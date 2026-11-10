@@ -1,0 +1,5 @@
+/build*/
+/data/libros_trabajo.json
+*.tmp.*
+.env
+.vscode/
