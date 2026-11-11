@@ -21,26 +21,37 @@ void ConsoleUI::print(const std::vector<Libro>& books) {
         output_ << '\n';
     }
 }
+Libro ConsoleUI::askBook() {
+    Libro book;
+    book.idLibro = ask("ID"); book.titulo = ask("Título"); book.autor = ask("Autor");
+    std::istringstream themes(ask("Temas separados por ; (vacío permitido)"));
+    std::string theme;
+    while (std::getline(themes, theme, ';')) book.temas.push_back(theme);
+    return book;
+}
 int ConsoleUI::run() {
-    output_ << "Biblioteca académica — E2-A (JSON local, guardado explícito)\n";
+    const bool mongo = service_.writesThrough();
+    if (mongo) output_ << "Biblioteca académica — MongoDB, escritura inmediata en " << service_.workingPath().string() << '\n';
+    else output_ << "Biblioteca académica — E2-A (JSON local, guardado explícito)\n";
     while (input_) {
         try {
             output_ << "\n1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección\n"
-                       "5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir\n";
+                       "5 Listar  6 Visualizar B+  7 Validar  " << (mongo ? "8 Actualizar por ID" : "8 Guardar") << "  9 Prefijo  0 Salir\n";
             const auto option = ask("Opción");
             if (option == "1") {
+                if (mongo) {
+                    const auto count = service_.load(service_.workingPath());
+                    output_ << "Cargados: " << count << '\n';
+                    continue;
+                }
                 const auto path = ask("Origen: 1 inicial, 2 trabajo, o ruta JSON");
                 if (service_.dirty() && ask("Reemplazar cambios sin guardar (SI)") != "SI") continue;
                 const auto source = path == "1" ? initial_ : path == "2" ? service_.workingPath() : std::filesystem::path(path);
                 const auto count = service_.load(source);
                 output_ << "Cargados: " << count << " | origen: " << source.string() << '\n';
             } else if (option == "2") {
-                Libro book;
-                book.idLibro = ask("ID"); book.titulo = ask("Título"); book.autor = ask("Autor");
-                std::istringstream themes(ask("Temas separados por ; (vacío permitido)"));
-                std::string theme;
-                while (std::getline(themes, theme, ';')) book.temas.push_back(theme);
-                service_.insert(book); output_ << "Insertado: " << book.idLibro << " (sin guardar)\n";
+                const auto book = askBook();
+                service_.insert(book); output_ << "Insertado: " << book.idLibro << (mongo ? " (verificado en nube)\n" : " (sin guardar)\n");
             } else if (option == "3") {
                 print(service_.byTitle(ask("Título exacto")));
             } else if (option == "4") {
@@ -52,7 +63,7 @@ int ConsoleUI::run() {
                     throw std::invalid_argument("ID no pertenece a la selección mostrada");
                 if (ask("Confirmar borrado de " + id + " (SI)") != "SI") continue;
                 if (!service_.erase(id)) throw std::logic_error("Selección ya no existe");
-                output_ << "Borrado: " << id << " (sin guardar)\n";
+                output_ << "Borrado: " << id << (mongo ? " (verificado en nube)\n" : " (sin guardar)\n");
             } else if (option == "5") print(service_.all());
             else if (option == "6") service_.visualize(output_);
             else if (option == "7") {
@@ -60,6 +71,10 @@ int ConsoleUI::run() {
                 const bool valid = service_.validate(reason);
                 output_ << "Invariantes " << (valid ? "OK: " : "FALLO: ") << reason << '\n';
                 if (!valid) return 2;
+            } else if (option == "8" && mongo) {
+                const auto book = askBook();
+                service_.update(book);
+                output_ << "Actualizado: " << book.idLibro << " (verificado en nube)\n";
             } else if (option == "8") {
                 service_.save(); output_ << "Guardado: " << service_.workingPath().string() << '\n';
             } else if (option == "9") print(service_.byPrefix(ask("Prefijo")));

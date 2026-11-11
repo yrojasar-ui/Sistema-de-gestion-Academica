@@ -1,0 +1,34 @@
+Comando: cmake --build build/asan -j2
+[  4%] Building CXX object CMakeFiles/libro.dir/backend/src/Libro.cpp.o
+[  9%] Linking CXX static library liblibro.a
+[  9%] Built target libro
+[ 14%] Building CXX object CMakeFiles/json_repository.dir/backend/src/JsonBookRepository.cpp.o
+[ 19%] Building CXX object CMakeFiles/bplus.dir/backend/src/BPlusTree.cpp.o
+[ 23%] Linking CXX static library libbplus.a
+[ 23%] Built target bplus
+[ 28%] Building CXX object CMakeFiles/mongo_repository.dir/backend/src/MongoApiBookRepository.cpp.o
+[ 33%] Linking CXX static library libjson_repository.a
+[ 33%] Built target json_repository
+[ 38%] Building CXX object CMakeFiles/test_bplus.dir/backend/tests/test_bplus.cpp.o
+[ 42%] Linking CXX executable test_bplus
+[ 42%] Built target test_bplus
+[ 47%] Building CXX object CMakeFiles/catalog_service.dir/backend/src/CatalogService.cpp.o
+[ 52%] Building CXX object CMakeFiles/mongo_repository.dir/backend/src/CurlTransport.cpp.o
+[ 57%] Linking CXX static library libcatalog_service.a
+[ 57%] Built target catalog_service
+[ 61%] Building CXX object CMakeFiles/console_ui.dir/backend/src/ConsoleUI.cpp.o
+[ 66%] Linking CXX static library libmongo_repository.a
+[ 66%] Built target mongo_repository
+[ 71%] Building CXX object CMakeFiles/test_mongo.dir/backend/tests/test_mongo.cpp.o
+[ 76%] Linking CXX static library libconsole_ui.a
+[ 76%] Built target console_ui
+[ 80%] Building CXX object CMakeFiles/biblioteca.dir/backend/apps/main.cpp.o
+[ 85%] Linking CXX executable biblioteca
+[ 85%] Built target biblioteca
+[ 90%] Building CXX object CMakeFiles/test_catalog.dir/backend/tests/test_catalog.cpp.o
+[ 95%] Linking CXX executable test_catalog
+[ 95%] Built target test_catalog
+[100%] Linking CXX executable test_mongo
+[100%] Built target test_mongo
+
+Código de retorno: 0

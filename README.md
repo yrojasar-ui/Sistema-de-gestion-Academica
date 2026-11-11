@@ -1,14 +1,14 @@
-# Biblioteca académica — prototipo E2-A
+# Biblioteca académica — prototipo E2-A y adaptador E2-B
 
 Proyecto de Yoel Alexander Rojas Arguedas, Universidad CENFOTEC,
-Estructuras de Datos II. Se ejecutaron **Prompt 0 y solo E2-A** de la guía
+Estructuras de Datos II. Se ejecutaron **Prompt 0, E2-A y E2-B** de la guía
 conservada en `docs/referencia/Prompts_Codex_Biblioteca_ED2.md`.
 
-Catálogo C++17 con B+ propio, carga JSON, consola y guardado local explícito.
+Catálogo C++17 con B+ propio, consola, guardado JSON explícito y persistencia por documento en la API MongoDB del profesor.
 Incluye inserción, consulta por título/prefijo/rango, borrado real, listado,
 visualización de los nodos reales y validación de invariantes. El rango está
 disponible en la API C++ y sus pruebas; título y prefijo también en consola.
-La modificación de título, opcional en E2-A, queda pendiente.
+El modo Mongo permite actualizar un libro por ID. El modo JSON conserva el menú de E2-A.
 
 ## Compilar y ejecutar en WSL
 
@@ -18,7 +18,7 @@ Trabajar desde Ubuntu, usando compilador y herramientas Linux:
 cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
 # Solo si faltan herramientas:
 sudo apt-get update
-sudo apt-get install g++ cmake make
+sudo apt-get install g++ cmake make libcurl4-openssl-dev
 
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/debug -j2
@@ -29,7 +29,9 @@ ctest --test-dir build/debug --output-on-failure
 La dependencia JSON 3.12.0 está incluida, con su licencia y SHA-256 en
 `third_party/`. No se descarga nada durante la configuración de CMake.
 
-En el menú: `1` y después `1` carga los 16 libros sintéticos iniciales;
+Para usar la nube, ejecute `./build/debug/biblioteca --storage=mongo`. El contrato, los ejemplos de la colección propia y la evidencia se encuentran en [API MongoDB](docs/API_MONGODB.md).
+
+En el menú JSON: `1` y después `1` carga los 16 libros sintéticos iniciales;
 `2` inserta; `3` busca título exacto normalizado; `4` muestra coincidencias,
 pide el ID exacto y confirma; `5` lista; `6` muestra B+; `7` valida;
 `8` guarda; `9` busca prefijo; `0` sale. Los IDs distinguen obras homónimas.
@@ -37,7 +39,7 @@ Al salir con cambios, `g` guarda, `d` descarta y cualquier otra respuesta cancel
 EOF con cambios pendientes produce código 2 y avisa que no se guardaron.
 
 ```bash
-./build/debug/biblioteca --order 3 \
+./build/debug/biblioteca --storage=json --order 3 \
   --initial data/libros_iniciales.json \
   --working data/libros_trabajo.json
 ```
@@ -83,12 +85,12 @@ ctest --test-dir build/asan -V --output-on-failure
 | `libro` | `backend/include/biblioteca/Libro.hpp`, `backend/src/Libro.cpp` | Modelo, validación y normalización |
 | `bplus` | `BPlusTree.hpp/.cpp` | Nodos, algoritmo, hojas enlazadas, consultas e invariantes |
 | `json_repository` | `IBookRepository.hpp`, `JsonBookRepository.hpp/.cpp` | Carga y guardado de snapshots JSON |
+| `mongo_repository` | `MongoApiBookRepository.hpp/.cpp`, `CurlTransport.cpp` | CRUD con verificación por ID y libcurl |
 | `catalog_service` | `CatalogService.hpp/.cpp` | Coordina índice, unicidad por ID y cambios pendientes |
 | `console_ui` | `ConsoleUI.hpp/.cpp` | Entrada/salida y selección inequívoca |
 | `biblioteca` | `backend/apps/main.cpp` | Composición y opciones de ejecución |
 
-`ConsoleUI` llama a `CatalogService`, que consulta `BPlusTree`. El repositorio
-solo se usa al cargar o guardar. Los registros están en las hojas; el auxiliar
+`ConsoleUI` llama a `CatalogService`, que consulta `BPlusTree`. En JSON el repositorio se usa al cargar o guardar. En Mongo también interviene en cada escritura y en la recarga posterior. Los registros están en las hojas; el auxiliar
 `unordered_map<id, clave>` comprueba unicidad y localiza la clave al borrar por ID.
 No responde búsquedas por título ni sustituye B+. Un `std::map` en las pruebas
 es el oráculo independiente, y otro en la visualización solo asigna nombres N0,
@@ -153,7 +155,7 @@ Se verificó reinicio normal, no durabilidad frente a cortes eléctricos.
 
 ## Qué queda pendiente
 
-E2-B (MongoDB), E2-C (informe y capturas), modificación de título y fases finales.
+E2-C (informe y capturas), modificación de título en modo JSON y fases finales.
 No se han implementado las otras estructuras, préstamos/reservas, API HTTP,
 frontend, broker, autenticación, CI remoto ni despliegue. La publicación en GitHub
 corresponde únicamente a E2-A; no se creó etiqueta de entrega. La fecha exacta del segundo avance sigue pendiente;

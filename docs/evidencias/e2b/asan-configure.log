@@ -1,0 +1,6 @@
+Comando: cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DENABLE_SANITIZERS=ON
+-- Configuring done (4.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+
+Código de retorno: 0

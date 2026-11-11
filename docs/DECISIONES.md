@@ -74,3 +74,13 @@ el margen a 600 s para reproducibilidad en WSL sin quitar casos ni relajar
 invariantes. Se volvió a ejecutar build y CTest en ambas configuraciones.
 `ejecucion-01` conserva el estado previo y `ejecucion-final` identifica las fuentes
 finales con SHA-256. No hay SHA de commit porque no hay identidad Git configurada.
+
+## D09 — persistencia por documento en E2-B
+
+La interfaz de escritura por registro permite conservar el guardado de snapshots
+de E2-A. En Mongo el servicio relee y valida el catálogo después de confirmar
+cada mutación. Para un prototipo de hasta 10 000 obras, aceptamos el coste de
+un GET completo y una reconstrucción del B+ por cambio. Esto permite incorporar
+otros cambios visibles en el momento de la lectura. El adaptador mantiene una
+tabla auxiliar de las identidades y los campos leídos para validar la selección.
+El contrato observado y los límites de concurrencia figuran en [API MongoDB](API_MONGODB.md).
