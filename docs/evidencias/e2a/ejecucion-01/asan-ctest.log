@@ -1,0 +1,153 @@
+Comando: env ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 ctest --test-dir build/asan -V --output-on-failure
+UpdateCTestConfiguration  from :/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Parse Config file:/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: bplus_oraculo
+
+1: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/test_bplus
+1: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+1: Test timeout computed to be: 180
+1: Semilla=20261109; oráculo=std::map<BookKey,Libro>
+1: orden=3 ascendente/descendente/mezclada/aleatoria OK
+1: orden=4 ascendente/descendente/mezclada/aleatoria OK
+1: orden=5 ascendente/descendente/mezclada/aleatoria OK
+1: orden=6 ascendente/descendente/mezclada/aleatoria OK
+1: orden=7 ascendente/descendente/mezclada/aleatoria OK
+1: orden=8 ascendente/descendente/mezclada/aleatoria OK
+1: orden=16 ascendente/descendente/mezclada/aleatoria OK
+1: orden=32 ascendente/descendente/mezclada/aleatoria OK
+1: splits hoja/interno=1796/645 préstamo hoja izq/der=553/448 préstamo interno izq/der=161/117 fusiones hoja/interno=1796/645 contracciones=262
+1: OK operaciones=23416 comprobaciones=2036201
+1/3 Test #1: bplus_oraculo ....................   Passed  177.09 sec
+test 2
+    Start 2: catalogo_json_consola
+
+2: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/test_catalog
+2: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+2: Test timeout computed to be: 180
+2: OK catálogo/JSON/consola; casos JSON inválido=18; comprobaciones=113
+2/3 Test #2: catalogo_json_consola ............   Passed    0.16 sec
+test 3
+    Start 3: demo_reinicio
+
+3: Test command: /usr/bin/bash "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/scripts/demo_entregable2.sh" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/biblioteca"
+3: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+3: Test timeout computed to be: 180
+3: Biblioteca académica — E2-A (JSON local, guardado explícito)
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 16 | origen: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: DEMO-01 (sin guardar)
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Título exacto: Resultados: 1
+3: [DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: B+ orden=3 libros=17
+3: N0 interno [(logica cotidiana,L009) ] hijos: N1 N2
+3: N1 interno [(diseño de estructuras,L005) ] hijos: N3 N4
+3: N2 interno [(sistemas ordenados,L013) ] hijos: N5 N6
+3: N3 interno [(arbol de demostracion,DEMO-01) (bibliotecas y conocimiento,L003) ] hijos: N7 N8 N9
+3: N4 interno [(grafos del jardin,L007) ] hijos: N10 N11
+3: N5 interno [(programacion modular,L011) ] hijos: N12 N13
+3: N6 interno [(universo de datos,L015) ] hijos: N14 N15
+3: N7 hoja [(algebra para explorar,L001) (algoritmos del campus,L002) ]
+3: N8 hoja [(arbol de demostracion,DEMO-01) ]
+3: N9 hoja [(bibliotecas y conocimiento,L003) (calculo con ejemplos,L004) ]
+3: N10 hoja [(diseño de estructuras,L005) (etica academica,L006) ]
+3: N11 hoja [(grafos del jardin,L007) (introduccion a redes,L008) ]
+3: N12 hoja [(logica cotidiana,L009) (niñez y lectura,L010) ]
+3: N13 hoja [(programacion modular,L011) (programacion modular,L012) ]
+3: N14 hoja [(sistemas ordenados,L013) (teoria de arboles,L014) ]
+3: N15 hoja [(universo de datos,L015) (zonas de estudio,L016) ]
+3: Hojas: N7 -> N8 -> N9 -> N10 -> N11 -> N12 -> N13 -> N14 -> N15 -> fin
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Título de la selección: Resultados: 1
+3: [DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+3: ID exacto a borrar (vacío cancela): Confirmar borrado de DEMO-01 (SI): Borrado: DEMO-01 (sin guardar)
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Título exacto: Resultados: 0
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: PERSIST-01 (sin guardar)
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Guardado: /tmp/biblioteca-demo-UViSbJ/trabajo.json
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Biblioteca académica — E2-A (JSON local, guardado explícito)
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-UViSbJ/trabajo.json
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Título exacto: Resultados: 1
+3: [PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Título exacto: Resultados: 0
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Resultados: 17
+3: [L001] Álgebra para explorar | Autora Sintética A | temas: matemática
+3: [L002] Algoritmos del campus | Autor Sintético B | temas: computación algoritmos
+3: [L003] Bibliotecas y conocimiento | Autora Sintética C | temas: bibliotecas
+3: [L004] Cálculo con ejemplos | Autor Sintético D | temas: matemática
+3: [L005] Diseño de estructuras | Autora Sintética E | temas: computación
+3: [L006] Ética académica | Autor Sintético F | temas: ética
+3: [L007] Grafos del jardín | Autora Sintética G | temas: grafos computación
+3: [L008] Introducción a redes | Autor Sintético H | temas: redes
+3: [L009] Lógica cotidiana | Autora Sintética I | temas: lógica
+3: [L010] Niñez y lectura | Autor Sintético J | temas: lectura
+3: [PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+3: [L011] Programación modular | Autora Sintética K | temas: computación
+3: [L012] Programación modular | Autor Sintético L | temas: computación diseño
+3: [L013] Sistemas ordenados | Autora Sintética M | temas: sistemas
+3: [L014] Teoría de árboles | Autor Sintético N | temas: árboles
+3: [L015] Universo de datos | Autora Sintética O | temas: datos
+3: [L016] Zonas de estudio | Autor Sintético P | temas: educación
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+3: 
+3: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+3: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+3: Opción: 
+3: DEMO OK: carga -> inserción -> búsqueda -> borrado -> ausencia -> guardado -> reinicio; fixture intacto.
+3/3 Test #3: demo_reinicio ....................   Passed    0.12 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) = 177.38 sec
+
+Código de retorno: 0

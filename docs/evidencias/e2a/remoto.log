@@ -1,0 +1,3 @@
+Comando: git ls-remote origin
+Salida (sin refs si está vacía):
+Código de retorno: 0

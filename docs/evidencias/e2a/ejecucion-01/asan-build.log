@@ -1,0 +1,27 @@
+Comando: cmake --build build/asan -j2
+[  6%] Building CXX object CMakeFiles/libro.dir/backend/src/Libro.cpp.o
+[ 12%] Linking CXX static library liblibro.a
+[ 12%] Built target libro
+[ 25%] Building CXX object CMakeFiles/bplus.dir/backend/src/BPlusTree.cpp.o
+[ 25%] Building CXX object CMakeFiles/json_repository.dir/backend/src/JsonBookRepository.cpp.o
+[ 31%] Linking CXX static library libbplus.a
+[ 31%] Built target bplus
+[ 37%] Building CXX object CMakeFiles/catalog_service.dir/backend/src/CatalogService.cpp.o
+[ 43%] Linking CXX static library libcatalog_service.a
+[ 43%] Built target catalog_service
+[ 50%] Building CXX object CMakeFiles/test_bplus.dir/backend/tests/test_bplus.cpp.o
+[ 56%] Linking CXX executable test_bplus
+[ 56%] Built target test_bplus
+[ 62%] Building CXX object CMakeFiles/console_ui.dir/backend/src/ConsoleUI.cpp.o
+[ 68%] Linking CXX static library libjson_repository.a
+[ 68%] Built target json_repository
+[ 75%] Linking CXX static library libconsole_ui.a
+[ 75%] Built target console_ui
+[ 87%] Building CXX object CMakeFiles/test_catalog.dir/backend/tests/test_catalog.cpp.o
+[ 87%] Building CXX object CMakeFiles/biblioteca.dir/backend/apps/main.cpp.o
+[ 93%] Linking CXX executable biblioteca
+[ 93%] Built target biblioteca
+[100%] Linking CXX executable test_catalog
+[100%] Built target test_catalog
+
+Código de retorno: 0

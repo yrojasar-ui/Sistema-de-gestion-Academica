@@ -1,0 +1,18 @@
+[
+  {"idLibro":"L001","titulo":"Álgebra para explorar","autor":"Autora Sintética A","temas":["matemática"]},
+  {"idLibro":"L002","titulo":"Algoritmos del campus","autor":"Autor Sintético B","temas":["computación","algoritmos"]},
+  {"idLibro":"L003","titulo":"Bibliotecas y conocimiento","autor":"Autora Sintética C","temas":["bibliotecas"]},
+  {"idLibro":"L004","titulo":"Cálculo con ejemplos","autor":"Autor Sintético D","temas":["matemática"]},
+  {"idLibro":"L005","titulo":"Diseño de estructuras","autor":"Autora Sintética E","temas":["computación"]},
+  {"idLibro":"L006","titulo":"Ética académica","autor":"Autor Sintético F","temas":["ética"]},
+  {"idLibro":"L007","titulo":"Grafos del jardín","autor":"Autora Sintética G","temas":["grafos","computación"]},
+  {"idLibro":"L008","titulo":"Introducción a redes","autor":"Autor Sintético H","temas":["redes"]},
+  {"idLibro":"L009","titulo":"Lógica cotidiana","autor":"Autora Sintética I","temas":["lógica"]},
+  {"idLibro":"L010","titulo":"Niñez y lectura","autor":"Autor Sintético J","temas":["lectura"]},
+  {"idLibro":"L011","titulo":"Programación modular","autor":"Autora Sintética K","temas":["computación"]},
+  {"idLibro":"L012","titulo":"Programación modular","autor":"Autor Sintético L","temas":["computación","diseño"]},
+  {"idLibro":"L013","titulo":"Sistemas ordenados","autor":"Autora Sintética M","temas":["sistemas"]},
+  {"idLibro":"L014","titulo":"Teoría de árboles","autor":"Autor Sintético N","temas":["árboles"]},
+  {"idLibro":"L015","titulo":"Universo de datos","autor":"Autora Sintética O","temas":["datos"]},
+  {"idLibro":"L016","titulo":"Zonas de estudio","autor":"Autor Sintético P","temas":["educación"]}
+]

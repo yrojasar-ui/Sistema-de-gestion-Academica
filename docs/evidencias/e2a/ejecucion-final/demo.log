@@ -1,0 +1,107 @@
+Comando: bash scripts/demo_entregable2.sh /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/biblioteca
+Biblioteca académica — E2-A (JSON local, guardado explícito)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 16 | origen: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: DEMO-01 (sin guardar)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Título exacto: Resultados: 1
+[DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: B+ orden=3 libros=17
+N0 interno [(logica cotidiana,L009) ] hijos: N1 N2
+N1 interno [(diseño de estructuras,L005) ] hijos: N3 N4
+N2 interno [(sistemas ordenados,L013) ] hijos: N5 N6
+N3 interno [(arbol de demostracion,DEMO-01) (bibliotecas y conocimiento,L003) ] hijos: N7 N8 N9
+N4 interno [(grafos del jardin,L007) ] hijos: N10 N11
+N5 interno [(programacion modular,L011) ] hijos: N12 N13
+N6 interno [(universo de datos,L015) ] hijos: N14 N15
+N7 hoja [(algebra para explorar,L001) (algoritmos del campus,L002) ]
+N8 hoja [(arbol de demostracion,DEMO-01) ]
+N9 hoja [(bibliotecas y conocimiento,L003) (calculo con ejemplos,L004) ]
+N10 hoja [(diseño de estructuras,L005) (etica academica,L006) ]
+N11 hoja [(grafos del jardin,L007) (introduccion a redes,L008) ]
+N12 hoja [(logica cotidiana,L009) (niñez y lectura,L010) ]
+N13 hoja [(programacion modular,L011) (programacion modular,L012) ]
+N14 hoja [(sistemas ordenados,L013) (teoria de arboles,L014) ]
+N15 hoja [(universo de datos,L015) (zonas de estudio,L016) ]
+Hojas: N7 -> N8 -> N9 -> N10 -> N11 -> N12 -> N13 -> N14 -> N15 -> fin
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Título de la selección: Resultados: 1
+[DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+ID exacto a borrar (vacío cancela): Confirmar borrado de DEMO-01 (SI): Borrado: DEMO-01 (sin guardar)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Título exacto: Resultados: 0
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: PERSIST-01 (sin guardar)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Guardado: /tmp/biblioteca-demo-EFeR9c/trabajo.json
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Biblioteca académica — E2-A (JSON local, guardado explícito)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-EFeR9c/trabajo.json
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Título exacto: Resultados: 1
+[PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Título exacto: Resultados: 0
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Resultados: 17
+[L001] Álgebra para explorar | Autora Sintética A | temas: matemática
+[L002] Algoritmos del campus | Autor Sintético B | temas: computación algoritmos
+[L003] Bibliotecas y conocimiento | Autora Sintética C | temas: bibliotecas
+[L004] Cálculo con ejemplos | Autor Sintético D | temas: matemática
+[L005] Diseño de estructuras | Autora Sintética E | temas: computación
+[L006] Ética académica | Autor Sintético F | temas: ética
+[L007] Grafos del jardín | Autora Sintética G | temas: grafos computación
+[L008] Introducción a redes | Autor Sintético H | temas: redes
+[L009] Lógica cotidiana | Autora Sintética I | temas: lógica
+[L010] Niñez y lectura | Autor Sintético J | temas: lectura
+[PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+[L011] Programación modular | Autora Sintética K | temas: computación
+[L012] Programación modular | Autor Sintético L | temas: computación diseño
+[L013] Sistemas ordenados | Autora Sintética M | temas: sistemas
+[L014] Teoría de árboles | Autor Sintético N | temas: árboles
+[L015] Universo de datos | Autora Sintética O | temas: datos
+[L016] Zonas de estudio | Autor Sintético P | temas: educación
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 
+DEMO OK: carga -> inserción -> búsqueda -> borrado -> ausencia -> guardado -> reinicio; fixture intacto.
+
+Código de retorno: 0
