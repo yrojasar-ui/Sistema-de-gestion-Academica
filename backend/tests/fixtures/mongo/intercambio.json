@@ -1,0 +1,54 @@
+{
+  "vacio": {
+    "coleccion": "biblioteca_yoel_ed2_libros",
+    "total": 0,
+    "documentos": []
+  },
+  "insertado": {
+    "mensaje": "Documento insertado correctamente en 'biblioteca_yoel_ed2_libros'"
+  },
+  "libro": {
+    "coleccion": "biblioteca_yoel_ed2_libros",
+    "total": 1,
+    "documentos": [
+      {
+        "_id": {
+          "$oid": "0123456789abcdef01234567"
+        },
+        "idLibro": "E2B-FIXTURE",
+        "titulo": "Bitácora sintética E2B",
+        "autor": "Autor sintético",
+        "temas": [
+          "prueba"
+        ],
+        "proyecto": "biblioteca_yoel_ed2_libros"
+      }
+    ]
+  },
+  "actualizado": {
+    "mensaje": "Documentos actualizados",
+    "modificados": 1
+  },
+  "revisado": {
+    "coleccion": "biblioteca_yoel_ed2_libros",
+    "total": 1,
+    "documentos": [
+      {
+        "_id": {
+          "$oid": "0123456789abcdef01234567"
+        },
+        "idLibro": "E2B-FIXTURE",
+        "titulo": "Bitácora sintética revisada",
+        "autor": "Autor sintético",
+        "temas": [
+          "prueba"
+        ],
+        "proyecto": "biblioteca_yoel_ed2_libros"
+      }
+    ]
+  },
+  "eliminado": {
+    "mensaje": "Documento eliminado",
+    "eliminados": 1
+  }
+}

@@ -1,0 +1,74 @@
+10 de noviembre de 2026 — WSL Ubuntu, hora de Guatemala (UTC−06:00)
+Host HTTPS: paginas-web-cr.com. Colección: biblioteca_yoel_ed2_libros.
+Transcripción de respuestas. Los identificadores de ambos libros y los ObjectId se sustituyeron.
+
+Primera ejecución: sonda HTTP con curl, un libro sintético nuevo.
+GET /Api/index.php?coleccion=biblioteca_yoel_ed2_libros
+HTTP 200 | text/html; charset=UTF-8 | 4325 bytes
+<!doctype html> ... <title>API</title>
+
+GET /Api/apis/mongodb.php?coleccion=biblioteca_yoel_ed2_libros
+HTTP 200 | application/json; charset=UTF-8
+{"coleccion": "biblioteca_yoel_ed2_libros", "total": 0, "documentos": []}
+
+POST /Api/apis/mongodb.php
+Solicitud: {"coleccion": "biblioteca_yoel_ed2_libros", "datos": {"idLibro": "E2B-FIXTURE", "titulo": "Bitácora sintética E2B", "autor": "Autor sintético", "temas": ["prueba"], "proyecto": "biblioteca_yoel_ed2_libros"}}
+HTTP 200 | application/json; charset=UTF-8
+{"mensaje": "Documento insertado correctamente en 'biblioteca_yoel_ed2_libros'"}
+
+GET por idLibro=E2B-FIXTURE
+HTTP 200 | application/json; charset=UTF-8
+{"coleccion": "biblioteca_yoel_ed2_libros", "total": 1, "documentos": [{"_id": {"$oid": "0123456789abcdef01234567"}, "idLibro": "E2B-FIXTURE", "titulo": "Bitácora sintética E2B", "autor": "Autor sintético", "temas": ["prueba"], "proyecto": "biblioteca_yoel_ed2_libros"}]}
+
+PUT /Api/apis/mongodb.php
+Solicitud: {"coleccion": "biblioteca_yoel_ed2_libros", "filtro": {"_id": "0123456789abcdef01234567", "idLibro": "E2B-FIXTURE", "proyecto": "biblioteca_yoel_ed2_libros"}, "datos": {"titulo": "Bitácora sintética revisada"}}
+HTTP 200 | application/json; charset=UTF-8
+{"mensaje": "Documentos actualizados", "modificados": 1}
+
+GET por idLibro=E2B-FIXTURE
+HTTP 200 | application/json; charset=UTF-8
+{"coleccion": "biblioteca_yoel_ed2_libros", "total": 1, "documentos": [{"_id": {"$oid": "0123456789abcdef01234567"}, "idLibro": "E2B-FIXTURE", "titulo": "Bitácora sintética revisada", "autor": "Autor sintético", "temas": ["prueba"], "proyecto": "biblioteca_yoel_ed2_libros"}]}
+
+GET por idLibro=AUSENTE-E2B-FIXTURE (el libro creado todavía existía)
+HTTP 200 | application/json; charset=UTF-8
+{"coleccion": "biblioteca_yoel_ed2_libros", "total": 0, "documentos": []}
+
+DELETE /Api/apis/mongodb.php
+Solicitud: {"coleccion": "biblioteca_yoel_ed2_libros", "filtro": {"_id": "0123456789abcdef01234567", "idLibro": "E2B-FIXTURE", "proyecto": "biblioteca_yoel_ed2_libros"}}
+HTTP 200 | application/json; charset=UTF-8
+{"mensaje": "Documento eliminado", "eliminados": 1}
+
+GET por idLibro=E2B-FIXTURE después de DELETE
+HTTP 200 | application/json; charset=UTF-8
+{"coleccion": "biblioteca_yoel_ed2_libros", "total": 0, "documentos": []}
+
+Segunda ejecución: build/debug/biblioteca --storage=mongo, otro libro sintético nuevo.
+Se registró su ObjectId con un GET independiente tras el POST. Se comprobó el mismo documento antes de PUT y DELETE.
+
+18:52:05 demo-insertar — extracto de stdout; retorno 0
+Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: E2B-DEMO (verificado en nube)
+Opción: Título exacto: Resultados: 1
+[E2B-DEMO] Atlas sintético demo | Autor sintético E2B | temas: prueba
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+18:52:07 demo-reinicio — extracto de stdout; retorno 0
+Opción: Título exacto: Resultados: 1
+[E2B-DEMO] Atlas sintético demo | Autor sintético E2B | temas: prueba
+Opción: B+ orden=4 libros=1
+N0 hoja [(atlas sintetico demo,E2B-DEMO) ]
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+18:52:11 demo-actualizar — extracto de stdout; retorno 0
+Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Actualizado: E2B-DEMO (verificado en nube)
+Opción: Título exacto: Resultados: 1
+[E2B-DEMO] Atlas sintético demo revisado | Autor sintético E2B | temas: prueba
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+18:52:16 demo-borrar — extracto de stdout; retorno 0
+Opción: Título de la selección: Resultados: 1
+[E2B-DEMO] Atlas sintético demo revisado | Autor sintético E2B | temas: prueba
+ID exacto a borrar (vacío cancela): Confirmar borrado de E2B-DEMO (SI): Borrado: E2B-DEMO (verificado en nube)
+Opción: Título exacto: Resultados: 0
+Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+GET independiente final por el segundo idLibro: total 0, documentos [].

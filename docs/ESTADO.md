@@ -116,5 +116,38 @@ el estado anterior a la publicación. No se creó una etiqueta de entrega.
   y pruebas; la consola expone título y prefijo. Normalización española limitada,
   documentada; no orden lingüístico ni normalización Unicode completa.
 - PDF inicial no disponible; no se afirma fidelidad completa a ese documento.
-- E2-B, E2-C y todas las fases finales siguen pendientes por alcance expreso.
-  No se verificó persistencia en nube ni se generó el informe E2-C.
+- Al cierre de E2-A, E2-B, E2-C y las fases finales quedaban pendientes.
+
+## E2-B — adaptador MongoDB
+
+El 10 de noviembre de 2026 se creó `feat/e2b-mongodb` desde `main` en
+`d2454ca`. En la API del profesor se completaron dos ciclos con libros
+sintéticos de esta ejecución. El primero permitió fijar el contrato. El segundo
+ejercitó la consola C++, con búsqueda por B+ desde otro proceso después del alta.
+Ambos terminaron con un GET filtrado que confirmó ausencia.
+
+| Verificación de esta rama | Resultado | Evidencia |
+|---|---|---|
+| Rutas, cuerpos GET/POST/PUT/DELETE, identidad y reinicio con nube | CRUD observado | [Contrato](API_MONGODB.md) y [transcripción](evidencias/e2b/nube.txt) |
+| CTest Debug | 4/4 en 25,93 s | [Salida](evidencias/e2b/debug-ctest.log) |
+| CTest ASan/UBSan, con detección de fugas | 4/4 en 159,75 s | [Salida](evidencias/e2b/asan-ctest.log) |
+| Demo independiente E2-A con archivo temporal | Código 0, fixture inicial intacto | [Salida](evidencias/e2b/demo.log) |
+| Configuraciones, compilaciones, CTest y demo | Siete pasos con retorno 0 | [Resultados](evidencias/e2b/resultados.tsv) |
+
+Se ejecutó `bash scripts/verificar_e2a.sh build/e2b-pruebas`. El oráculo B+
+mantuvo sus 23 416 operaciones y 2 036 201 comprobaciones. El catálogo JSON y
+la consola conservaron las 121 comprobaciones y la demo entre procesos.
+La cuarta prueba usa un transporte simulado y fixtures sanitizados.
+Los logs archivados conservan los comandos y códigos de retorno; se recortaron
+los espacios finales de línea. El manifiesto identifica 28 archivos.
+
+En este WSL estaba instalada la biblioteca compartida libcurl 8.18.0. Se
+extrajeron los encabezados oficiales de Ubuntu en `build-tools/e2b-curl/` para
+la compilación. Se pasaron a CMake `CURL_INCLUDE_DIR` y `CURL_LIBRARY_RELEASE`
+apuntando respectivamente a esos encabezados y a la biblioteca compartida del
+sistema. También se compiló en otro directorio con `-DENABLE_MONGO=OFF` y se
+comprobó el arranque JSON y el rechazo explícito de la selección Mongo.
+
+La verificación externa cubre las operaciones de catálogo de E2-B. Las garantías
+del servidor y los fallos probados únicamente mediante simulación quedan
+enumerados en [API MongoDB](API_MONGODB.md). E2-C y las fases finales siguen pendientes.

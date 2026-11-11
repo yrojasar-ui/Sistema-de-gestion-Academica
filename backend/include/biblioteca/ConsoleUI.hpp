@@ -13,6 +13,7 @@ private:
     std::istream& input_;
     std::ostream& output_;
     std::string ask(const std::string& label);
+    Libro askBook();
     void print(const std::vector<Libro>& books);
 };
 } // namespace biblioteca

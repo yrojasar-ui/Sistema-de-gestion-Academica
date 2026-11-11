@@ -1,8 +1,8 @@
 # Matriz de requisitos
 
-Alcance: Prompt 0 y E2-A. Estados locales respaldados por ejecución real; no hay
-ninguna capacidad verificada en nube. Evidencia canónica en
-`evidencias/e2a/ejecucion-final/`; la ejecución preliminar se conserva separada.
+La matriz cubre Prompt 0, E2-A y E2-B. Las pruebas de E2-A se conservan en
+`evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
+regresión de esta rama se recogen en `evidencias/e2b/`.
 
 | ID | Fase | Criterio verificable | Implementación | Prueba/evidencia | Estado |
 |---|---|---|---|---|---|
@@ -15,7 +15,9 @@ ninguna capacidad verificada en nube. Evidencia canónica en
 | A06 | E2-A | Archivo de trabajo separado; fallo y reinicio | `JsonBookRepository::save`, dirty en servicio | Fallo de escritura/rename, protección de fixture, reintento, dos procesos → logs CTest y demo | Implementado y probado localmente |
 | A07 | E2-A | Español UTF-8 determinista | `Libro.cpp::normalizeTitle` | Acentos/mayúsculas/descompuestos/ñ/otros Unicode/UTF-8 inválido → `test_bplus.cpp` y logs CTest | Implementado y probado localmente |
 | A08 | E2-A opcional | Modificar título conservando índice | Sin implementar | Sin pruebas | Pendiente opcional |
-| B01 | E2-B | API MongoDB verificada | Sin iniciar | Sin evidencia cloud | Pendiente |
+| B01 | E2-B | GET, POST, PUT y DELETE de libro propio | `MongoApiBookRepository`, libcurl | [Contrato](API_MONGODB.md) y [sesiones reales](evidencias/e2b/nube.txt) | Verificado en nube con datos sintéticos |
+| B02 | E2-B | Reconstrucción de B+ y consulta tras reinicio | `CatalogService` y consola | Segundo proceso en la demo de nube | Verificado |
+| B03 | E2-B | Escritura incierta y recuperación | GET de verificación y recarga del servicio | `mongo_contrato_simulado` | Verificado localmente con fixtures |
 | C01 | E2-C | Informe 2–3 páginas y capturas | Sin iniciar | Sin informe | Pendiente |
 | F01 | Final | Rojo-Negro, hash extensible, grafo, FIFO propios | Sin iniciar | Sin pruebas | Pendiente |
 | F02 | Final | Ejemplares/usuarios/préstamos/reservas e integridad | Sin iniciar | Sin pruebas | Pendiente |

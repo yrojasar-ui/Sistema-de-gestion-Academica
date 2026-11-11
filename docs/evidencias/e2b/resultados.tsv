@@ -1,0 +1,8 @@
+paso	codigo
+debug-configure	0
+debug-build	0
+debug-ctest	0
+asan-configure	0
+asan-build	0
+asan-ctest	0
+demo	0
