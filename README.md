@@ -153,13 +153,23 @@ Alcance: un proceso escritor, archivos locales Linux/WSL. No hay bloqueo entre
 procesos, detección de ediciones externas, transacciones cloud ni `fsync`.
 Se verificó reinicio normal, no durabilidad frente a cortes eléctricos.
 
+## Informe del segundo avance
+
+E2-A y E2-B están integrados en `main`. E2-C documenta el prototipo evaluado en
+`f745b22`. El [informe en PDF](docs/Informe_Entregable2_Biblioteca.pdf) y la
+[fuente HTML editable](docs/Informe_Entregable2_Biblioteca.html) comparten las
+[capturas, el guion de demostración y los registros](docs/evidencias/entregable2/).
+Para editar o volver a imprimir el informe, abrí el HTML desde su ubicación en
+el repositorio, conservando la carpeta de capturas. Al imprimir, elegí A4,
+escala 100 %, gráficos de fondo y desactivá los encabezados y pies del navegador.
+
 ## Qué queda pendiente
 
-E2-C (informe y capturas), modificación de título en modo JSON y fases finales.
-No se han implementado las otras estructuras, préstamos/reservas, API HTTP,
-frontend, broker, autenticación, CI remoto ni despliegue. La publicación en GitHub
-corresponde únicamente a E2-A; no se creó etiqueta de entrega. La fecha exacta del segundo avance sigue pendiente;
-el proyecto final está previsto para el 24 de noviembre de 2026.
+La revisión y fusión del informe preceden a la etiqueta `entregable-2`. La
+edición de títulos en modo JSON es opcional. Para el proyecto final quedan las
+otras estructuras, préstamos y reservas, API HTTP propia, frontend, broker,
+autenticación, CI remoto y despliegue. La fecha exacta del segundo avance sigue
+pendiente y el proyecto final está previsto para el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;

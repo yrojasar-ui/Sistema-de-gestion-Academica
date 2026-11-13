@@ -1,8 +1,8 @@
 # Matriz de requisitos
 
-La matriz cubre Prompt 0, E2-A y E2-B. Las pruebas de E2-A se conservan en
+La matriz cubre Prompt 0, E2-A, E2-B y E2-C. Las pruebas de E2-A se conservan en
 `evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
-regresión de esta rama se recogen en `evidencias/e2b/`.
+regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificación de E2-C están en `evidencias/entregable2/`.
 
 | ID | Fase | Criterio verificable | Implementación | Prueba/evidencia | Estado |
 |---|---|---|---|---|---|
@@ -18,7 +18,7 @@ regresión de esta rama se recogen en `evidencias/e2b/`.
 | B01 | E2-B | GET, POST, PUT y DELETE de libro propio | `MongoApiBookRepository`, libcurl | [Contrato](API_MONGODB.md) y [sesiones reales](evidencias/e2b/nube.txt) | Verificado en nube con datos sintéticos |
 | B02 | E2-B | Reconstrucción de B+ y consulta tras reinicio | `CatalogService` y consola | Segundo proceso en la demo de nube | Verificado |
 | B03 | E2-B | Escritura incierta y recuperación | GET de verificación y recarga del servicio | `mongo_contrato_simulado` | Verificado localmente con fixtures |
-| C01 | E2-C | Informe 2–3 páginas y capturas | Sin iniciar | Sin informe | Pendiente |
+| C01 | E2-C | Informe breve, capturas reales y guion de demostración | [PDF de 3 páginas](Informe_Entregable2_Biblioteca.pdf) y [fuente HTML](Informe_Entregable2_Biblioteca.html) | [Capturas y logs](evidencias/entregable2/) y [guion de 4 minutos](evidencias/entregable2/guion.md) | Preparado y verificado para revisión |
 | F01 | Final | Rojo-Negro, hash extensible, grafo, FIFO propios | Sin iniciar | Sin pruebas | Pendiente |
 | F02 | Final | Ejemplares/usuarios/préstamos/reservas e integridad | Sin iniciar | Sin pruebas | Pendiente |
 | F03 | Final | API/worker/colas reales y persistencia cloud | Sin iniciar | Sin evidencia cloud | Pendiente |
@@ -28,4 +28,4 @@ regresión de esta rama se recogen en `evidencias/e2b/`.
 Los archivos `.cpp` de pruebas están en `backend/tests/`. No se interpreta un
 build local como CI remoto, JSON como nube, ni logs de terminal como capturas
 del informe. Las cotas, límites y protocolo de guardado se explican en README.
-El cierre completo del Entregable 2 (informe E2-C) no se declara realizado.
+El informe E2-C está preparado. La etiqueta de entrega queda pendiente de la revisión y fusión.

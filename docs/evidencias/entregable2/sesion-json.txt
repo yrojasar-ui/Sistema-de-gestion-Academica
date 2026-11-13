@@ -1,0 +1,61 @@
+Consola C++ en xterm de WSL. Mismo proceso para las seis capturas.
+Base evaluada: f745b22. $TEMPORAL sustituye el directorio temporal de la ejecución.
+Comando: build/debug/biblioteca --storage=json --initial data/libros_iniciales.json --working "$TEMPORAL/trabajo.json"
+
+Biblioteca académica — E2-A (JSON local, guardado explícito)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 1
+Origen: 1 inicial, 2 trabajo, o ruta JSON: 1
+Cargados: 16 | origen: data/libros_iniciales.json
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 2
+ID: E2C-01
+Título: Atlas del campus
+Autor: Autor de prueba
+Temas separados por ; (vacío permitido): mapas
+Insertado: E2C-01 (sin guardar)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 3
+Título exacto: Atlas del campus
+Resultados: 1
+[E2C-01] Atlas del campus | Autor de prueba | temas: mapas
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 4
+Título de la selección: Atlas del campus
+Resultados: 1
+[E2C-01] Atlas del campus | Autor de prueba | temas: mapas
+ID exacto a borrar (vacío cancela): E2C-01
+Confirmar borrado de E2C-01 (SI): SI
+Borrado: E2C-01 (sin guardar)
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 3
+Título exacto: Atlas del campus
+Resultados: 0
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 7
+Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 8
+Guardado: $TEMPORAL/trabajo.json
+
+1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+Opción: 0
+
+Retorno: 0
+SHA-256 de data/libros_iniciales.json antes y después: 7852aadb1c01f71840aa34e8cf828495caf3ca195c88d656019d6ff702cffce5
+Al terminar se verificaron las 16 obras originales en el JSON de trabajo temporal.
