@@ -150,4 +150,25 @@ comprobó el arranque JSON y el rechazo explícito de la selección Mongo.
 
 La verificación externa cubre las operaciones de catálogo de E2-B. Las garantías
 del servidor y los fallos probados únicamente mediante simulación quedan
-enumerados en [API MongoDB](API_MONGODB.md). E2-C y las fases finales siguen pendientes.
+enumerados en [API MongoDB](API_MONGODB.md). Al cierre de E2-B quedaban pendientes E2-C y las fases finales.
+
+## E2-C — informe del segundo avance
+
+La rama del informe parte de `f745b22`, que integra E2-A y E2-B. La compilación
+en WSL y CTest Debug terminaron con código 0. Pasaron las cuatro pruebas en
+22,38 s. El informe cita la ejecución ASan/UBSan versionada en E2-B, así como
+el CRUD y el reinicio en la nube observados en esa fase.
+
+En la sesión local se cargaron 16 obras, se insertó y encontró «Atlas del
+campus» (E2C-01), se confirmó su borrado y se repitió la búsqueda con cero
+resultados. El B+ validó sus invariantes y el JSON inicial conservó su SHA-256.
+Se guardaron seis capturas originales de xterm y la salida de la misma sesión.
+
+El [PDF](Informe_Entregable2_Biblioteca.pdf) tiene tres páginas A4. Se
+revisaron las tres páginas renderizadas, los seis pies y la legibilidad de los
+recortes. La [fuente editable](Informe_Entregable2_Biblioteca.html) usa rutas
+relativas a los PNG. La revisión, fusión y etiqueta de entrega quedan pendientes.
+
+[Guion y reproducción](evidencias/entregable2/guion.md) ·
+[Sesión JSON](evidencias/entregable2/sesion-json.txt) ·
+[Compilación y CTest](evidencias/entregable2/verificacion-local.txt)

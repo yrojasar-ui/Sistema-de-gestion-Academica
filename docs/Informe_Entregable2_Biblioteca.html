@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="Yoel Alexander Rojas Arguedas">
+<title>Biblioteca Académica — Informe del segundo avance</title>
+<style>
+@page { size:A4; margin:0 }
+*{box-sizing:border-box}
+body{margin:0;background:#eaece9;color:#182628;font:11.6pt/1.43 Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:210mm;min-height:297mm;margin:0 auto 6mm;padding:14mm 18mm 12mm;background:white;display:flex;flex-direction:column;break-after:page}
+.page:last-child{break-after:auto}
+header,footer{display:flex;align-items:center;justify-content:space-between;font-size:8.8pt;color:#385659}
+header{border-bottom:1px solid #9eaeab;padding-bottom:3mm;font-weight:bold;letter-spacing:.03em}
+footer{margin-top:auto;padding-top:3mm;border-top:1px solid #9eaeab}
+main{padding:8mm 0 5mm}
+.kicker{margin:0 0 2mm;color:#336663;font-weight:bold;font-size:9pt;letter-spacing:.09em;text-transform:uppercase}
+h1,h2,h3{color:#131b1c;break-after:avoid}
+h1,h2{font: bold 29pt/1.07 Georgia,serif;letter-spacing:-.035em;margin:0 0 3mm}
+h2{font-size:22pt}
+h3{font-size:13pt;margin:5.5mm 0 1.3mm}
+p{margin:0 0 3mm}
+.by{font-size:10.5pt;margin:1.5mm 0 6mm;color:#486466}
+.lede{font:15pt/1.37 Georgia,serif;margin:0 0 5mm}
+code{font:.92em Consolas,"Courier New",monospace}
+a{color:#245854}
+.diagram{width:100%;height:auto;display:block;margin:2.5mm 0 4mm}
+.diagram text{font:14px Arial,sans-serif;fill:#172c30}
+.diagram rect{fill:#eff4f3;stroke:#a8bab7;stroke-width:1}
+.diagram path.link{fill:none;stroke:#396b68;stroke-width:1.8;marker-end:url(#arrow)}
+.keycase{padding:3mm 4mm;background:#f0f4f3;border-left:3px solid #457570;margin:2mm 0 3mm}
+.keycase p{margin:0 0 1.2mm}.keycase p:last-child{margin:0}
+.mono{font:10.3pt/1.38 Consolas,"Courier New",monospace;color:#244744}
+.small{font-size:10pt}
+.evidence main{padding-top:6.2mm}
+.evidence .intro{font-size:10.8pt;margin-bottom:4mm}
+figure{margin:0 0 3.1mm;break-inside:avoid}
+.shot{position:relative;background:#f1f4f4;overflow:hidden;width:100%;height:calc(174mm * var(--h) / 900)}
+.shot img{display:block;width:100%;height:auto;position:absolute;top:calc(-174mm * var(--y) / 900);left:0}
+figcaption{font-size:10pt;line-height:1.25;margin-top:1mm;color:#314a48}
+figure:last-child{margin-bottom:0}
+table{border-collapse:collapse;width:100%;font-size:10pt;line-height:1.32;margin:2mm 0 3.3mm}
+th,td{text-align:left;padding:2.3mm 2.5mm;vertical-align:top;border:1px solid #c3d1cd}
+th{background:#e5eeeb;color:#233f3e}
+tbody tr:nth-child(even){background:#f6f8f7}
+.proofs main{font-size:10.7pt;line-height:1.4}
+.proofs h3{margin-top:4.3mm}
+.sources{font-size:9pt;line-height:1.4;color:#314b4b}
+.sources p{margin:0 0 1.1mm}
+@media print{body{background:white}.page{margin:0;min-height:296.8mm}}
+</style>
+</head>
+<body>
+<section class="page">
+<header><span>Universidad CENFOTEC</span><span>Estructuras de Datos II</span></header>
+<main>
+<p class="kicker">Informe del segundo avance</p>
+<h1>Biblioteca Académica</h1>
+<p class="by">Yoel Alexander Rojas Arguedas · Prototipo C++17 · Revisión <code>f745b22</code></p>
+<p class="lede">El catálogo permite cargar obras, insertarlas, buscarlas por título o prefijo y borrar una selección por ID. El mismo árbol B+ atiende las consultas con datos de un archivo JSON o de la API MongoDB del profesor.</p>
+<h3>Del menú al catálogo</h3>
+<svg class="diagram" viewBox="0 0 658 103" role="img" aria-label="ConsoleUI llama a CatalogService. El servicio usa BPlusTree como índice e IBookRepository para persistir en JSON o MongoDB.">
+<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="#396b68"/></marker></defs>
+<g><rect x="1" y="32" width="100" height="34" rx="3"/><rect x="132" y="32" width="129" height="34" rx="3"/><rect x="305" y="3" width="156" height="34" rx="3"/><rect x="305" y="62" width="156" height="34" rx="3"/><rect x="504" y="43" width="151" height="25" rx="3"/><rect x="504" y="75" width="151" height="25" rx="3"/></g>
+<g class="links"><path class="link" d="M102 49 H129"/><path class="link" d="M262 49 H282 V20 H302"/><path class="link" d="M262 49 H282 V79 H302"/><path class="link" d="M462 79 H481 V55 H501"/><path class="link" d="M462 79 H481 V87 H501"/></g>
+<g text-anchor="middle" dominant-baseline="central"><text x="51" y="49">ConsoleUI</text><text x="196" y="49">CatalogService</text><text x="383" y="20">BPlusTree</text><text x="383" y="79">IBookRepository</text><text x="580" y="55">Archivo JSON</text><text x="580" y="87">API MongoDB</text></g>
+</svg>
+<p><b>ConsoleUI</b> recibe los datos y pide el ID y la confirmación antes del borrado. <b>CatalogService</b> valida los libros, controla los IDs duplicados y, al cargar, construye un árbol candidato. Solo lo publica cuando pasan las invariantes. <b>BPlusTree</b> guarda las obras en hojas enlazadas y conserva el orden tras insertar o borrar.</p>
+<h3>Dos obras pueden compartir título</h3>
+<p>La clave es el par <b>(título normalizado, idLibro)</b>. El catálogo inicial contiene dos obras tituladas «Programación modular». La normalización unifica mayúsculas y acentos y el ID desempata dentro del mismo título.</p>
+<div class="keycase"><p class="mono">("programacion modular", "L011")<br>("programacion modular", "L012")</p><p class="small">La búsqueda devuelve las dos obras. Seleccionar <code>L011</code> identifica cuál borrar.</p></div>
+<h3>Cuándo se guardan los cambios</h3>
+<p><b>JsonBookRepository</b> carga las 16 obras iniciales a petición del usuario. Las ediciones quedan en memoria hasta guardar el archivo de trabajo. <b>MongoApiBookRepository</b> carga al arrancar, escribe por documento y contrasta el resultado con un GET antes de que el servicio reconstruya el índice.</p>
+<p class="small">Para la entrega final quedan la gestión de ejemplares, préstamos y reservas, las demás estructuras de datos y la interfaz web.</p>
+</main>
+<footer><span>Biblioteca Académica · Segundo avance</span><span>1 / 3</span></footer>
+</section>
+<section class="page evidence">
+<header><span>Universidad CENFOTEC</span><span>Estructuras de Datos II</span></header>
+<main>
+<p class="kicker">Ejecución en WSL</p><h2>El recorrido de un libro</h2>
+<p class="intro">Una sesión de la consola en modo JSON siguió <i>Atlas del campus</i> (<code>E2C-01</code>). Los recortes muestran la salida de la terminal. Las capturas completas y el registro están en <code>evidencias/entregable2/</code>, junto a la guía de reproducción.</p>
+<!-- Las ventanas de recorte se aplican a las capturas PNG originales de 900 × 444 píxeles. -->
+<figure><div class="shot" style="--y:101;--h:75"><img src="evidencias/entregable2/01-carga.png" alt="Origen inicial y 16 libros cargados"></div><figcaption><b>1. Carga.</b> La consola identifica el archivo inicial y confirma 16 libros.</figcaption></figure>
+<figure><div class="shot" style="--y:197;--h:146"><img src="evidencias/entregable2/02-insercion.png" alt="Datos del libro y confirmación de inserción de E2C-01"></div><figcaption><b>2. Inserción.</b> El catálogo incorpora <code>E2C-01</code> y lo marca como pendiente de guardar.</figcaption></figure>
+<figure><div class="shot" style="--y:245;--h:99"><img src="evidencias/entregable2/03-busqueda.png" alt="Una coincidencia por título con el ID E2C-01"></div><figcaption><b>3. Búsqueda.</b> El título exacto devuelve una obra y muestra su ID, autor y tema.</figcaption></figure>
+<figure><div class="shot" style="--y:270;--h:74"><img src="evidencias/entregable2/04-borrado.png" alt="ID exacto, confirmación SI y mensaje Borrado"></div><figcaption><b>4. Borrado.</b> Se selecciona <code>E2C-01</code>, se confirma con <code>SI</code> y se observa el borrado.</figcaption></figure>
+<figure><div class="shot" style="--y:270;--h:74"><img src="evidencias/entregable2/05-ausencia.png" alt="La misma consulta por título devuelve cero resultados"></div><figcaption><b>5. Segunda búsqueda.</b> El mismo título devuelve cero resultados.</figcaption></figure>
+<figure><div class="shot" style="--y:270;--h:74"><img src="evidencias/entregable2/06-invariantes.png" alt="Invariantes OK después del borrado"></div><figcaption><b>6. Validación.</b> El B+ confirma orden, ocupación, separadores, padres, profundidad y enlaces entre hojas.</figcaption></figure>
+</main><footer><span>Biblioteca Académica · Segundo avance</span><span>2 / 3</span></footer>
+</section>
+<section class="page proofs">
+<header><span>Universidad CENFOTEC</span><span>Estructuras de Datos II</span></header>
+<main><p class="kicker">Verificación del prototipo</p><h2>Pruebas y problemas observados</h2>
+<h3>Resultados reproducibles</h3>
+<table><thead><tr><th>Configuración</th><th>Resultado</th><th>Alcance</th></tr></thead><tbody>
+<tr><td>Debug · E2-C [1]</td><td>4/4 · 22,38 s</td><td>Compilación y nueva ejecución en WSL sobre <code>f745b22</code>.</td></tr>
+<tr><td>Debug · E2-B [2]</td><td>4/4 · 25,93 s</td><td>Oráculo B+, catálogo JSON y consola, reinicio y contrato Mongo simulado.</td></tr>
+<tr><td>ASan/UBSan · E2-B&nbsp;[2]</td><td>4/4 · 159,75&nbsp;s</td><td>Misma suite, con detección de fugas. Sin diagnósticos en esa ejecución.</td></tr>
+</tbody></table>
+<p>El oráculo contrastó 23 416 operaciones del B+ con una referencia independiente. En la sesión de la página 2, el SHA-256 del JSON inicial coincidió antes y después. El archivo temporal guardado contenía las mismas 16 obras de partida. [1, 2]</p>
+<h3>Qué se comprobó en la API docente</h3>
+<p><b>En nube.</b> En la colección propia se crearon, consultaron, actualizaron y borraron dos libros sintéticos. En la prueba de consola, un segundo proceso recuperó su libro, reconstruyó el B+ y lo encontró por título. Un GET posterior a cada borrado confirmó la ausencia. [3]</p>
+<p><b>Con fixtures.</b> Se simularon timeouts y respuestas ambiguas. El adaptador envía el POST una sola vez y relee por ID. Si el resultado sigue incierto, exige recargar. Concurrencia, paginación, autenticación, unicidad y transacciones quedan pendientes de verificación en nube. [2, 3]</p>
+<table><thead><tr><th style="width:35%">Problema y evidencia</th><th>Solución aplicada</th><th style="width:15%">Estado</th></tr></thead><tbody>
+<tr><td>El GET a <code>/Api/index.php</code> devolvió HTTP 200 con HTML.&nbsp;[3]</td><td>Se probó <code>/Api/apis/mongodb.php</code> con la colección propia. Devolvió JSON. El adaptador valida tipo de contenido, colección, total y documentos.</td><td>Resuelto</td></tr>
+<tr><td>El acuse del POST traía un mensaje sin el <code>_id</code> asignado. [3]</td><td>Un GET por <code>idLibro</code> recuperó el ObjectId. PUT y DELETE usaron ese ID, el ID del libro y el proyecto en el filtro.</td><td>Resuelto</td></tr>
+</tbody></table>
+<h3>Reproducción y registros</h3>
+<p class="small">Desde la raíz, compilá con <code>cmake --build build/debug</code>. Iniciá la consola con <code>--storage=json</code> y un archivo de trabajo temporal. El guion incluye el comando completo y las entradas de cada operación.</p>
+<div class="sources"><p>[1] <code>evidencias/entregable2/</code> · <code>guion.md</code>, <code>sesion-json.txt</code> y <code>verificacion-local.txt</code>.</p>
+<p>[2] <code>evidencias/e2b/</code> · <code>debug-ctest.log</code> y <code>asan-ctest.log</code>.</p>
+<p>[3] <code>API_MONGODB.md</code> y <code>evidencias/e2b/nube.txt</code>. Rutas relativas a este informe.</p>
+<p><a href="https://github.com/yrojasar-ui/Sistema-de-gestion-Academica">Repositorio en GitHub · yrojasar-ui/Sistema-de-gestion-Academica</a></p></div>
+</main><footer><span>Biblioteca Académica · Segundo avance</span><span>3 / 3</span></footer>
+</section>
+</body></html>
