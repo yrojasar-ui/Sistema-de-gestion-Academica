@@ -1,0 +1,9 @@
+Catálogo inicial: 16 obras y dos páginas de ocho. Se observaron ambas páginas.
+Alta por formulario: E2C-01, Atlas del campus. Total confirmado: 17.
+Búsqueda por prefijo ATLAS: una obra. Título exacto ATLAS: cero. Título exacto Atlas del campus: E2C-01.
+Árbol visible: 17 libros, clave de E2C-01 y cadena de hojas. Texto idéntico a GET /api/arbol.
+Con el backend detenido, recargar mostró API sin conexión.
+Tras reiniciar el proceso C++ con el mismo JSON, el navegador volvió a encontrar E2C-01.
+Cancelar mantuvo la obra. Confirmar el borrado y repetir la búsqueda exacta dio cero resultados.
+Tras el borrado: 16 libros en el B+, E2C-01 ausente e invariantes válidas.
+Vista móvil de 375 px sin desbordamiento horizontal. Cero excepciones JavaScript de página.

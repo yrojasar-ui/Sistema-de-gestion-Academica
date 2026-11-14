@@ -172,3 +172,29 @@ relativas a los PNG. La revisión, fusión y etiqueta de entrega quedan pendient
 [Guion y reproducción](evidencias/entregable2/guion.md) ·
 [Sesión JSON](evidencias/entregable2/sesion-json.txt) ·
 [Compilación y CTest](evidencias/entregable2/verificacion-local.txt)
+
+## Primer recorrido web del proyecto final
+
+La rama `feat/catalogo-web` parte de `0cb6d31`, que integra E2-C. La pantalla
+del catálogo consume el servicio C++17 mediante HTTP local. La demo usa el
+archivo de trabajo `data/catalogo_web.json`. El arranque importa las 16 obras del
+fixture solo cuando falta el archivo de trabajo.
+
+Se probó con Playwright en Chrome 157.0.8103.51 contra Vite y el proceso C++
+de WSL. Se insertó E2C-01, se comprobó por título exacto y prefijo, y se comparó
+el texto del panel con el snapshot HTTP. Con el backend detenido, la interfaz
+indicó desconexión. Al reiniciar el ejecutable con el mismo JSON reapareció el
+libro. Cancelar el borrado lo conservó. Confirmarlo dejó cero coincidencias y
+el B+ validó sus invariantes con 16 obras. El SHA-256 del catálogo inicial
+coincidió con el registrado en E2-C. El recorrido solicitado se verificó completo.
+
+[Registro del navegador](evidencias/catalogo-web/navegador.txt) ·
+[Catálogo inicial](evidencias/catalogo-web/01-catalogo.png) ·
+[Árbol con el libro insertado](evidencias/catalogo-web/02-arbol.png) ·
+[Búsqueda vacía y validación](evidencias/catalogo-web/03-validacion.png).
+
+En la regresión pasaron las cuatro pruebas anteriores y la nueva prueba HTTP
+en ambas configuraciones: 5/5 en Debug (25,92 s) y 5/5 con ASan/UBSan
+(176,86 s). La demo independiente de la consola terminó con retorno 0.
+El frontend compiló después de instalar las dependencias desde el lockfile.
+[Regresión local y compilación del frontend](evidencias/catalogo-web/pruebas.txt).

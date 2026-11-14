@@ -3,3 +3,8 @@
 *.tmp.*
 .env
 .vscode/
+
+/data/catalogo_web.json
+/frontend/node_modules/
+/frontend/dist/
+/data/catalogo_web.json.lock

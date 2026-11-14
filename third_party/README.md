@@ -15,3 +15,11 @@ curl --fail --location https://raw.githubusercontent.com/nlohmann/json/v3.12.0/s
 curl --fail --location https://raw.githubusercontent.com/nlohmann/json/v3.12.0/LICENSE.MIT -o third_party/nlohmann/LICENSE.MIT
 sha256sum -c third_party/SHA256SUMS
 ```
+
+## Servidor HTTP local
+
+`cpp-httplib` 0.66.0 (licencia MIT), encabezado de la versión oficial
+[publicada en GitHub](https://github.com/yhirose/cpp-httplib/tree/v0.66.0).
+El ejecutable `catalogo_api` lo utiliza para HTTP en loopback. La licencia se
+conserva junto al encabezado. Las sumas se verifican con
+`sha256sum -c third_party/SHA256SUMS` desde la raíz.
