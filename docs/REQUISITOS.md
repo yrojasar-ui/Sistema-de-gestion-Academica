@@ -1,6 +1,6 @@
 # Matriz de requisitos
 
-La matriz cubre el segundo avance y el primer recorrido web del proyecto final. Las pruebas de E2-A se conservan en
+La matriz cubre el segundo avance, el catálogo web y su integración continua. Las pruebas de E2-A se conservan en
 `evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
 regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificación de E2-C están en `evidencias/entregable2/`.
 
@@ -23,7 +23,7 @@ regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificaci
 | F01 | Final | Rojo-Negro, hash extensible, grafo, FIFO propios | Sin iniciar | Sin pruebas | Pendiente |
 | F02 | Final | Ejemplares/usuarios/préstamos/reservas e integridad | Sin iniciar | Sin pruebas | Pendiente |
 | F03 | Final | API/worker/colas reales y persistencia cloud | Sin iniciar | Sin evidencia cloud | Pendiente |
-| F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla local del catálogo | CAT-WEB | Parcial. Autenticación y despliegue pendientes |
+| F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Autenticación y despliegue pendientes |
 | F05 | Final | Informe técnico, presentación y defensa | Sin iniciar | Sin artefactos | Pendiente |
 
 Los archivos `.cpp` de pruebas están en `backend/tests/`. No se interpreta un

@@ -245,10 +245,17 @@ Para editar o volver a imprimir el informe, abrí el HTML desde su ubicación en
 el repositorio, conservando la carpeta de capturas. Al imprimir, elegí A4,
 escala 100 %, gráficos de fondo y desactivá los encabezados y pies del navegador.
 
+## Integración continua
+
+[GitHub Actions](.github/workflows/ci.yml) ejecuta tres comprobaciones en cada PR y en cada push a `main`.
+Dos compilan el backend C++17 y ejecutan CTest en Debug, una de ellas con ASan/UBSan y detección de fugas.
+Cada una conserva el informe JUnit y el log de CTest durante 14 días. Las pruebas usan archivos temporales,
+una API de catálogo en loopback y un transporte simulado para MongoDB.
+La tercera usa Node 24.22.3, instala desde el lockfile con `npm ci` y ejecuta `npm run build` en `frontend/`.
+
 ## Qué queda pendiente
 
-El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan las otras estructuras, préstamos y reservas, las demás vistas, el broker, la autenticación, CI remoto y despliegue. La fecha exacta del segundo avance sigue
-pendiente y el proyecto final está previsto para el 24 de noviembre de 2026.
+El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan las otras estructuras, préstamos y reservas, las demás vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;

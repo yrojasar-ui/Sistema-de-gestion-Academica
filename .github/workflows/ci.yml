@@ -1,0 +1,75 @@
+name: Biblioteca Académica
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: C++17 / ${{ matrix.nombre }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: Debug
+            sanitizers: 'OFF'
+          - nombre: ASan-UBSan
+            sanitizers: 'ON'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Verificar dependencias C++
+        run: |
+          sha256sum -c third_party/SHA256SUMS
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+      - name: Configurar CMake
+        run: |
+          arch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+          cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON -DENABLE_MONGO=ON \
+            -DENABLE_SANITIZERS=${{ matrix.sanitizers }} \
+            -DCURL_LIBRARY="/usr/lib/$arch/libcurl.so" \
+            -DCURL_INCLUDE_DIR="/usr/include/$arch"
+      - name: Compilar consola, API y pruebas
+        run: cmake --build build/ci --parallel 2
+      - name: Ejecutar CTest
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: ctest --test-dir build/ci --output-on-failure --no-tests=error --output-junit ctest.xml
+      - name: Conservar resultados de CTest
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ctest-${{ matrix.nombre }}
+          path: |
+            build/ci/ctest.xml
+            build/ci/Testing/Temporary/LastTest.log
+          retention-days: 14
+
+  frontend:
+    name: Frontend / TypeScript y Vite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '24.22.3'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build

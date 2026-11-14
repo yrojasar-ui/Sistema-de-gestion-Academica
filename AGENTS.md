@@ -5,9 +5,9 @@ Responder, comentar y documentar en español. Este proyecto no es File-X.
 
 ## Alcance autorizado
 
-Ejecutar Prompt 0 y únicamente E2-A de la guía en `docs/referencia/`.
-No comenzar E2-B, E2-C ni las fases finales sin una nueva solicitud.
-El segundo avance es la próxima semana, con día/hora pendientes; final: 24 de noviembre de 2026.
+El segundo avance y el catálogo web están integrados en main. La fase actual cubre
+la integración continua del backend y el frontend.
+Segundo avance el 16 de noviembre de 2026 y entrega final el 24 de noviembre de 2026.
 Trabajar en este repositorio e historial; inspeccionar y conservar archivos existentes.
 
 ## Diseño y reglas

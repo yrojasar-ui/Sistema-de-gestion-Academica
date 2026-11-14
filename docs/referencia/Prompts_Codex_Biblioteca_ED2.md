@@ -28,7 +28,7 @@ Si ya tienes código local, abre su carpeta y revisa git status y git remote -v 
 
 | Hito | Fecha comunicada | Alcance |
 |---|---|---|
-| Entregable 2 — Prototipo funcional (50%) | La próxima semana; día y hora exactos por confirmar | C++ parcial: insertar, buscar y borrar en al menos una estructura avanzada; carga desde archivos **o** nube; integración modular; informe de 2–3 páginas con capturas y problemas/soluciones. |
+| Entregable 2 — Prototipo funcional (50%) | 16 de noviembre de 2026 | C++ parcial: insertar, buscar y borrar en al menos una estructura avanzada; carga desde archivos **o** nube; integración modular; informe de 2–3 páginas con capturas y problemas/soluciones. |
 | Proyecto final | 24 de noviembre de 2026 | Todas las estructuras y componentes del diseño, CRUD, servicio de colas, persistencia en nube, Git/CI, interfaz, informe técnico completo, presentación y defensa. |
 
 La carga desde un archivo cumple la alternativa de datos iniciales del segundo avance. La nube sigue siendo obligatoria para el proyecto final. “50%” se conserva como parte del nombre/peso comunicado; no significa que sea suficiente implementar arbitrariamente la mitad de cada requisito.
@@ -42,7 +42,7 @@ La API del profesor se documenta aquí a partir del enunciado. No se ha comproba
 ## Prompt E2-A — Prototipo C++ modular con B+ y archivos
 
 ```text
-Prioridad actual: Entregable 2 de Estructuras de Datos II, para la próxima semana; no inventes el día exacto. El proyecto final será el 24 de noviembre de 2026. Desarrolla el prototipo en el repositorio de nuestra biblioteca académica, con C++17 en WSL/VS Code. Conserva el trabajo existente; si alguna fase ya está terminada, verifícala y reutilízala.
+Prioridad actual: Entregable 2 de Estructuras de Datos II, para el 16 de noviembre de 2026. El proyecto final será el 24 de noviembre de 2026. Desarrolla el prototipo en el repositorio de nuestra biblioteca académica, con C++17 en WSL/VS Code. Conserva el trabajo existente; si alguna fase ya está terminada, verifícala y reutilízala.
 
 Lee AGENTS.md, el estado del proyecto y el diseño inicial. Para este avance implementaremos el catálogo con B+, clave (tituloNormalizado, idLibro), manteniendo hojas enlazadas. No cambies a ISBN ni traslades la lógica al frontend. Si aún no hay AGENTS.md, créalo con el contexto del Prompt 0, pero implementa ahora solo este alcance.
 
@@ -98,7 +98,7 @@ Demuestra, si el servicio está disponible, insertar libro propio -> volver a co
 ```text
 Prepara exclusivamente el informe del Entregable 2 de nuestra biblioteca, con 2–3 páginas totales; usa 3 páginas para incluir evidencia legible. No escribas ahora el informe final largo. Revisa primero el código y ejecuta el prototipo: no inventes funciones, capturas, resultados ni problemas.
 
-Autor: Yoel Alexander Rojas Arguedas; Universidad CENFOTEC; Estructuras de Datos II. No inventes nombre del docente ni fecha exacta del avance. El final está previsto para el 24 de noviembre de 2026.
+Autor: Yoel Alexander Rojas Arguedas; Universidad CENFOTEC; Estructuras de Datos II. No inventes el nombre del docente. El segundo avance se entrega el 16 de noviembre de 2026. El final está previsto para el 24 de noviembre de 2026.
 
 Página 1: objetivo del avance, alcance implementado, módulos reales y diagrama compacto ConsoleUI -> CatalogService -> BPlusTree / IBookRepository -> JSON o API MongoDB. Explica la clave del B+, la carga inicial y qué queda para el final.
 
@@ -168,7 +168,7 @@ DISEÑO DE BIBLIOTECA QUE DEBES RESPETAR:
 8. Solo usuarios activos pueden recibir préstamos. Un ejemplar admite como máximo un préstamo activo. Un lector no puede tener dos reservas pendientes del mismo libro. Se respeta la primera reserva válida. La reserva es por libro, no por ejemplar. Una copia prestada, apartada o retirada no está disponible.
 
 HITOS Y ARQUITECTURA OBJETIVO:
-- Segundo avance la próxima semana (fecha exacta pendiente): B+ con insertar/buscar/borrar, carga por archivo O nube, modularidad e informe de 2–3 páginas. Ejecutar E2-A, E2-B, E2-C antes de implementar todo el final.
+- Segundo avance el 16 de noviembre de 2026: B+ con insertar/buscar/borrar, carga por archivo O nube, modularidad e informe de 2–3 páginas. Ejecutar E2-A, E2-B, E2-C antes de implementar todo el final.
 - Proyecto final: 24 de noviembre de 2026, con todos los requisitos del curso.
 - C++17, CMake y consola para el prototipo. Frontend React/TypeScript/Vite en GitHub Pages para el final.
 - Persistencia detrás de IBookRepository: JSON para demostrar carga inicial; API MongoDB proporcionada por el profesor para nube. Usar REST mediante libcurl y documentar contrato observado.
