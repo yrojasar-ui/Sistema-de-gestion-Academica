@@ -198,3 +198,16 @@ en ambas configuraciones: 5/5 en Debug (25,92 s) y 5/5 con ASan/UBSan
 (176,86 s). La demo independiente de la consola terminó con retorno 0.
 El frontend compiló después de instalar las dependencias desde el lockfile.
 [Regresión local y compilación del frontend](evidencias/catalogo-web/pruebas.txt).
+
+## Integración continua del catálogo web
+
+El [flujo de GitHub Actions](../.github/workflows/ci.yml) parte del catálogo integrado en el PR #4.
+En los PR y en cada push a `main`, dos jobs compilan la consola, la API y las pruebas con CMake.
+Ambos ejecutan los cinco casos de CTest. El job instrumentado activa ASan, detección de fugas
+y UBSan, y falla ante el primer diagnóstico. El oráculo del B+ dispone de 600 segundos.
+Los artefactos `ctest-Debug` y `ctest-ASan-UBSan` contienen el XML de resultados y el log.
+El tercer job verifica TypeScript y genera el build de Vite a partir de `frontend/package-lock.json`.
+
+La prueba HTTP usa un servidor local en loopback y un JSON temporal. El contrato MongoDB se
+ejercita con el transporte simulado de `backend/tests/test_mongo.cpp` y su fixture versionado.
+Las operaciones reales de E2-B siguen documentadas en [el registro de nube](evidencias/e2b/nube.txt).
