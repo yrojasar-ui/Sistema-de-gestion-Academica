@@ -3,6 +3,7 @@
 #include <functional>
 #include <iterator>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <stdexcept>
 
 namespace biblioteca {
@@ -14,12 +15,14 @@ void BPlusTree::swap(BPlusTree& other) noexcept {
     swap(order_, other.order_); swap(size_, other.size_);
     swap(root_, other.root_); swap(stats_, other.stats_);
 }
-BPlusTree::Node* BPlusTree::leafFor(const BookKey& key) const {
+BPlusTree::Node* BPlusTree::leafFor(const BookKey& key, std::vector<const Node*>* camino) const {
     Node* node = root_.get();
+    if (camino) camino->push_back(node);
     while (!node->leaf) {
         // Igualdad con un separador pertenece al hijo de la derecha.
         const auto i = static_cast<std::size_t>(std::upper_bound(node->keys.begin(), node->keys.end(), key) - node->keys.begin());
         node = node->children[i].get();
+        if (camino) camino->push_back(node);
     }
     return node;
 }
@@ -251,12 +254,45 @@ bool BPlusTree::validate(std::string& reason) const {
         return true;
     } catch (const std::exception& e) { reason = e.what(); return false; }
 }
+std::vector<const BPlusTree::Node*> BPlusTree::enumerarNodos(std::map<const Node*, std::size_t>& ids) const {
+    std::vector<const Node*> nodos{root_.get()};
+    ids.emplace(root_.get(), 0);
+    for (std::size_t i = 0; i < nodos.size(); ++i) {
+        for (const auto& hijo : nodos[i]->children) {
+            ids.emplace(hijo.get(), nodos.size());
+            nodos.push_back(hijo.get());
+        }
+    }
+    return nodos;
+}
+std::string BPlusTree::snapshot(std::optional<BookKey> buscar) const {
+    using nlohmann::json;
+    std::map<const Node*, std::size_t> ids;
+    auto nodos = enumerarNodos(ids);
+    auto id = [&](const Node* n) -> json { return n ? json(ids.at(n)) : json(nullptr); };
+    auto datos = json::array();
+    for (const auto* nodo : nodos) {
+        auto claves = json(nodo->keys);
+        for (const auto& entrada : nodo->entries) claves.push_back(json(entrada.key));
+        auto hijos = json::array();
+        for (const auto& hijo : nodo->children) hijos.push_back(id(hijo.get()));
+        datos.push_back({{"id", id(nodo)}, {"hoja", nodo->leaf}, {"claves", std::move(claves)},
+            {"hijos", std::move(hijos)}, {"anterior", id(nodo->prev)}, {"siguiente", id(nodo->next)}});
+    }
+    json salida{{"raiz", 0}, {"orden", order_}, {"cantidad", size_}, {"nodos", std::move(datos)}};
+    if (buscar) {
+        auto traza = json::array();
+        std::vector<const Node*> camino;
+        leafFor(*buscar, &camino);
+        for (const auto* nodo : camino) traza.push_back(id(nodo));
+        salida["traza"] = std::move(traza);
+    }
+    return salida.dump();
+}
 void BPlusTree::visualize(std::ostream& out) const {
     // El mapa solo asigna etiquetas de presentación a nodos reales, nunca indexa libros.
-    std::vector<const Node*> queue{root_.get()};
-    std::map<const Node*, std::size_t> ids{{root_.get(), 0}};
-    for (std::size_t i = 0; i < queue.size(); ++i)
-        for (const auto& child : queue[i]->children) { ids.emplace(child.get(), queue.size()); queue.push_back(child.get()); }
+    std::map<const Node*, std::size_t> ids;
+    auto queue = enumerarNodos(ids);
     out << "B+ orden=" << order_ << " libros=" << size_ << '\n';
     for (const auto* node : queue) {
         out << 'N' << ids.at(node) << (node->leaf ? " hoja [" : " interno [");

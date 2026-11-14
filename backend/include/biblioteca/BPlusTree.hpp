@@ -1,6 +1,7 @@
 #pragma once
 #include "biblioteca/Libro.hpp"
 #include <memory>
+#include <map>
 #include <optional>
 #include <ostream>
 
@@ -23,6 +24,7 @@ public:
     std::vector<Libro> range(const BookKey& low, const BookKey& high) const;
     std::vector<Libro> all() const;
     bool validate(std::string& reason) const;
+    std::string snapshot(std::optional<BookKey> buscar = std::nullopt) const;
     void visualize(std::ostream& out) const;
     std::size_t size() const { return size_; }
     std::size_t order() const { return order_; }
@@ -43,7 +45,8 @@ private:
     std::size_t order_, size_ = 0;
     std::unique_ptr<Node> root_;
     Stats stats_;
-    Node* leafFor(const BookKey& key) const;
+    Node* leafFor(const BookKey& key, std::vector<const Node*>* camino = nullptr) const;
+    std::vector<const Node*> enumerarNodos(std::map<const Node*, std::size_t>& ids) const;
     Node* firstLeaf() const;
     const BookKey& minimum(const Node* node) const;
     void refresh(Node* node);
