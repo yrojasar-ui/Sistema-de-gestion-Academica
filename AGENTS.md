@@ -5,8 +5,8 @@ Responder, comentar y documentar en español. Este proyecto no es File-X.
 
 ## Alcance autorizado
 
-El segundo avance y el catálogo web están integrados en main. La fase actual cubre
-la integración continua del backend y el frontend.
+El segundo avance y el catálogo web están integrados en main. La integración continua está activa.
+La fase actual cubre las estructuras del Prompt 2 y sus pruebas.
 Segundo avance el 16 de noviembre de 2026 y entrega final el 24 de noviembre de 2026.
 Trabajar en este repositorio e historial; inspeccionar y conservar archivos existentes.
 

@@ -1,0 +1,28 @@
+Comando: cmake --build build/debug -j2
+[  5%] Built target libro
+[ 10%] Built target bplus
+[ 13%] Building CXX object CMakeFiles/estructuras.dir/backend/src/PrestamosActivos.cpp.o
+[ 18%] Built target json_repository
+[ 23%] Built target catalog_service
+[ 31%] Built target mongo_repository
+[ 36%] Built target catalogo_api
+[ 42%] Built target test_mongo
+[ 47%] Built target test_bplus
+[ 52%] Built target console_ui
+[ 57%] Built target biblioteca
+[ 63%] Built target test_catalog
+[ 65%] Linking CXX static library libestructuras.a
+[ 73%] Built target estructuras
+[ 78%] Building CXX object CMakeFiles/test_rojo_negro.dir/backend/tests/test_rojo_negro.cpp.o
+[ 78%] Linking CXX executable test_hash_extensible
+[ 81%] Built target test_hash_extensible
+[ 84%] Linking CXX executable test_grafo_temas
+[ 86%] Built target test_grafo_temas
+[ 89%] Linking CXX executable test_fifo_reservas
+[ 92%] Built target test_fifo_reservas
+[ 94%] Linking CXX executable test_snapshot_bplus
+[ 97%] Built target test_snapshot_bplus
+[100%] Linking CXX executable test_rojo_negro
+[100%] Built target test_rojo_negro
+
+Código de retorno: 0

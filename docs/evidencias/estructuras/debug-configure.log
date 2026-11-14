@@ -1,0 +1,6 @@
+Comando: cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+-- Configuring done (4.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+
+Código de retorno: 0
