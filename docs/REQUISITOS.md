@@ -1,6 +1,6 @@
 # Matriz de requisitos
 
-La matriz cubre el segundo avance, el catálogo web y su integración continua. Las pruebas de E2-A se conservan en
+La matriz cubre el segundo avance, el catálogo web, su integración continua y las estructuras en memoria. Las pruebas de E2-A se conservan en
 `evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
 regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificación de E2-C están en `evidencias/entregable2/`.
 
@@ -20,7 +20,7 @@ regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificaci
 | B03 | E2-B | Escritura incierta y recuperación | GET de verificación y recarga del servicio | `mongo_contrato_simulado` | Verificado localmente con fixtures |
 | C01 | E2-C | Informe breve, capturas reales y guion de demostración | [PDF de 3 páginas](Informe_Entregable2_Biblioteca.pdf) y [fuente HTML](Informe_Entregable2_Biblioteca.html) | [Capturas y logs](evidencias/entregable2/) y [guion de 4 minutos](evidencias/entregable2/guion.md) | Preparado y verificado para revisión |
 | CAT-WEB | Final, catálogo local | Alta, consulta por título/prefijo, borrado, reinicio y visualización del B+ | React/TypeScript/Vite → API C++ → CatalogService y JSON | [Recorrido en Chrome](evidencias/catalogo-web/navegador.txt), capturas y CTest | Verificado localmente |
-| F01 | Final | Rojo-Negro, hash extensible, grafo, FIFO propios | Sin iniciar | Sin pruebas | Pendiente |
+| F01 | Final | Rojo-Negro, hash extensible, grafo y FIFO propios. Snapshots de las cinco estructuras | [Diseño y operaciones](DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca) | [Resultados de CTest y snapshots](evidencias/estructuras/) | Implementado en memoria. Integración de dominio en F02 |
 | F02 | Final | Ejemplares/usuarios/préstamos/reservas e integridad | Sin iniciar | Sin pruebas | Pendiente |
 | F03 | Final | API/worker/colas reales y persistencia cloud | Sin iniciar | Sin evidencia cloud | Pendiente |
 | F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Autenticación y despliegue pendientes |

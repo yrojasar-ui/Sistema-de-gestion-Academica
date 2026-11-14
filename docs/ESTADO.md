@@ -203,7 +203,7 @@ El frontend compiló después de instalar las dependencias desde el lockfile.
 
 El [flujo de GitHub Actions](../.github/workflows/ci.yml) parte del catálogo integrado en el PR #4.
 En los PR y en cada push a `main`, dos jobs compilan la consola, la API y las pruebas con CMake.
-Ambos ejecutan los cinco casos de CTest. El job instrumentado activa ASan, detección de fugas
+Ambos ejecutan la suite registrada en CTest. El job instrumentado activa ASan, detección de fugas
 y UBSan, y falla ante el primer diagnóstico. El oráculo del B+ dispone de 600 segundos.
 Los artefactos `ctest-Debug` y `ctest-ASan-UBSan` contienen el XML de resultados y el log.
 El tercer job verifica TypeScript y genera el build de Vite a partir de `frontend/package-lock.json`.
@@ -211,3 +211,30 @@ El tercer job verifica TypeScript y genera el build de Vite a partir de `fronten
 La prueba HTTP usa un servidor local en loopback y un JSON temporal. El contrato MongoDB se
 ejercita con el transporte simulado de `backend/tests/test_mongo.cpp` y su fixture versionado.
 Las operaciones reales de E2-B siguen documentadas en [el registro de nube](evidencias/e2b/nube.txt).
+
+## Prompt 2 — estructuras de biblioteca
+
+El commit `dab9b86609b5aea5cbc1a4ddd3d55223e677f066` implementa los cuatro índices
+en C++17 y la exportación JSON de las cinco estructuras. Las [decisiones de diseño](DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca)
+documentan el alcance en memoria y los límites. Los [snapshots de ejemplo](evidencias/estructuras/snapshots.json)
+proceden de las pruebas de Debug. La integración con préstamos, reservas y vistas queda para la fase siguiente.
+
+| Caso CTest | Semilla | Operaciones contrastadas | Comprobaciones |
+|---|---:|---:|---:|
+| rojo_negro | 20261114 | 3085 | 9261 |
+| hash_extensible | 20261115 | 659 | 26795 |
+| grafo_temas | 20261116 | 518 | 6310 |
+| fifo_reservas | 20261117 | 582 | 5043 |
+| snapshot_bplus | 20261118 | 7 | 17 |
+| bplus_oraculo | 20261109 | 23416 | 2036201 |
+
+Los contadores de operaciones corresponden a las secuencias de cada prueba. Las
+comprobaciones incluyen consultas al oráculo, recorridos e invariantes.
+
+En Ubuntu 26.04.1 bajo WSL2, GCC 15.2.0 y CMake 4.2.3, el comando
+`bash scripts/verificar_e2a.sh build/prompt2/dab9b86` completó las dos compilaciones
+y la demo de reinicio. CTest pasó 10/10 en [Debug](evidencias/estructuras/debug-ctest.log)
+y 10/10 con [ASan/UBSan y detección de fugas](evidencias/estructuras/asan-ctest.log).
+Los [códigos de retorno](evidencias/estructuras/resultados.tsv) y los
+[hashes de las fuentes](evidencias/estructuras/fuentes.sha256) corresponden a esa ejecución.
+Los resultados de GitHub Actions se consultan por separado en las comprobaciones del PR.

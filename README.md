@@ -253,9 +253,22 @@ Cada una conserva el informe JUnit y el log de CTest durante 14 días. Las prueb
 una API de catálogo en loopback y un transporte simulado para MongoDB.
 La tercera usa Node 24.22.3, instala desde el lockfile con `npm ci` y ejecuta `npm run build` en `frontend/`.
 
+## Estructuras de biblioteca
+
+El backend incluye un Rojo-Negro para vencimientos, un hash extensible de usuarios,
+un grafo de temas y una FIFO por libro. Cada estructura y el B+ exportan su estado
+interno a JSON. Las [decisiones de diseño](docs/DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca)
+describen las claves, los límites y cómo los usará el servicio.
+
+Desde la raíz, con el build Debug compilado, se pueden ver los ejemplos y repetir sus pruebas:
+
+```bash
+ctest --test-dir build/debug -V -R '^(rojo_negro|hash_extensible|grafo_temas|fifo_reservas|snapshot_bplus)$'
+```
+
 ## Qué queda pendiente
 
-El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan las otras estructuras, préstamos y reservas, las demás vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
+El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan la integración con préstamos y reservas, las demás vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;

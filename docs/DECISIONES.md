@@ -99,3 +99,30 @@ trabajador HTTP evita lecturas de cambios pendientes de guardar. Si la
 escritura falla, se intenta recargar el último snapshot. El bloqueo de archivo
 coordina las instancias de la API que usan el mismo destino. La consola conserva
 su propio archivo y su guardado explícito. Vite y la API escuchan en loopback.
+
+## D11 — índices en memoria para el servicio de biblioteca
+
+| Estructura | Operación que usará el servicio | Estado que exporta C++ |
+|---|---|---|
+| `PrestamosActivos` (Rojo-Negro con enlaces inclinados a la izquierda) | Insertar la fecha ISO de ancho fijo y el ID al prestar, retirar la clave al devolver y reindexarla con `cambiarVencimiento` al renovar. El dominio conservará el historial y validará la fecha. | Clave compuesta como ID de nodo, padre, hijos, color y altura negra (la hoja nula cuenta como uno). `contiene` admite una traza de claves visitadas. |
+| `IndiceUsuarios` (hash extensible) | Consultar, reemplazar los datos y eliminar por ID. El hash FNV-1a de 64 bits selecciona una entrada con sus bits bajos. | Referencias del directorio, profundidades, ocupación e IDs. El nombre y el estado del usuario se excluyen. `traza` identifica la posición y cubeta consultadas. |
+| `GrafoTemas` (listas de adyacencia) | Insertar, modificar o retirar una obra. Una intersección de temas normalizados crea una sola arista. Cambiar temas modifica los enlaces en ambos sentidos. El borrado limpia las listas de todos los vecinos. | IDs, temas normalizados, listas de vecinos y número de aristas. BFS y DFS recorren el componente desde el libro elegido, con desempate por ID. |
+| `ColaReservas` (una lista enlazada por libro) | Encolar por secuencia de llegada y desempatar por ID. Al atender, el servicio proporciona un predicado de cancelación. La cola consume las canceladas del frente y devuelve la primera válida. | Libro, extremos, tamaño y cada ID con su llegada y enlace siguiente. El estado de cancelación se consulta en el dominio. |
+
+En el hash, la capacidad inicial por cubeta es cuatro y la profundidad máxima
+predeterminada es doce. Cada división distribuye por un bit adicional. Al llegar
+al límite, los registros que colisionan comparten la misma cubeta y la búsqueda
+es lineal en su ocupación. El límite configurable (0–16) acota el directorio.
+El borrado conserva las cubetas para reutilizarlas y mantiene el tamaño del directorio.
+
+En el grafo, el mapa auxiliar localiza el vértice por ID. Las listas ordenadas
+representan las relaciones y los conjuntos de visitados evitan ciclos en los
+recorridos. La única escritura de aristas es la edición de los temas que las
+justifican. En la FIFO, el conjunto auxiliar detecta IDs repetidos. La lista
+determina el turno. Las llegadas crecientes se insertan por el puntero final
+en tiempo esperado constante. Una llegada fuera de orden puede recorrer la lista.
+
+El B+ ofrece `snapshot(claveOpcional)`. Enumera los mismos nodos que la vista
+textual y exporta claves, hijos y ambos enlaces entre hojas. La búsqueda opcional
+registra el descenso real hasta la hoja. Los IDs numéricos del B+ valen dentro
+de una captura. Todos los métodos `snapshot()` devuelven texto JSON.

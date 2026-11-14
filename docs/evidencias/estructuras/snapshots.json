@@ -1,0 +1,150 @@
+{
+  "rojo_negro": {
+    "alturaNegra": 3,
+    "cantidad": 3,
+    "nodos": [
+      {
+        "clave": [
+          "2026-11-16",
+          "P2"
+        ],
+        "color": "negro",
+        "der": [
+          "2026-11-16",
+          "P3"
+        ],
+        "izq": [
+          "2026-11-16",
+          "P1"
+        ],
+        "padre": null
+      },
+      {
+        "clave": [
+          "2026-11-16",
+          "P1"
+        ],
+        "color": "negro",
+        "der": null,
+        "izq": null,
+        "padre": [
+          "2026-11-16",
+          "P2"
+        ]
+      },
+      {
+        "clave": [
+          "2026-11-16",
+          "P3"
+        ],
+        "color": "negro",
+        "der": null,
+        "izq": null,
+        "padre": [
+          "2026-11-16",
+          "P2"
+        ]
+      }
+    ],
+    "raiz": [
+      "2026-11-16",
+      "P2"
+    ]
+  },
+  "hash_extensible": {
+    "capacidad": 1,
+    "cubetas": [
+      {
+        "id": 0,
+        "ocupacion": 1,
+        "profundidadLocal": 1,
+        "usuarios": [
+          "U2"
+        ]
+      },
+      {
+        "id": 1,
+        "ocupacion": 1,
+        "profundidadLocal": 2,
+        "usuarios": [
+          "U3"
+        ]
+      },
+      {
+        "id": 2,
+        "ocupacion": 1,
+        "profundidadLocal": 2,
+        "usuarios": [
+          "U1"
+        ]
+      }
+    ],
+    "directorio": [
+      0,
+      1,
+      0,
+      2
+    ],
+    "profundidadGlobal": 2,
+    "profundidadMaxima": 3
+  },
+  "grafo_temas": {
+    "aristas": 1,
+    "vertices": [
+      {
+        "id": "A",
+        "temas": [
+          "arbol",
+          "web"
+        ],
+        "vecinos": [
+          "C"
+        ]
+      },
+      {
+        "id": "C",
+        "temas": [
+          "web"
+        ],
+        "vecinos": [
+          "A"
+        ]
+      },
+      {
+        "id": "D",
+        "temas": [
+          "red"
+        ],
+        "vecinos": []
+      },
+      {
+        "id": "E",
+        "temas": [],
+        "vecinos": []
+      }
+    ]
+  },
+  "fifo_reservas": {
+    "cantidad": 3,
+    "fin": "R3",
+    "idLibro": "L1",
+    "inicio": "R1",
+    "nodos": [
+      {
+        "id": "R1",
+        "llegada": 1,
+        "siguiente": "R2"
+      },
+      {
+        "id": "R2",
+        "llegada": 2,
+        "siguiente": "R3"
+      },
+      {
+        "id": "R3",
+        "llegada": 2,
+        "siguiente": null
+      }
+    ]
+  }
+}
