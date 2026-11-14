@@ -1,16 +1,98 @@
-# Biblioteca académica — prototipo E2-A y adaptador E2-B
+# Biblioteca Académica
 
-Proyecto de Yoel Alexander Rojas Arguedas, Universidad CENFOTEC,
-Estructuras de Datos II. Se ejecutaron **Prompt 0, E2-A y E2-B** de la guía
-conservada en `docs/referencia/Prompts_Codex_Biblioteca_ED2.md`.
+Catálogo de obras de Yoel Alexander Rojas Arguedas para Estructuras de Datos II,
+Universidad CENFOTEC. La pantalla React consulta una API C++17 local. El mismo
+`CatalogService` y `BPlusTree` que usa la consola listan, buscan, insertan y
+borran las obras. El panel del índice muestra los nodos y las hojas enlazadas
+emitidos por C++.
 
-Catálogo C++17 con B+ propio, consola, guardado JSON explícito y persistencia por documento en la API MongoDB del profesor.
-Incluye inserción, consulta por título/prefijo/rango, borrado real, listado,
-visualización de los nodos reales y validación de invariantes. El rango está
-disponible en la API C++ y sus pruebas; título y prefijo también en consola.
-El modo Mongo permite actualizar un libro por ID. El modo JSON conserva el menú de E2-A.
+## Arrancar el catálogo web en dos terminales WSL
 
-## Compilar y ejecutar en WSL
+**Terminal 1 · API C++**. Requiere G++, CMake y Make. Desde la raíz se puede
+compilar únicamente el servidor de la demo, con el repositorio JSON.
+
+~~~bash
+cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
+cmake -S . -B build/catalogo-web -DCMAKE_BUILD_TYPE=Debug -DENABLE_MONGO=OFF -DBUILD_TESTING=OFF
+cmake --build build/catalogo-web --target catalogo_api -j2
+./build/catalogo-web/catalogo_api
+~~~
+
+El servidor escucha en `127.0.0.1:8080`. Al primer arranque crea
+`data/catalogo_web.json` a partir de las 16 obras de `data/libros_iniciales.json`.
+En los siguientes arranques carga el archivo de trabajo, incluso si contiene
+una lista vacía. Si el archivo existente es inválido, el arranque informa el
+error. Para reanudar una demo después de Ctrl+C, repetí el último comando. Para
+usar otro archivo de trabajo, agregá `--working ruta/al/catalogo.json` al
+comando del servidor y conservá esa ruta al reiniciarlo.
+
+**Terminal 2 · React, TypeScript y Vite**. Usá Node.js de Linux 22.12 o posterior
+con npm. El bloque usa el Node preparado en esta copia de WSL si está presente.
+En un clon nuevo podés usar tu instalación de Linux o el bloque de instalación
+local de Node que figura a continuación.
+
+~~~bash
+cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
+if [ -x build/catalogo-prep/node-v24.22.3-linux-x64/bin/node ]; then
+  export PATH="$PWD/build/catalogo-prep/node-v24.22.3-linux-x64/bin:$PATH"
+fi
+cd frontend
+node --version
+npm ci
+npm run dev
+~~~
+
+Si tu WSL x86_64 aún no tiene Node, ejecutá esto una vez antes de la terminal 2.
+Descarga la distribución oficial en el directorio de compilación del proyecto
+y verifica su SHA-256.
+
+~~~bash
+cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
+mkdir -p build/catalogo-prep
+cd build/catalogo-prep
+version=v24.22.3
+archivo="node-$version-linux-x64.tar.xz"
+curl -fSLO "https://nodejs.org/dist/$version/$archivo"
+curl -fsSL "https://nodejs.org/dist/$version/SHASUMS256.txt" -o SHASUMS256.txt
+grep -F "  $archivo" SHASUMS256.txt | sha256sum -c - && tar -xf "$archivo"
+~~~
+
+Abrí **[http://127.0.0.1:5173/](http://127.0.0.1:5173/)** desde el navegador.
+Vite reenvía `/api` al backend en loopback. Las lecturas y escrituras se
+procesan en C++. La página muestra ocho obras por vez, en el orden devuelto
+por el B+. El buscador admite prefijo y título exacto. El botón **Ver árbol B+**
+incluye la salida textual y la validación de invariantes.
+
+### Contrato HTTP de la demo
+
+| Método | Ruta | Resultado |
+|---|---|---|
+| GET | `/api/libros` | `{"libros":[…]}` en orden de título e ID. |
+| GET | `/api/libros?titulo=Atlas%20del%20campus` | Búsqueda exacta normalizada. |
+| GET | `/api/libros?prefijo=Atl` | Búsqueda por prefijo en el B+. |
+| POST | `/api/libros` | Recibe JSON con `idLibro`, `titulo`, `autor` y `temas`. Devuelve 201 con el libro guardado. |
+| DELETE | `/api/libros/E2C-01` | Borra el ID indicado. Devuelve 204 al guardar o 404 si está ausente. |
+| GET | `/api/arbol` | `{"estructura":"…"}` con nodos, hijos y hojas enlazadas. |
+| GET | `/api/arbol/validacion` | `{"valido":true,"detalle":"…"}` o el diagnóstico del validador. |
+
+Ejemplo de cuerpo para el alta:
+
+~~~json
+{"idLibro":"E2C-01","titulo":"Atlas del campus","autor":"Autor de prueba","temas":["mapas"]}
+~~~
+
+Los errores de entrada devuelven 400, un ID duplicado devuelve 409 y un fallo de
+guardado devuelve 503. Los cuerpos se limitan a 32 KiB. La API confirma las
+mutaciones después del guardado atómico del JSON. Si falla el guardado, relee
+el último archivo confirmado. Si tampoco puede recuperarlo, devuelve 503 hasta
+el reinicio. Un único trabajador coordina lecturas y escrituras. Dos instancias
+de esta API respetan un bloqueo sobre el mismo archivo de trabajo. El archivo
+`.lock` puede permanecer al salir y el sistema libera el bloqueo al terminar
+el proceso.
+
+[Capturas y resultados de la prueba de navegador](docs/evidencias/catalogo-web/).
+
+## Compilar y ejecutar la consola en WSL
 
 Trabajar desde Ubuntu, usando compilador y herramientas Linux:
 
@@ -149,7 +231,7 @@ enlaces simbólicos de salida. Si falla, no se anuncia éxito, se limpia el temp
 y se conservan los cambios en memoria para reintentar. El directorio de destino
 debe existir. El guardado exitoso solo entonces limpia la bandera de cambios.
 
-Alcance: un proceso escritor, archivos locales Linux/WSL. No hay bloqueo entre
+Alcance de la consola: un proceso escritor, archivos locales Linux/WSL. No hay bloqueo entre
 procesos, detección de ediciones externas, transacciones cloud ni `fsync`.
 Se verificó reinicio normal, no durabilidad frente a cortes eléctricos.
 
@@ -165,12 +247,20 @@ escala 100 %, gráficos de fondo y desactivá los encabezados y pies del navegad
 
 ## Qué queda pendiente
 
-La revisión y fusión del informe preceden a la etiqueta `entregable-2`. La
-edición de títulos en modo JSON es opcional. Para el proyecto final quedan las
-otras estructuras, préstamos y reservas, API HTTP propia, frontend, broker,
-autenticación, CI remoto y despliegue. La fecha exacta del segundo avance sigue
+El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan las otras estructuras, préstamos y reservas, las demás vistas, el broker, la autenticación, CI remoto y despliegue. La fecha exacta del segundo avance sigue
 pendiente y el proyecto final está previsto para el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;
 las decisiones se tomaron de la guía adjunta, sin afirmar haber leído ese PDF.
+
+## Guion de demostración de tres minutos
+
+| Tiempo | Acción | Resultado visible |
+|---|---|---|
+| 0:00–0:30 | Abrí el catálogo con un archivo de trabajo nuevo y recorré sus dos páginas. | Aparecen las 16 obras iniciales, con título, autor e ID. |
+| 0:30–1:00 | En **Agregar libro**, ingresá E2C-01, «Atlas del campus», «Autor de prueba» y el tema «mapas». Guardá y buscá «Atl» por prefijo. | El total sube a 17. La búsqueda muestra el ID E2C-01. |
+| 1:00–1:30 | Elegí **Título exacto**, escribí «Atlas del campus» y abrí **Ver árbol B+**. | Aparece una obra. En la salida C++ se ve su clave en una hoja y al final la cadena de hojas. |
+| 1:30–2:10 | En la terminal 1, usá Ctrl+C. Recargá el navegador. Reiniciá el mismo backend con el mismo archivo, pulsá **Reintentar** y buscá otra vez «Atlas del campus». | Primero aparece **API sin conexión**. Tras reiniciar, vuelve a aparecer E2C-01. |
+| 2:10–2:40 | En la fila E2C-01, pulsá **Borrar** y **Confirmar borrado**. Repetí la búsqueda exacta. | El catálogo confirma el borrado y la consulta muestra **Sin resultados**. |
+| 2:40–3:00 | Abrí **Ver árbol B+** y pulsá **Validar invariantes**. | El árbol contiene 16 libros y el validador C++ confirma sus invariantes. |

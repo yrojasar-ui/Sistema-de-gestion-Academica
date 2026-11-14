@@ -41,7 +41,7 @@ std::size_t CatalogService::load(const std::filesystem::path& source) {
 void CatalogService::insert(const Libro& book) {
     requireLoaded();
     validateBook(book);
-    if (ids_.count(book.idLibro)) throw std::invalid_argument("ID duplicado: " + book.idLibro);
+    if (ids_.count(book.idLibro)) throw DuplicateBookId("ID duplicado: " + book.idLibro);
     if (tree_.size() >= 10000) throw std::invalid_argument("Máximo 10000 libros en este prototipo");
     if (records_) {
         needsReload_ = true;

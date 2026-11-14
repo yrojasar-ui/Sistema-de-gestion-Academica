@@ -1,9 +1,15 @@
 #pragma once
 #include "biblioteca/BPlusTree.hpp"
 #include "biblioteca/IRecordBookRepository.hpp"
+#include <stdexcept>
 #include <unordered_map>
 
 namespace biblioteca {
+class DuplicateBookId : public std::invalid_argument {
+public:
+    using std::invalid_argument::invalid_argument;
+};
+
 class CatalogService {
 public:
     explicit CatalogService(IBookRepository& repository, std::size_t order = 4);

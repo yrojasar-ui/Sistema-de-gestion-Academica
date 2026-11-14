@@ -84,3 +84,18 @@ un GET completo y una reconstrucción del B+ por cambio. Esto permite incorporar
 otros cambios visibles en el momento de la lectura. El adaptador mantiene una
 tabla auxiliar de las identidades y los campos leídos para validar la selección.
 El contrato observado y los límites de concurrencia figuran en [API MongoDB](API_MONGODB.md).
+
+## D10 — catálogo web con el B+ del servicio de consola
+
+La interfaz React solicita el listado o la búsqueda a `catalogo_api`. El
+controlador llama a `CatalogService::all`, `byTitle` o `byPrefix` y serializa
+el resultado. React divide esa respuesta en páginas. El panel muestra la
+cadena de `CatalogService::visualize` y pide la validación al servicio. El
+navegador no reconstruye las claves ni los nodos.
+
+Para la demo usamos un JSON de trabajo dedicado y el guardado atómico de
+`JsonBookRepository`. Cada mutación se guarda antes de responder. Un solo
+trabajador HTTP evita lecturas de cambios pendientes de guardar. Si la
+escritura falla, se intenta recargar el último snapshot. El bloqueo de archivo
+coordina las instancias de la API que usan el mismo destino. La consola conserva
+su propio archivo y su guardado explícito. Vite y la API escuchan en loopback.
