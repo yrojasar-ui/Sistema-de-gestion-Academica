@@ -2,6 +2,7 @@
 #include "biblioteca/BPlusTree.hpp"
 #include "biblioteca/IRecordBookRepository.hpp"
 #include <stdexcept>
+#include <functional>
 #include <unordered_map>
 
 namespace biblioteca {
@@ -18,6 +19,10 @@ public:
     void update(const Libro& book);
     bool erase(const std::string& id);
     void save();
+    // Unidad de escritura JSON: el estado visible cambia después del guardado.
+    void commit(const std::function<void(CatalogService&)>& operation);
+    std::optional<Libro> find(const std::string& id) const;
+    std::string snapshot() const { requireLoaded(); return tree_.snapshot(); }
     std::vector<Libro> byTitle(const std::string& title) const { requireLoaded(); return tree_.byTitle(title); }
     std::vector<Libro> byPrefix(const std::string& title) const { requireLoaded(); return tree_.byPrefix(title); }
     std::vector<Libro> all() const { requireLoaded(); return tree_.all(); }

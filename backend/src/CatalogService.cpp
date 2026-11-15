@@ -57,9 +57,19 @@ void CatalogService::insert(const Libro& book) {
 }
 void CatalogService::update(const Libro& book) {
     requireLoaded();
-    if (!records_) throw std::logic_error("La edición por documento requiere almacenamiento Mongo");
     validateBook(book);
     if (!ids_.count(book.idLibro)) throw std::invalid_argument("ID ausente");
+    if (!records_) {
+        BPlusTree candidate(tree_);
+        const auto old = ids_.at(book.idLibro);
+        candidate.erase(old);
+        candidate.insert(book);
+        auto newKey = keyOf(book);
+        ids_.at(book.idLibro).swap(newKey);
+        tree_.swap(candidate);
+        dirty_ = true;
+        return;
+    }
     needsReload_ = true;
     records_->updateRecord(book);
     reloadAfterWrite();
@@ -76,6 +86,21 @@ bool CatalogService::erase(const std::string& id) {
     }
     if (!tree_.erase(pos->second)) throw std::logic_error("ID e índice desincronizados");
     ids_.erase(pos); dirty_ = true; return true;
+}
+std::optional<Libro> CatalogService::find(const std::string& id) const {
+    requireLoaded();
+    const auto pos = ids_.find(id);
+    if (pos == ids_.end()) return std::nullopt;
+    return tree_.find(pos->second);
+}
+void CatalogService::commit(const std::function<void(CatalogService&)>& operation) {
+    if (writesThrough()) throw std::logic_error("La unidad local requiere repositorio JSON");
+    CatalogService candidate(*this);
+    operation(candidate);
+    candidate.save();
+    tree_.swap(candidate.tree_);
+    ids_.swap(candidate.ids_);
+    dirty_ = false;
 }
 void CatalogService::save() {
     repository_.save(tree_.all());

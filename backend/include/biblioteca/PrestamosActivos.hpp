@@ -11,6 +11,9 @@ using ClavePrestamo = std::pair<std::string, std::string>;
 
 class PrestamosActivos {
 public:
+    PrestamosActivos() = default;
+    PrestamosActivos(const PrestamosActivos& otro);
+    PrestamosActivos& operator=(const PrestamosActivos&) = delete;
     bool insertar(const ClavePrestamo& clave);
     bool eliminar(const ClavePrestamo& clave);
     bool cambiarVencimiento(const ClavePrestamo& anterior, const std::string& fechaNueva);

@@ -7,6 +7,9 @@ namespace biblioteca {
 ColaReservas::ColaReservas(std::string idLibro) : libro_(std::move(idLibro)) {
     if (libro_.empty()) throw std::invalid_argument("La cola necesita un libro");
 }
+ColaReservas::ColaReservas(const ColaReservas& otra) : ColaReservas(otra.libro_) {
+    for (auto n = otra.inicio_.get(); n; n = n->siguiente.get()) encolar(n->id, n->llegada);
+}
 ColaReservas::~ColaReservas() {
     // Liberación iterativa incluso si quedan muchos turnos pendientes.
     while (inicio_) {
