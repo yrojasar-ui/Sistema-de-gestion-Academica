@@ -1,0 +1,28 @@
+Comando: cmake --build build/debug -j2
+[  4%] Built target libro
+[  8%] Built target bplus
+[ 19%] Built target estructuras
+[ 23%] Built target json_repository
+[ 28%] Built target catalog_service
+[ 36%] Built target test_rojo_negro
+[ 39%] Built target mongo_repository
+[ 47%] Built target test_grafo_temas
+[ 47%] Built target test_hash_extensible
+[ 56%] Built target test_snapshot_bplus
+[ 56%] Built target test_fifo_reservas
+[ 60%] Built target console_ui
+[ 65%] Built target test_bplus
+[ 69%] Built target test_mongo
+[ 71%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryService.cpp.o
+[ 76%] Built target test_catalog
+[ 80%] Built target biblioteca
+[ 82%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryValidation.cpp.o
+[ 84%] Linking CXX static library liblibrary_service.a
+[ 86%] Built target library_service
+[ 89%] Linking CXX executable test_dominio
+[ 93%] Built target http_controller
+[ 95%] Linking CXX executable catalogo_api
+[ 97%] Built target test_dominio
+[100%] Built target catalogo_api
+
+Código de retorno: 0

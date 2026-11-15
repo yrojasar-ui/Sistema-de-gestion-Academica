@@ -1,6 +1,6 @@
 # Matriz de requisitos
 
-La matriz cubre el segundo avance, el catálogo web, su integración continua y las estructuras en memoria. Las pruebas de E2-A se conservan en
+La matriz cubre el segundo avance, el catálogo web, su integración continua y el dominio local integrado. Las pruebas de E2-A se conservan en
 `evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
 regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificación de E2-C están en `evidencias/entregable2/`.
 
@@ -14,15 +14,15 @@ regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificaci
 | A05 | E2-A | Bibliotecas CMake separadas | `CMakeLists.txt`: libro, bplus, json_repository, catalog_service, console_ui | `debug-build.log`, `asan-build.log`, `resultados.tsv` | Implementado y compilado localmente |
 | A06 | E2-A | Archivo de trabajo separado; fallo y reinicio | `JsonBookRepository::save`, dirty en servicio | Fallo de escritura/rename, protección de fixture, reintento, dos procesos → logs CTest y demo | Implementado y probado localmente |
 | A07 | E2-A | Español UTF-8 determinista | `Libro.cpp::normalizeTitle` | Acentos/mayúsculas/descompuestos/ñ/otros Unicode/UTF-8 inválido → `test_bplus.cpp` y logs CTest | Implementado y probado localmente |
-| A08 | E2-A opcional | Modificar título conservando índice | Sin implementar | Sin pruebas | Pendiente opcional |
+| A08 | E2-A opcional | Modificar título conservando índice | CatalogService::update y API PUT de libro | biblioteca_api y dominio_repositorios | Implementado y verificado localmente |
 | B01 | E2-B | GET, POST, PUT y DELETE de libro propio | `MongoApiBookRepository`, libcurl | [Contrato](API_MONGODB.md) y [sesiones reales](evidencias/e2b/nube.txt) | Verificado en nube con datos sintéticos |
 | B02 | E2-B | Reconstrucción de B+ y consulta tras reinicio | `CatalogService` y consola | Segundo proceso en la demo de nube | Verificado |
 | B03 | E2-B | Escritura incierta y recuperación | GET de verificación y recarga del servicio | `mongo_contrato_simulado` | Verificado localmente con fixtures |
 | C01 | E2-C | Informe breve, capturas reales y guion de demostración | [PDF de 3 páginas](Informe_Entregable2_Biblioteca.pdf) y [fuente HTML](Informe_Entregable2_Biblioteca.html) | [Capturas y logs](evidencias/entregable2/) y [guion de 4 minutos](evidencias/entregable2/guion.md) | Preparado y verificado para revisión |
 | CAT-WEB | Final, catálogo local | Alta, consulta por título/prefijo, borrado, reinicio y visualización del B+ | React/TypeScript/Vite → API C++ → CatalogService y JSON | [Recorrido en Chrome](evidencias/catalogo-web/navegador.txt), capturas y CTest | Verificado localmente |
-| F01 | Final | Rojo-Negro, hash extensible, grafo y FIFO propios. Snapshots de las cinco estructuras | [Diseño y operaciones](DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca) | [Resultados de CTest y snapshots](evidencias/estructuras/) | Implementado en memoria. Integración de dominio en F02 |
-| F02 | Final | Ejemplares/usuarios/préstamos/reservas e integridad | Sin iniciar | Sin pruebas | Pendiente |
-| F03 | Final | API/worker/colas reales y persistencia cloud | Sin iniciar | Sin evidencia cloud | Pendiente |
+| F01 | Final | Rojo-Negro, hash extensible, grafo y FIFO propios. Snapshots de las cinco estructuras | [Diseño y operaciones](DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca) | [Resultados de CTest y snapshots](evidencias/estructuras/) | Integrado en el dominio local F02 |
+| F02 | Final | Ejemplares, usuarios, préstamos, reservas y avisos con integridad | [LibraryService y contrato](DOMINIO_API.md) | biblioteca_api, dominio_repositorios y [demo](../scripts/demo_biblioteca.sh) | Implementado localmente con repositorio en memoria |
+| F03 | Final | API/worker/colas reales y persistencia cloud | API de dominio e IEventPublisher preparados | [OpenAPI](openapi.json) y pruebas HTTP locales | API local verificada. Worker, RabbitMQ y persistencia de entidades nuevas en nube pendientes |
 | F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Autenticación y despliegue pendientes |
 | F05 | Final | Informe técnico, presentación y defensa | Sin iniciar | Sin artefactos | Pendiente |
 
