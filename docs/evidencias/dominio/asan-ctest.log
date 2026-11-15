@@ -16,8 +16,8 @@ test 1
 1: Test timeout computed to be: 1500
 1: Semilla=20261114
 1: Commit de dominio y catálogo, fallos de repositorio, reindexación, reconstrucción y calendario OK
-1: OK operaciones=31 comprobaciones=63
- 1/12 Test  #1: dominio_repositorios .............   Passed    0.20 sec
+1: OK operaciones=32 comprobaciones=66
+ 1/12 Test  #1: dominio_repositorios .............   Passed    1.14 sec
 test 2
       Start  2: biblioteca_api
 
@@ -32,21 +32,21 @@ test 2
 2: F. Carla recibe y devuelve; dos préstamos históricos y E1 disponible.
 2: G. Estados, referencias, hash, Rojo-Negro y FIFO comprobados tras cada operación.
 2: Adicionales OK: inactivos, duplicados, dos copias, desactivación, renovación, edición, referencias, importación inválida, errores y guardado fallido.
-2: OK solicitudes HTTP=413; datos temporales; avisos pendientes en memoria.
- 2/12 Test  #2: biblioteca_api ...................   Passed    2.69 sec
+2: OK solicitudes HTTP=414; datos temporales; avisos pendientes en memoria.
+ 2/12 Test  #2: biblioteca_api ...................   Passed    3.73 sec
 test 3
       Start  3: catalogo_http_reinicio
 
 3: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_catalog_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
 3: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
 3: Test timeout computed to be: 1500
-3: API de catálogo en http://127.0.0.1:46879 · /tmp/tmp5g0ihxlb/catalogo.json
+3: API de catálogo en http://127.0.0.1:54613 · /tmp/tmpoanwchk7/catalogo.json
 3: Error: El archivo de trabajo ya está en uso por otra API
-3: API de catálogo en http://127.0.0.1:46879 · /tmp/tmp5g0ihxlb/catalogo.json
-3: API de catálogo en http://127.0.0.1:46879 · /tmp/tmp5g0ihxlb/catalogo.json
-3: Error: Carga rechazada [/tmp/tmp5g0ihxlb/catalogo.json]: [json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal
+3: API de catálogo en http://127.0.0.1:54613 · /tmp/tmpoanwchk7/catalogo.json
+3: API de catálogo en http://127.0.0.1:54613 · /tmp/tmpoanwchk7/catalogo.json
+3: Error: Carga rechazada [/tmp/tmpoanwchk7/catalogo.json]: [json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal
 3: API HTTP: CRUD, errores, recuperación, reinicio y catálogo vacío comprobados.
- 3/12 Test  #3: catalogo_http_reinicio ...........   Passed    0.47 sec
+ 3/12 Test  #3: catalogo_http_reinicio ...........   Passed    0.54 sec
 test 4
       Start  4: mongo_contrato_simulado
 
@@ -54,7 +54,7 @@ test 4
 4: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
 4: Test timeout computed to be: 1500
 4: Fixtures Mongo OK: CRUD, identidad, reconciliación, fallos y reconstrucción del B+
- 4/12 Test  #4: mongo_contrato_simulado ..........   Passed    0.07 sec
+ 4/12 Test  #4: mongo_contrato_simulado ..........   Passed    0.15 sec
 test 5
       Start  5: rojo_negro
 
@@ -64,7 +64,7 @@ test 5
 5: Semilla=20261114
 5: Ejemplo={"alturaNegra":3,"cantidad":3,"nodos":[{"clave":["2026-11-16","P2"],"color":"negro","der":["2026-11-16","P3"],"izq":["2026-11-16","P1"],"padre":null},{"clave":["2026-11-16","P1"],"color":"negro","der":null,"izq":null,"padre":["2026-11-16","P2"]},{"clave":["2026-11-16","P3"],"color":"negro","der":null,"izq":null,"padre":["2026-11-16","P2"]}],"raiz":["2026-11-16","P2"]}
 5: OK operaciones=3085 comprobaciones=9261
- 5/12 Test  #5: rojo_negro .......................   Passed    1.62 sec
+ 5/12 Test  #5: rojo_negro .......................   Passed    2.05 sec
 test 6
       Start  6: hash_extensible
 
@@ -74,7 +74,7 @@ test 6
 6: Semilla=20261115
 6: Ejemplo={"capacidad":1,"cubetas":[{"id":0,"ocupacion":1,"profundidadLocal":1,"usuarios":["U2"]},{"id":1,"ocupacion":1,"profundidadLocal":2,"usuarios":["U3"]},{"id":2,"ocupacion":1,"profundidadLocal":2,"usuarios":["U1"]}],"directorio":[0,1,0,2],"profundidadGlobal":2,"profundidadMaxima":3}
 6: OK operaciones=659 comprobaciones=26795
- 6/12 Test  #6: hash_extensible ..................   Passed    1.09 sec
+ 6/12 Test  #6: hash_extensible ..................   Passed    1.36 sec
 test 7
       Start  7: grafo_temas
 
@@ -84,7 +84,7 @@ test 7
 7: Semilla=20261116
 7: Ejemplo={"aristas":1,"vertices":[{"id":"A","temas":["arbol","web"],"vecinos":["C"]},{"id":"C","temas":["web"],"vecinos":["A"]},{"id":"D","temas":["red"],"vecinos":[]},{"id":"E","temas":[],"vecinos":[]}]}
 7: OK operaciones=518 comprobaciones=6310
- 7/12 Test  #7: grafo_temas ......................   Passed    1.10 sec
+ 7/12 Test  #7: grafo_temas ......................   Passed    1.45 sec
 test 8
       Start  8: fifo_reservas
 
@@ -94,7 +94,7 @@ test 8
 8: Semilla=20261117
 8: Ejemplo={"cantidad":3,"fin":"R3","idLibro":"L1","inicio":"R1","nodos":[{"id":"R1","llegada":1,"siguiente":"R2"},{"id":"R2","llegada":2,"siguiente":"R3"},{"id":"R3","llegada":2,"siguiente":null}]}
 8: OK operaciones=582 comprobaciones=5043
- 8/12 Test  #8: fifo_reservas ....................   Passed    0.42 sec
+ 8/12 Test  #8: fifo_reservas ....................   Passed    0.54 sec
 test 9
       Start  9: snapshot_bplus
 
@@ -103,7 +103,7 @@ test 9
 9: Test timeout computed to be: 1500
 9: Semilla=20261118
 9: OK operaciones=7 comprobaciones=17
- 9/12 Test  #9: snapshot_bplus ...................   Passed    0.03 sec
+ 9/12 Test  #9: snapshot_bplus ...................   Passed    0.07 sec
 test 10
       Start 10: bplus_oraculo
 
@@ -121,7 +121,7 @@ test 10
 10: orden=32 ascendente/descendente/mezclada/aleatoria OK
 10: splits hoja/interno=1796/645 préstamo hoja izq/der=553/448 préstamo interno izq/der=161/117 fusiones hoja/interno=1796/645 contracciones=262
 10: OK operaciones=23416 comprobaciones=2036201
-10/12 Test #10: bplus_oraculo ....................   Passed  167.97 sec
+10/12 Test #10: bplus_oraculo ....................   Passed  217.38 sec
 test 11
       Start 11: catalogo_json_consola
 
@@ -129,7 +129,7 @@ test 11
 11: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
 11: Test timeout computed to be: 600
 11: OK catálogo/JSON/consola; casos JSON inválido=18; comprobaciones=121
-11/12 Test #11: catalogo_json_consola ............   Passed    0.21 sec
+11/12 Test #11: catalogo_json_consola ............   Passed    0.32 sec
 test 12
       Start 12: demo_reinicio
 
@@ -192,7 +192,7 @@ test 12
 12:
 12: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 12: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
-12: Opción: Guardado: /tmp/biblioteca-demo-4jydVe/trabajo.json
+12: Opción: Guardado: /tmp/biblioteca-demo-wbuWi7/trabajo.json
 12:
 12: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 12: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
@@ -200,7 +200,7 @@ test 12
 12:
 12: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 12: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
-12: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-4jydVe/trabajo.json
+12: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-wbuWi7/trabajo.json
 12:
 12: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 12: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
@@ -240,10 +240,10 @@ test 12
 12: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
 12: Opción:
 12: DEMO OK: carga -> inserción -> búsqueda -> borrado -> ausencia -> guardado -> reinicio; fixture intacto.
-12/12 Test #12: demo_reinicio ....................   Passed    0.14 sec
+12/12 Test #12: demo_reinicio ....................   Passed    0.24 sec
 
 100% tests passed, 0 tests failed out of 12
 
-Total Test time (real) = 176.01 sec
+Total Test time (real) = 228.97 sec
 
 Código de retorno: 0

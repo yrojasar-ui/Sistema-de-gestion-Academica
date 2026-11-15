@@ -55,7 +55,7 @@ Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado
 
 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
-Opción: Guardado: /tmp/biblioteca-demo-nVaKoe/trabajo.json
+Opción: Guardado: /tmp/biblioteca-demo-S2DXqK/trabajo.json
 
 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
@@ -63,7 +63,7 @@ Opción: Biblioteca académica — E2-A (JSON local, guardado explícito)
 
 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
-Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-nVaKoe/trabajo.json
+Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-S2DXqK/trabajo.json
 
 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
