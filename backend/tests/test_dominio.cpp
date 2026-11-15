@@ -90,6 +90,10 @@ void probar(Caso& c) {
     invalido = servicio.estado();
     invalido.usuarios[2].activo = false;
     rechazar([&] { servicio.reconstruir(invalido); });
+    EstadoBiblioteca excesivo;
+    for (unsigned i = 0; i < 5000; ++i)
+        excesivo.usuarios.push_back({"X-" + std::to_string(i), std::string(256, 'x'), true});
+    rechazar([&] { servicio.reconstruir(excesivo); });
     // Carga de un repositorio nuevo reconstruye las mismas consultas y turnos.
     LibraryService recargado(catalogo, repositorio);
     recargado.validar();

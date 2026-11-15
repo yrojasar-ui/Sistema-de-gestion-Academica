@@ -34,6 +34,8 @@ autorización de bibliotecario para administración, exportación y snapshots
 requiere la futura fase de autenticación. El 403 actual señala un origen CORS
 rechazado. La API emite 400, 404, 409, 413, 415 y 503 según OpenAPI.
 El límite de cuerpo es 1 MiB y cada colección admite hasta 10 000 registros.
+El dominio serializado también tiene un límite total de 1 MiB para permitir
+restaurar toda exportación aceptada. Se rechaza la operación que lo exceda.
 Los límites de texto se aplican en bytes UTF-8.
 
 ## Estado, identidad y fechas

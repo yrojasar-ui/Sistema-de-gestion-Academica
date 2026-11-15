@@ -2234,7 +2234,8 @@
           "reservas",
           "avisos",
           "siguienteLlegada"
-        ]
+        ],
+        "description": "El estado completo serializado en JSON compacto UTF-8 tiene un máximo de 1 MiB para garantizar su restauración."
       },
       "Error": {
         "type": "object",

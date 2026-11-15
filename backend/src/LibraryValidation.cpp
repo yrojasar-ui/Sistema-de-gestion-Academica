@@ -1,4 +1,5 @@
 #include "biblioteca/LibraryService.hpp"
+#include "biblioteca/DomainJson.hpp"
 #include <algorithm>
 #include <set>
 
@@ -19,6 +20,8 @@ void idsUnicos(const std::vector<T>& filas, F id) {
 }
 void LibraryService::validar(const Runtime& e) const {
     const auto& d = e.datos;
+    if (Json(d).dump().size() > 1024 * 1024)
+        throw std::invalid_argument("El estado del dominio supera 1 MiB; exportación debe poder restaurarse");
     idsUnicos(d.usuarios, [](const auto& x) { return x.idUsuario; });
     idsUnicos(d.ejemplares, [](const auto& x) { return x.idEjemplar; });
     idsUnicos(d.prestamos, [](const auto& x) { return x.idPrestamo; });
