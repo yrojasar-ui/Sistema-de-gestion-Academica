@@ -1,0 +1,23 @@
+
+> biblioteca-academica-catalogo@0.1.0 build
+> tsc --noEmit && vite build --outDir ../build/pages/configurada
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./src/api-config" without a file extension (vite.config.ts:3:41). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2084 modules transformed.
+
+(!) outDir /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/pages/configurada is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+
+rendering chunks...
+computing gzip size...
+../build/pages/configurada/index.html                   0.51 kB │ gzip:  0.32 kB
+../build/pages/configurada/assets/index-D1h7oYOs.css    8.08 kB │ gzip:  2.73 kB
+../build/pages/configurada/assets/index-D9-F87AB.js   238.20 kB │ gzip: 75.19 kB
+
+✓ built in 232ms
+Build rechazó URL con /api antes de generar artefactos: OK
+Build rechazó credenciales sintéticas antes de generar artefactos: OK

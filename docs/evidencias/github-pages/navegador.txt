@@ -1,0 +1,25 @@
+Verificación manual mediante navegador integrado, servidor Vite dentro de WSL.
+Fecha: 15 de noviembre de 2026, America/Guatemala.
+
+Producción local:
+URL: http://127.0.0.1:4173/Sistema-de-gestion-Academica/
+Build sin VITE_API_URL, servido con npm run preview.
+- Documento "Catálogo · Biblioteca Académica" cargado.
+- CSS visible y mensaje exacto:
+  "Servidor de biblioteca pendiente de configuración".
+- Texto: "El catálogo estará disponible cuando se configure el servidor."
+- Agregar libro, buscador, selector y Ver árbol B+ deshabilitados.
+- No se mostraron registros de ejemplo ni el mensaje de catálogo vacío.
+- Verificación de recursos HTTP y archivos dist: recursos.log y frontend.log.
+Esta observación no es un despliegue en GitHub Pages.
+
+Desarrollo local:
+URL: http://127.0.0.1:5173/
+API C++ con --storage local, archivo temporal y puerto 8080.
+- La pantalla mostró colección de 16 obras, primera página 1–8 de 16.
+- Se observaron títulos e IDs reales del catálogo inicial (L001 a L008).
+- Búsqueda "ZZZ-SIN-COINCIDENCIAS-PAGES": contador 0 y "Sin resultados".
+- El archivo inicial no se modificó.
+No se hicieron escrituras ni solicitudes a MongoDB.
+La sesión de navegador dejó de estar disponible al intentar abrir el panel B+;
+esa comprobación adicional no se declara ejecutada en navegador en esta fase.

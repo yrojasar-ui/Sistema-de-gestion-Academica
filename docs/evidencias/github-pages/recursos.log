@@ -1,0 +1,5 @@
+GET /Sistema-de-gestion-Academica/ 200 text/html
+GET /Sistema-de-gestion-Academica/assets/index-6XmId_61.js 200 text/javascript 238169 bytes
+GET /Sistema-de-gestion-Academica/assets/index-D1h7oYOs.css 200 text/css 8080 bytes
+Proxy dev: GET /api/libros 200 total= 16
+Código de retorno: 0

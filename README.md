@@ -6,6 +6,84 @@ Universidad CENFOTEC. La pantalla React consulta una API C++17 local. El mismo
 borran las obras. El panel del índice muestra los nodos y las hojas enlazadas
 emitidos por C++.
 
+## Frontend en GitHub Pages
+
+Esta fase prepara el despliegue estático; la publicación efectiva se comprueba
+después de revisar y fusionar el PR. La URL esperada es
+`https://yrojasar-ui.github.io/Sistema-de-gestion-Academica/`; no se presenta
+como un sitio ya publicado.
+
+1. En el repositorio, abrir **Settings > Pages > Build and deployment >
+   Source > GitHub Actions**.
+2. En **Settings > Secrets and variables > Actions > Variables**, crear la
+   variable de repositorio **`VITE_API_URL`** cuando exista una API C++ pública.
+3. Revisar y fusionar el PR. El workflow `Biblioteca Académica` ejecuta
+   CTest Debug, ASan/UBSan y validación/build del frontend. Solo si todos pasan
+   en un push a `main`, invoca `pages.yml` sobre el mismo commit.
+   Los PR validan sin publicar ni crear un despliegue.
+4. El workflow recompila con Node **24.22.3**, `npm ci`, `npm test`,
+   `npm run build` y `npm run verify:dist`; sube **únicamente `frontend/dist`**
+   con acciones oficiales fijadas por SHA. El trabajo de despliegue usa el
+   entorno `github-pages` y permisos `pages:write` / `id-token:write`.
+   Se pueden configurar revisores requeridos y restringir ese entorno a main.
+   Ningún secreto de API se pasa al cliente.
+
+**Formato exacto de VITE_API_URL:** origen HTTPS de la API C++,
+por ejemplo `https://biblioteca-api.example.org` (ejemplo, no servicio activo).
+Admite puerto explícito y una barra final opcional. **No incluir `/api` ni
+otras rutas, usuario/contraseña, query o fragmento**. El cliente añade `/api/`
+una sola vez: `https://biblioteca-api.example.org/api/libros`.
+Un origen inválido, HTTP o localhost hace fallar el build antes de incorporar
+el valor al JavaScript. La variable es pública y queda incluida en el bundle:
+no introducir tokens ni credenciales. No es la URL de la API MongoDB docente.
+
+Si se omite o queda vacía, el sitio compila y muestra exactamente
+**“Servidor de biblioteca pendiente de configuración”**, sin solicitar datos
+a localhost/Pages, sin inventar libros y con los controles de catálogo
+deshabilitados. Una API configurada pero inaccesible muestra “API sin conexión”;
+un resultado válido vacío conserva “Sin resultados” o “El catálogo está vacío”.
+Cambiar la variable exige recompilar: ejecutar de nuevo todos los jobs del
+workflow de `main` o publicar otro commit revisado en main.
+
+**Verificar el despliegue:** en Actions, abrir la ejecución de `main` y comprobar
+que los controles, `Pages después de CI / build` y `deploy` terminan en success.
+Seguir `page_url` del entorno `github-pages` o `Visit site` en Settings > Pages.
+Abrir la subruta del repositorio, recargarla y revisar en Network que JS/CSS
+responden 200 bajo `/Sistema-de-gestion-Academica/assets/`. Si no hay URL de API,
+comprobar el mensaje anterior y ausencia de solicitudes `/api`. Si hay backend,
+comprobar que las solicitudes van a su origen HTTPS y no contienen `/api/api`.
+
+**Conexión pendiente del backend:** Pages sirve HTML/JS/CSS; **no ejecuta C++
+ni RabbitMQ**. Todavía hace falta alojar la API con HTTPS válido, proceso
+persistente y almacenamiento configurado, y preparar el worker/broker en su fase.
+La API actual escucha en loopback: un proxy HTTPS del alojamiento deberá
+reenviar hacia ese puerto y permitir GET, POST, PUT, DELETE y OPTIONS.
+Arrancar C++ con `--origin https://yrojasar-ui.github.io` (origen sin la subruta)
+para autorizar CORS; verificar el preflight y `Content-Type`.
+CORS no sustituye autenticación ni autorización. El perfil administrativo actual
+no tiene autenticación: la protección de un backend público queda pendiente.
+No se contrataron servicios ni se configuró un proveedor remoto.
+
+Desarrollo WSL conserva `http://127.0.0.1:5173/` y el proxy
+`/api → http://127.0.0.1:8080`; `VITE_API_URL` se ignora en desarrollo.
+Para comprobar localmente el artefacto de producción sin configurar backend:
+
+~~~bash
+cd frontend
+npm ci
+npm test
+VITE_API_URL= npm run build
+npm run verify:dist
+npm run preview -- --port 4173
+# Abrir http://127.0.0.1:4173/Sistema-de-gestion-Academica/
+~~~
+
+[Evidencias de esta preparación](docs/evidencias/github-pages/README.md).
+Referencias oficiales:
+[base de Vite para Pages](https://vite.dev/guide/static-deploy#github-pages),
+[variables públicas de Vite](https://vite.dev/guide/env-and-mode),
+[workflow y permisos de Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
 ## Persistencia completa en MongoDB (Prompt 4)
 
 La API puede recuperar automáticamente libros, usuarios, ejemplares, préstamos,

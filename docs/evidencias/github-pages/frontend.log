@@ -1,0 +1,44 @@
+v24.22.3
+
+added 25 packages, and audited 26 packages in 4s
+
+8 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> biblioteca-academica-catalogo@0.1.0 test
+> node --test src/api-config.test.ts
+
+✔ desarrollo conserva el proxy incluso si existe una variable de producción (1.341741ms)
+✔ producción sin URL presenta el mensaje requerido, sin backend implícito (1.027123ms)
+✔ origen HTTPS con o sin barra produce exactamente un prefijo api (0.686896ms)
+✔ producción rechaza /api, rutas, credenciales, consulta, fragmento y URL no HTTPS (0.295067ms)
+✔ producción nunca configura loopback como backend (0.299027ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 108.146234
+
+> biblioteca-academica-catalogo@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2084 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:  0.32 kB
+dist/assets/index-D1h7oYOs.css    8.08 kB │ gzip:  2.73 kB
+dist/assets/index-6XmId_61.js   238.16 kB │ gzip: 75.17 kB
+
+✓ built in 266ms
+
+> biblioteca-academica-catalogo@0.1.0 verify:dist
+> node verify-dist.mjs
+
+Pages: recursos JS/CSS existentes bajo /Sistema-de-gestion-Academica/

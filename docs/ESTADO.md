@@ -347,3 +347,33 @@ despliegue e informe final no se implementan en esta fase.
 
 [Diseño y recuperación](PERSISTENCIA_MONGODB.md), [API](openapi.json) y
 [diagramas](DOMINIO_API.md#diagramas-editables) actualizados.
+
+## Preparación del frontend para GitHub Pages
+
+15 de noviembre de 2026, America/Guatemala. Se partió de main actualizado
+`6692b41` (PR #8 integrado), sin cambios locales; rama `feat/github-pages`.
+
+Vite genera recursos bajo `/Sistema-de-gestion-Academica/` en build/preview,
+manteniendo raíz y proxy en desarrollo. `VITE_API_URL` es un origen HTTPS
+público sin /api; el cliente añade ese segmento una sola vez. Sin variable,
+muestra “Servidor de biblioteca pendiente de configuración”, no consulta
+localhost ni inventa datos. Los controles quedan deshabilitados.
+Una URL inválida no vacía detiene el build antes de incluirla en el bundle.
+
+`pages.yml` usa acciones oficiales fijadas por SHA, Node 24.22.3, npm ci/build,
+artefacto exclusivo frontend/dist y entorno github-pages con permisos mínimos.
+CI lo invoca únicamente para push main después de pasar los jobs backend
+(Debug y ASan/UBSan) y frontend. Los PR validan sin desplegar.
+
+[Resultados WSL y navegador](evidencias/github-pages/README.md): frontend 5/5,
+build con/sin origen configurado, rechazo de /api y credenciales, rutas de
+recursos con GET 200, mensaje sin backend en navegador, proxy local con 16 obras
+y búsqueda sin resultados. CTest existente: Debug 13/13 y ASan/UBSan 13/13.
+actionlint 1.7.12 sin errores. No se modificaron backend, fixture inicial,
+informe E2-C, dependencias fijadas ni etiqueta entregable-2.
+
+Se comprobó por lectura que Pages ya usa Source = GitHub Actions y que la
+variable VITE_API_URL está ausente. Publicación real y conexión HTTPS/CORS
+quedan pendientes de revisión/merge y configuración. El enlace de Actions del
+PR distingue los resultados GitHub de los de WSL. No se contrató alojamiento
+ni se desplegaron C++ o RabbitMQ.

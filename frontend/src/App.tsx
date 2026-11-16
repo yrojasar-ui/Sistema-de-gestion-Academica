@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronRight, ChevronLeft, X, ShieldCheck, CircleCheck,
   Unplug, RefreshCw, GraduationCap, BookText,
 } from 'lucide-react'
-import { api, ApiError, type Libro } from './api'
+import { api, ApiError, apiConfigurationError, type Libro } from './api'
 
 type SearchMode = 'prefijo' | 'titulo'
 type ModalState = { kind: 'add' } | { kind: 'delete'; book: Libro }
@@ -120,18 +120,18 @@ export function App() {
     <main className="shell">
       <nav className="crumb" aria-label="Ubicación"><Library size={15}/><span>Biblioteca</span><ChevronRight size={13}/><b>Catálogo</b></nav>
       <div className="title-row"><div><h1>Catálogo de libros</h1><p>Consultá y administrá las obras de la biblioteca.</p></div>
-        <button className="primary add" onClick={() => open({ kind: 'add' })}><Plus size={18}/>Agregar libro</button></div>
+        <button className="primary add" disabled={!!apiConfigurationError} onClick={() => open({ kind: 'add' })}><Plus size={18}/>Agregar libro</button></div>
 
       <div className="tools">
         <section className="search-card card"><label className="card-heading" htmlFor="search">Buscar en el catálogo</label>
           <div className="search-fields"><div className="input-wrap"><Search size={18}/>
-            <input id="search" placeholder="Buscar por título…" value={query} ref={searchBox} onChange={e => { setNotice(''); setQuery(e.target.value) }}/>
+            <input id="search" disabled={!!apiConfigurationError} placeholder="Buscar por título…" value={query} ref={searchBox} onChange={e => { setNotice(''); setQuery(e.target.value) }}/>
             {query && <button className="clear" aria-label="Limpiar búsqueda" onClick={() => { setQuery(''); searchBox.current?.focus() }}><X size={15}/></button>}
-          </div><div className="select-wrap"><select aria-label="Modo de búsqueda" value={mode} onChange={e => setMode(e.target.value as SearchMode)}>
+          </div><div className="select-wrap"><select disabled={!!apiConfigurationError} aria-label="Modo de búsqueda" value={mode} onChange={e => setMode(e.target.value as SearchMode)}>
             <option value="prefijo">Por prefijo</option><option value="titulo">Título exacto</option></select><ChevronDown size={15}/></div></div>
         </section>
         <button className={'tree-card card' + (treeOpen ? ' expanded' : '')} aria-expanded={treeOpen} aria-controls="tree-region"
-          aria-label={treeOpen ? 'Ocultar árbol B+' : 'Ver árbol B+'} onClick={() => setTreeOpen(!treeOpen)}>
+          disabled={!!apiConfigurationError} aria-label={treeOpen ? 'Ocultar árbol B+' : 'Ver árbol B+'} onClick={() => setTreeOpen(!treeOpen)}>
           <span className="tree-icon"><Network size={26}/></span><span className="tree-copy"><strong>Índice B+</strong>
           <span>{treeOpen ? 'Ocultar árbol B+' : 'Ver árbol B+'}<ChevronRight size={15}/></span></span>
           <span className="tree-art" aria-hidden="true"><Network size={86} strokeWidth={0.8}/></span>
@@ -142,9 +142,9 @@ export function App() {
       <section className="collection card" aria-labelledby="collection-title">
         <div className="collection-head"><div className="section-heading"><Layers size={19}/><h2 id="collection-title">{query.trim() ? 'Resultados de búsqueda' : 'Colección'}</h2>
           {!loading && !error && <span className="count">{rows.length}</span>}</div><span className="sort">Título · A–Z</span></div>
-        {error ? <div className="empty" role="alert"><Unplug size={30}/><h3>{error.offline ? 'API sin conexión' : 'No se pudo cargar el catálogo'}</h3>
-          <p>{error.offline ? 'Comprobá que el backend de C++ esté en ejecución.' : error.message}</p>
-          <button className="secondary" onClick={() => setRevision(n => n + 1)}><RefreshCw size={15}/>Reintentar</button></div>
+        {error ? <div className="empty" role="alert"><Unplug size={30}/><h3>{apiConfigurationError ?? (error.offline ? 'API sin conexión' : 'No se pudo cargar el catálogo')}</h3>
+          <p>{apiConfigurationError ? 'El catálogo estará disponible cuando se configure el servidor.' : error.offline ? 'No se pudo contactar al servidor de biblioteca.' : error.message}</p>
+          {!apiConfigurationError && <button className="secondary" onClick={() => setRevision(n => n + 1)}><RefreshCw size={15}/>Reintentar</button>}</div>
         : loading ? <div className="empty" role="status">Cargando catálogo…</div>
         : !rows.length ? <div className="empty" role="status"><Search size={28}/><h3>{query.trim() ? 'Sin resultados' : 'El catálogo está vacío'}</h3>
           <p>{query.trim() ? 'Probá con otro título o cambiá el modo de búsqueda.' : 'Agregá un libro para comenzar.'}</p></div>
