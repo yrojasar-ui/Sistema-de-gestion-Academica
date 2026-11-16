@@ -238,3 +238,50 @@ y 10/10 con [ASan/UBSan y detección de fugas](evidencias/estructuras/asan-ctest
 Los [códigos de retorno](evidencias/estructuras/resultados.tsv) y los
 [hashes de las fuentes](evidencias/estructuras/fuentes.sha256) corresponden a esa ejecución.
 Los resultados de GitHub Actions se consultan por separado en las comprobaciones del PR.
+
+## Prompt 3 — dominio y API local
+
+El 14 de noviembre de 2026 se partió de main con el PR #6 integrado en
+`594f221d3f1dd9d966d1a0700eba9c2869b58db3`. Su [CI en main](https://github.com/yrojasar-ui/Sistema-de-gestion-Academica/actions/runs/43607624786)
+tenía los tres jobs aprobados antes de comenzar.
+
+El código comprobado corresponde a `2e326855e09b2764ce11ee00576f421885d590aa`.
+El [contrato OpenAPI](openapi.json), los [diagramas y reglas de dominio](DOMINIO_API.md)
+y las [decisiones de confirmación local](DECISIONES.md#d12--dominio-con-catálogo-único-y-confirmación-local)
+describen esta implementación. Los libros mantienen su repositorio JSON y las
+entidades nuevas usan MemoryDomainRepository con exportación y reconstrucción explícitas.
+
+| Comprobación WSL | Resultado | Evidencia |
+|---|---|---|
+| Configuración y compilación C++17 Debug | Código 0 | [Build](evidencias/dominio/debug-build.log) |
+| CTest Debug | 12/12, 31,66 s | [CTest](evidencias/dominio/debug-ctest.log) |
+| Configuración y compilación ASan/UBSan | Código 0 | [Build instrumentado](evidencias/dominio/asan-build.log) |
+| CTest ASan/UBSan con fugas | 12/12, 228,97 s | [CTest instrumentado](evidencias/dominio/asan-ctest.log) |
+| Demo anterior de consola y reinicio | Código 0 | [Demo E2](evidencias/dominio/demo.log) |
+| Ana → Bruno → Carla por HTTP | Completado, índices y estados comprobados | [Demo de dominio](evidencias/dominio/demo-dominio.log) |
+| Escenarios adicionales por HTTP | Completados | [Aceptación](evidencias/dominio/contrato-http.log) |
+| Frontend Node 24.22.3, npm ci y npm run build | Código 0 | [Build frontend](evidencias/dominio/frontend.log) |
+| Contrato OpenAPI en WSL | 34 schemas y 411 respuestas HTTP reales validados | [Contrato](evidencias/dominio/openapi.log) |
+
+El recorrido rechaza el segundo préstamo sin alterar datos, JSON ni snapshots.
+La devolución de Ana conserva su historial, vacía el índice activo y aparta E1
+para Bruno. Su cancelación reasigna E1 a Carla. Carla recibe la copia y devuelve,
+dejando dos préstamos históricos, cero activos y E1 disponible.
+
+Se probaron usuarios inactivos, reservas duplicadas, dos copias prestadas a la
+vez, desactivación con reservas, cambio de vencimiento, título y temas, borrados
+con referencias, eliminación física sin historial, importaciones incompatibles,
+calendario, límite de exportación y fallos de confirmación. La prueba C++ inyecta fallos de repositorio
+en devolución, cancelación, renovación y escritura de libros y contrasta datos
+e índices con el estado anterior.
+
+Los comandos de CMake/CTest y sus códigos están en los logs y en
+[resultados.tsv](evidencias/dominio/resultados.tsv). Se ejecutó
+`bash scripts/verificar_e2a.sh build/prompt3/2e32685` y
+`bash scripts/demo_biblioteca.sh`. El [entorno](evidencias/dominio/entorno.log)
+y los [hashes de las fuentes](evidencias/dominio/fuentes.sha256) identifican el código probado.
+Los resultados del runner de GitHub se registran por separado en el PR.
+
+Quedan pendientes los adaptadores MongoDB de entidades nuevas y sus garantías
+de recuperación, el publicador/worker RabbitMQ, autenticación y vistas del
+dominio. Los avisos observados son registros pendientes en memoria.

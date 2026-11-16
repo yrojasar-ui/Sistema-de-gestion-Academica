@@ -12,6 +12,8 @@ class ColaReservas {
 public:
     explicit ColaReservas(std::string idLibro);
     ~ColaReservas();
+    ColaReservas(const ColaReservas& otra);
+    ColaReservas& operator=(const ColaReservas&) = delete;
     bool encolar(std::string idReserva, std::uint64_t llegada);
     std::optional<std::string> frente() const;
     std::optional<std::string> desencolar();

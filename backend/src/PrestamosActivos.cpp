@@ -3,6 +3,16 @@
 #include <stdexcept>
 
 namespace biblioteca {
+PrestamosActivos::PrestamosActivos(const PrestamosActivos& otro) : cantidad_(otro.cantidad_) {
+    auto copiar = [&](auto& visitar, const Nodo* origen, Nodo* padre) -> Rama {
+        if (!origen) return {};
+        auto nodo = std::make_unique<Nodo>(Nodo{origen->clave, origen->rojo, padre, {}, {}});
+        nodo->izq = visitar(visitar, origen->izq.get(), nodo.get());
+        nodo->der = visitar(visitar, origen->der.get(), nodo.get());
+        return nodo;
+    };
+    raiz_ = copiar(copiar, otro.raiz_.get(), nullptr);
+}
 bool PrestamosActivos::rojo(const Rama& rama) { return rama && rama->rojo; }
 
 void PrestamosActivos::rotarIzq(Rama& rama) {

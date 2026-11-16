@@ -16,6 +16,8 @@ public:
     };
     // Orden m = máximo m hijos internos y m-1 entradas por hoja; 3 <= m <= 128.
     explicit BPlusTree(std::size_t order = 4);
+    BPlusTree(const BPlusTree& other);
+    BPlusTree& operator=(const BPlusTree&) = delete;
     bool insert(const Libro& book);
     bool erase(const BookKey& key);
     std::optional<Libro> find(const BookKey& key) const;

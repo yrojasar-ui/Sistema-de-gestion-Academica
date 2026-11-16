@@ -266,9 +266,31 @@ Desde la raíz, con el build Debug compilado, se pueden ver los ejemplos y repet
 ctest --test-dir build/debug -V -R '^(rojo_negro|hash_extensible|grafo_temas|fifo_reservas|snapshot_bplus)$'
 ```
 
+## Dominio y API de biblioteca
+
+La API permite administrar usuarios y ejemplares, prestar, devolver, renovar y
+gestionar reservas. La edición de libros actualiza título en B+ y temas en el
+grafo. El [contrato OpenAPI](docs/openapi.json) y la [guía de dominio con diagramas](docs/DOMINIO_API.md)
+detallan los endpoints, estados, persistencia y límites.
+
+Los libros se guardan en el JSON de trabajo. Las entidades nuevas viven en
+memoria durante el proceso. Para recuperarlas tras reiniciar, exportá
+`GET /api/dominio` y restaurá ese documento mediante `PUT /api/dominio`
+sobre el catálogo correspondiente. Los avisos quedan pendientes para la futura
+publicación por eventos. La administración local funciona sin autenticación.
+
+Para repetir Ana → Bruno → Carla desde la raíz en WSL, una vez compilado el backend:
+
+```bash
+bash scripts/demo_biblioteca.sh
+```
+
+El script arranca una API propia con datos temporales, verifica el recorrido,
+exporta y reconstruye los turnos tras reiniciar y limpia sus archivos.
+
 ## Qué queda pendiente
 
-El informe E2-C se integró en `main`. La edición de títulos en modo JSON es opcional. Para el proyecto final quedan la integración con préstamos y reservas, las demás vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
+El informe E2-C se integró en `main`. Para el proyecto final quedan la persistencia MongoDB de las entidades nuevas, sus vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;

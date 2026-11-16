@@ -10,6 +10,23 @@ namespace biblioteca {
 BPlusTree::BPlusTree(std::size_t order) : order_(order), root_(std::make_unique<Node>(true)) {
     if (order < 3 || order > 128) throw std::invalid_argument("Orden B+ debe estar entre 3 y 128");
 }
+BPlusTree::BPlusTree(const BPlusTree& other) : order_(other.order_), size_(other.size_), stats_(other.stats_) {
+    Node* previous = nullptr;
+    auto clone = [&](auto& recurse, const Node* source, Node* parent) -> std::unique_ptr<Node> {
+        auto node = std::make_unique<Node>(source->leaf);
+        node->parent = parent;
+        node->entries = source->entries;
+        node->keys = source->keys;
+        if (source->leaf) {
+            node->prev = previous;
+            if (previous) previous->next = node.get();
+            previous = node.get();
+        }
+        for (const auto& child : source->children) node->children.push_back(recurse(recurse, child.get(), node.get()));
+        return node;
+    };
+    root_ = clone(clone, other.root_.get(), nullptr);
+}
 void BPlusTree::swap(BPlusTree& other) noexcept {
     using std::swap;
     swap(order_, other.order_); swap(size_, other.size_);

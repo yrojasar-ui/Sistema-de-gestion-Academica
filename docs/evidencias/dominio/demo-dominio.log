@@ -1,0 +1,8 @@
+A. Ana recibe E1; un préstamo activo en el Rojo-Negro.
+B. Bruno reserva con turno 1 y Carla con turno 2.
+C. Segundo préstamo rechazado con 409; datos, archivo e índices intactos.
+D. Ana devuelve; historial conservado, RN vacío y E1 apartada para Bruno.
+E. Bruno cancela; E1 queda apartada para Carla.
+F. Carla recibe y devuelve; dos préstamos históricos y E1 disponible.
+G. Estados, referencias, hash, Rojo-Negro y FIFO comprobados tras cada operación.
+OK solicitudes HTTP=119; datos temporales; avisos pendientes en memoria.

@@ -126,3 +126,27 @@ El B+ ofrece `snapshot(claveOpcional)`. Enumera los mismos nodos que la vista
 textual y exporta claves, hijos y ambos enlaces entre hojas. La búsqueda opcional
 registra el descenso real hasta la hoja. Los IDs numéricos del B+ valen dentro
 de una captura. Todos los métodos `snapshot()` devuelven texto JSON.
+
+## D12 — dominio con catálogo único y confirmación local
+
+LibraryService comparte el CatalogService que sirve al catálogo web. Los libros
+persisten con JsonBookRepository. Los registros del dominio se almacenan mediante
+IDomainRepository en MemoryDomainRepository. Las consultas de usuarios por ID,
+activos por vencimiento, catálogo y relaciones utilizan sus estructuras propias.
+Los vectores contienen registros e historial y las tablas auxiliares ubican
+colas por libro. Los recorridos académicos se mantienen en los índices.
+
+Para confirmar una mutación se preparan copias de los registros y de los nodos
+reales, se aplican los algoritmos y se validan las referencias antes de guardar.
+El repositorio local garantiza reemplazo completo o excepción conservando el
+estado previo. El nuevo estado visible se publica con swap. La edición de libros
+prepara B+ y grafo y confirma el JSON antes de sustituir el estado visible.
+Este mecanismo añade coste de copia y validación a cada operación.
+
+La [guía del dominio](DOMINIO_API.md) define transiciones, política de varias
+copias, retirada, desactivación, renovación, recuperación y límites de esta fase.
+La secuencia de llegada la asigna el servicio y viaja en la exportación del
+dominio. El endpoint administrativo de reconstrucción valida referencias y
+restaura ese orden. Los avisos se preparan pendientes; IEventPublisher define
+la futura frontera de publicación. La autorización por roles y el transporte
+de mensajes requieren sus fases de implementación.
