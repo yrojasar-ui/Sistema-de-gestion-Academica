@@ -89,12 +89,14 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     s.Get("/api/libros", [&](const Request& req, Response& res) {
         parametros(req, {"titulo","prefijo","limite","desplazamiento"});
         if (req.has_param("titulo") && req.has_param("prefijo")) throw std::invalid_argument("Use título o prefijo");
-        auto filas = catalogo.all();
-        for (const auto* tipo : {"titulo","prefijo"}) {
-            if (!req.has_param(tipo)) continue;
-            const auto valor = req.get_param_value(tipo);
+        std::vector<Libro> filas;
+        if (req.has_param("titulo") || req.has_param("prefijo")) {
+            const bool porTitulo = req.has_param("titulo");
+            const auto valor = req.get_param_value(porTitulo ? "titulo" : "prefijo");
             if (valor.size() > 512 || normalizeTitle(valor).empty()) throw std::invalid_argument("Consulta vacía o demasiado larga");
-            filas = std::string(tipo) == "titulo" ? catalogo.byTitle(valor) : catalogo.byPrefix(valor);
+            filas = porTitulo ? catalogo.byTitle(valor) : catalogo.byPrefix(valor);
+        } else {
+            filas = catalogo.all();
         }
         pagina(res, req, filas, "libros");
     });
