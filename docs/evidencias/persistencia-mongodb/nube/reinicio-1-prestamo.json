@@ -1,0 +1,166 @@
+{
+  "dominio": {
+    "avisos": [],
+    "ejemplares": [
+      {
+        "estado": "prestado",
+        "idEjemplar": "P4-E",
+        "idLibro": "P4-L"
+      }
+    ],
+    "prestamos": [
+      {
+        "devolucion": "",
+        "idEjemplar": "P4-E",
+        "idPrestamo": "P4-PA",
+        "idUsuario": "Ana",
+        "inicio": "2026-11-16T04:04:18Z",
+        "vencimiento": "2026-11-30"
+      }
+    ],
+    "reservas": [
+      {
+        "creada": "2026-11-16T04:04:19Z",
+        "estado": "pendiente",
+        "idEjemplar": "",
+        "idLibro": "P4-L",
+        "idReserva": "P4-R-Bruno",
+        "idUsuario": "Bruno",
+        "llegada": 1
+      },
+      {
+        "creada": "2026-11-16T04:04:21Z",
+        "estado": "pendiente",
+        "idEjemplar": "",
+        "idLibro": "P4-L",
+        "idReserva": "P4-R-Carla",
+        "idUsuario": "Carla",
+        "llegada": 2
+      }
+    ],
+    "siguienteLlegada": 3,
+    "usuarios": [
+      {
+        "activo": true,
+        "idUsuario": "Ana",
+        "nombre": "Ana sintética"
+      },
+      {
+        "activo": true,
+        "idUsuario": "Bruno",
+        "nombre": "Bruno sintética"
+      },
+      {
+        "activo": true,
+        "idUsuario": "Carla",
+        "nombre": "Carla sintética"
+      }
+    ],
+    "version": 1
+  },
+  "estructuras": {
+    "bplus": {
+      "cantidad": 2,
+      "nodos": [
+        {
+          "anterior": null,
+          "claves": [
+            [
+              "geografia del campus",
+              "P4-L"
+            ],
+            [
+              "plano sintetico",
+              "P4-REL"
+            ]
+          ],
+          "hijos": [],
+          "hoja": true,
+          "id": 0,
+          "siguiente": null
+        }
+      ],
+      "orden": 4,
+      "raiz": 0
+    },
+    "grafo": {
+      "aristas": 0,
+      "vertices": [
+        {
+          "id": "P4-L",
+          "temas": [
+            "geografia"
+          ],
+          "vecinos": []
+        },
+        {
+          "id": "P4-REL",
+          "temas": [
+            "campus"
+          ],
+          "vecinos": []
+        }
+      ]
+    },
+    "prestamos": {
+      "alturaNegra": 2,
+      "cantidad": 1,
+      "nodos": [
+        {
+          "clave": [
+            "2026-11-30",
+            "P4-PA"
+          ],
+          "color": "negro",
+          "der": null,
+          "izq": null,
+          "padre": null
+        }
+      ],
+      "raiz": [
+        "2026-11-30",
+        "P4-PA"
+      ]
+    },
+    "reservas": [
+      {
+        "cantidad": 2,
+        "fin": "P4-R-Carla",
+        "idLibro": "P4-L",
+        "inicio": "P4-R-Bruno",
+        "nodos": [
+          {
+            "id": "P4-R-Bruno",
+            "llegada": 1,
+            "siguiente": "P4-R-Carla"
+          },
+          {
+            "id": "P4-R-Carla",
+            "llegada": 2,
+            "siguiente": null
+          }
+        ]
+      }
+    ],
+    "usuarios": {
+      "capacidad": 4,
+      "cubetas": [
+        {
+          "id": 0,
+          "ocupacion": 3,
+          "profundidadLocal": 0,
+          "usuarios": [
+            "Ana",
+            "Bruno",
+            "Carla"
+          ]
+        }
+      ],
+      "directorio": [
+        0
+      ],
+      "profundidadGlobal": 0,
+      "profundidadMaxima": 12
+    }
+  }
+}

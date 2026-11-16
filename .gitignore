@@ -8,3 +8,6 @@
 /frontend/node_modules/
 /frontend/dist/
 /data/catalogo_web.json.lock
+
+# Diario durable y bloqueo del modo Mongo (conservar al reiniciar).
+/data/mongo-runtime/

@@ -1,13 +1,19 @@
 #pragma once
 #include "biblioteca/Dominio.hpp"
 #include <memory>
+#include "biblioteca/Persistence.hpp"
 
 namespace biblioteca {
-// load entrega una copia. replace debe confirmar todo o lanzar conservando el estado.
-// Un futuro adaptador remoto debe declarar y resolver escrituras de resultado incierto.
+// replace retorna solo con persistencia confirmada. El servicio publica después.
+// PersistenceError distingue rechazo de resultado incierto; este último bloquea
+// nuevas escrituras hasta reconciliar, sin afirmar que el remoto quedó intacto.
 class IDomainRepository {
 public:
     virtual ~IDomainRepository() = default;
+    virtual bool ready() const { return true; }
+    virtual std::string storage() const { return "memoria"; }
+    virtual std::string recovery() const { return "validado"; }
+    virtual std::string outcome() const { return "confirmado"; }
     virtual EstadoBiblioteca load() const = 0;
     virtual void replace(const EstadoBiblioteca& estado) = 0;
 };

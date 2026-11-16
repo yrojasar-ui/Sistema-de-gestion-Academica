@@ -6,6 +6,49 @@ Universidad CENFOTEC. La pantalla React consulta una API C++17 local. El mismo
 borran las obras. El panel del índice muestra los nodos y las hojas enlazadas
 emitidos por C++.
 
+## Persistencia completa en MongoDB (Prompt 4)
+
+La API puede recuperar automáticamente libros, usuarios, ejemplares, préstamos,
+reservas, secuencias y avisos pendientes desde una instantánea remota confirmada.
+Conserva el modo local JSON/memoria. No hay cambio silencioso de almacenamiento.
+La consola y el informe del segundo avance se conservan.
+
+Desde la raíz en WSL, con libcurl de desarrollo instalada:
+
+~~~bash
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DENABLE_MONGO=ON
+cmake --build build/debug -j2
+mkdir -p data/mongo-runtime
+./build/debug/catalogo_api --storage mongo \
+  --endpoint https://paginas-web-cr.com/Api/apis/mongodb.php \
+  --collection biblioteca_yoel_final_v1 \
+  --mongo-state data/mongo-runtime/biblioteca_yoel_final_v1 --port 8080 --initialize
+~~~
+
+La inicialización explícita crea una biblioteca vacía únicamente si no existe.
+Para reiniciar, repetí el comando **sin `--initialize`**, conservando colección
+y ruta `--mongo-state`. No borrar su diario pendiente ni utilizar una colección
+con libros individuales de E2-B. La segunda terminal y URL del frontend son las
+mismas que en la sección siguiente.
+
+~~~bash
+# Demo real: colección sintética nueva, cuatro reinicios y limpieza propia.
+python3 scripts/demo_mongodb.py --binary build/debug/catalogo_api \
+  --evidence "build/demo-mongodb-$(date +%Y%m%d-%H%M%S)"
+# Salud del proceso y disponibilidad de la biblioteca:
+curl -sS http://127.0.0.1:8080/healthz
+curl -sS http://127.0.0.1:8080/readyz
+# Solo relectura/reconstrucción; nunca reenvía la escritura incierta:
+curl -sS -X POST http://127.0.0.1:8080/api/recuperacion \
+  -H 'Content-Type: application/json' --data '{}'
+~~~
+
+[Esquema, confirmaciones, recuperación y límites](docs/PERSISTENCIA_MONGODB.md).
+[Evidencias reales y fixtures separados](docs/evidencias/persistencia-mongodb/README.md).
+Solo un escritor y datos sintéticos. El futuro worker deberá coordinar sus cambios
+de avisos mediante el único escritor; no debe sobrescribir el agregado directamente.
+RabbitMQ, autenticación y despliegue siguen pendientes. CI no ejecuta la demo cloud.
+
 ## Arrancar el catálogo web en dos terminales WSL
 
 **Terminal 1 · API C++**. Requiere G++, CMake y Make. Desde la raíz se puede
@@ -15,7 +58,7 @@ compilar únicamente el servidor de la demo, con el repositorio JSON.
 cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
 cmake -S . -B build/catalogo-web -DCMAKE_BUILD_TYPE=Debug -DENABLE_MONGO=OFF -DBUILD_TESTING=OFF
 cmake --build build/catalogo-web --target catalogo_api -j2
-./build/catalogo-web/catalogo_api
+./build/catalogo-web/catalogo_api --storage local
 ~~~
 
 El servidor escucha en `127.0.0.1:8080`. Al primer arranque crea

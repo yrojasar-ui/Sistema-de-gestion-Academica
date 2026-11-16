@@ -1,6 +1,6 @@
 # Matriz de requisitos
 
-La matriz cubre el segundo avance, el catálogo web, su integración continua y el dominio local integrado. Las pruebas de E2-A se conservan en
+La matriz cubre el segundo avance, el catálogo web, su integración continua y el dominio integrado con modo Mongo explícito. Las pruebas de E2-A se conservan en
 `evidencias/e2a/ejecucion-final/`. Los intercambios con la API docente y la
 regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificación de E2-C están en `evidencias/entregable2/`.
 
@@ -21,8 +21,13 @@ regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificaci
 | C01 | E2-C | Informe breve, capturas reales y guion de demostración | [PDF de 3 páginas](Informe_Entregable2_Biblioteca.pdf) y [fuente HTML](Informe_Entregable2_Biblioteca.html) | [Capturas y logs](evidencias/entregable2/) y [guion de 4 minutos](evidencias/entregable2/guion.md) | Preparado y verificado para revisión |
 | CAT-WEB | Final, catálogo local | Alta, consulta por título/prefijo, borrado, reinicio y visualización del B+ | React/TypeScript/Vite → API C++ → CatalogService y JSON | [Recorrido en Chrome](evidencias/catalogo-web/navegador.txt), capturas y CTest | Verificado localmente |
 | F01 | Final | Rojo-Negro, hash extensible, grafo y FIFO propios. Snapshots de las cinco estructuras | [Diseño y operaciones](DECISIONES.md#d11--índices-en-memoria-para-el-servicio-de-biblioteca) | [Resultados de CTest y snapshots](evidencias/estructuras/) | Integrado en el dominio local F02 |
-| F02 | Final | Ejemplares, usuarios, préstamos, reservas y avisos con integridad | [LibraryService y contrato](DOMINIO_API.md) | biblioteca_api, dominio_repositorios y [demo](../scripts/demo_biblioteca.sh) | Implementado localmente con repositorio en memoria |
-| F03 | Final | API/worker/colas reales y persistencia cloud | API de dominio e IEventPublisher preparados | [OpenAPI](openapi.json) y pruebas HTTP locales | API local verificada. Worker, RabbitMQ y persistencia de entidades nuevas en nube pendientes |
+| F02 | Final | Ejemplares, usuarios, préstamos, reservas y avisos con integridad | [LibraryService y contrato](DOMINIO_API.md) | biblioteca_api, dominio_repositorios y [demo](../scripts/demo_biblioteca.sh) | Implementado; modo local en memoria y modo Mongo con recuperación automática |
+| F03 | Final | API/worker/colas reales y persistencia cloud | API de dominio y MongoLibraryRepository; IEventPublisher preparado | [Contrato](PERSISTENCIA_MONGODB.md), [nube real y fixtures](evidencias/persistencia-mongodb/README.md) | Persistencia completa verificada con reinicios en nube. Worker y RabbitMQ pendientes |
+| P4-01 | Final | Carga íntegra, índices, historia, secuencias y avisos tras reinicio | Agregado esquema 1; CatalogService + LibraryService candidatos | [Cuatro reinicios reales](evidencias/persistencia-mongodb/nube/nube.log), snapshots JSON | Verificado en nube sintética |
+| P4-02 | Final | Confirmar antes de publicar; rechazo/incertidumbre; no POST ciego | Diario durable, GET antes/después, recuperación y bloqueo HTTP | mongo_biblioteca_recuperacion: timeout aplicado/tardío, HTML, lectura fallida, parcial, POST incierto | Fixtures deterministas, sin inducir fallos en nube |
+| P4-03 | Final | Datos incompatibles no publican biblioteca vacía | Validación completa y /readyz 503; /healthz 200 | Esquema, referencias, duplicados, lectura incompleta, HTTP y conservación del estado | Verificado con fixtures |
+| P4-04 | Final | Contrato real antes de elegir almacenamiento | Campo estado único con revisión; escritor único | [Sondeos](evidencias/persistencia-mongodb/capacidades.log), [filtro anidado](evidencias/persistencia-mongodb/filtro-anidado.log) | PUT condicionado observado; ID de negocio duplicable. Sin garantías de transacción/multiinstancia |
+| P4-05 | Final | Modo local, consola, web y CI aislada | JSON/memoria explícitos; adaptador E2-B conservado | Regresión Debug/ASan, frontend y Actions del PR | Resultados detallados en evidencia de fase |
 | F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Autenticación y despliegue pendientes |
 | F05 | Final | Informe técnico, presentación y defensa | Sin iniciar | Sin artefactos | Pendiente |
 

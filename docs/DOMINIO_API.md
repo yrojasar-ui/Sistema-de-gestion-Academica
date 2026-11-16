@@ -1,9 +1,13 @@
-# Dominio y API local
+# Dominio y API de Biblioteca
 
 La API combina el catálogo existente con usuarios, copias físicas, préstamos,
 reservas y avisos. El contrato de solicitudes, respuestas y paginación está en
 [OpenAPI 3.1](openapi.json). El proceso escucha en `127.0.0.1:8080`.
 La pantalla del catálogo continúa usando `/api/libros` y la vista textual del B+.
+
+El modo `--storage mongo` persiste la biblioteca completa y la reconstruye al
+reiniciar. Ver [configuración y recuperación](PERSISTENCIA_MONGODB.md).
+Las instrucciones de demo de esta sección corresponden al modo local JSON/memoria.
 
 ## Ejecutar y demostrar
 
@@ -24,7 +28,7 @@ Los archivos y procesos de demostración se limpian al terminar.
 Para usar la API manualmente:
 
 ```bash
-./build/debug/catalogo_api --initial data/libros_iniciales.json --working data/catalogo_web.json --port 8080
+./build/debug/catalogo_api --storage local --initial data/libros_iniciales.json --working data/catalogo_web.json --port 8080
 ```
 
 CORS permite los orígenes locales de Vite en el puerto 5173.
@@ -86,7 +90,7 @@ Las operaciones de préstamo y reserva históricas se conservan.
 web como `LibraryService` lo consultan. `JsonBookRepository` conserva el
 archivo de trabajo y la protección del catálogo inicial.
 
-`MemoryDomainRepository` guarda usuarios, ejemplares, préstamos, reservas,
+**En modo local**, `MemoryDomainRepository` guarda usuarios, ejemplares, préstamos, reservas,
 avisos y la próxima secuencia durante la vida del proceso. Reiniciar vacía
 esas entidades. Para conservar una sesión, exportar `GET /api/dominio`,
 mantener el JSON de libros correspondiente y restaurar con `PUT /api/dominio`.
@@ -97,10 +101,12 @@ Las canceladas o ya atendidas no necesitan reconstruir un turno en espera.
 
 Cada mutación de dominio copia sus registros y nodos reales, aplica los
 algoritmos de las estructuras y verifica invariantes antes de llamar al
-repositorio. `replace` confirma el estado completo o conserva el anterior al
-fallar. Después se intercambia el estado visible con una operación sin asignación.
+repositorio. `replace` retorna solo con confirmación. En Mongo un error puede ser
+rechazado o incierto; el resultado incierto bloquea y conserva el diario para
+relectura explícita, sin afirmar que el remoto no cambió. Después de confirmar
+se intercambia el estado visible con una operación sin asignación.
 Un rechazo conserva también la topología de los índices.
-La edición de libros prepara B+ y grafo y guarda el JSON antes de publicarlos.
+La edición de libros prepara B+ y grafo y confirma la instantánea JSON o Mongo antes de publicarlos.
 El grafo se deriva del catálogo y se reconstruye al arrancar.
 
 El servidor usa un trabajador para serializar solicitudes. El bloqueo existente
@@ -110,20 +116,19 @@ La copia y validación completa tienen coste adicional al recorrido del índice.
 La comprobación del grafo compara los temas de cada par de libros.
 Esta implementación prioriza consistencia y comprobación en la demo local.
 
-## Avisos y siguiente persistencia
+## Persistencia Mongo y avisos
 
-`IEventPublisher::publish(const Aviso&)` define la frontera de publicación
-para el futuro adaptador. El servicio prepara registros de aviso pendientes
-consultables mediante `/api/avisos`. RabbitMQ, confirmaciones, reintentos,
-deduplicación y worker quedan pendientes.
+`MongoLibraryRepository` implementa las interfaces de libros y dominio con un
+único documento versionado que contiene ambos. Carga, valida y reconstruye todos
+los índices al arrancar; conserva secuencias, historia e IDs de avisos. No se
+requiere exportación/importación. Reutiliza el transporte HTTP y protocolo del
+adaptador E2-B. [Diseño, capacidades reales y recuperación](PERSISTENCIA_MONGODB.md).
 
-`IDomainRepository` define carga y reemplazo íntegro de entidades. Para MongoDB
-falta verificar el contrato de sus colecciones, implementar los adaptadores de
-las entidades nuevas y resolver confirmaciones parciales o inciertas antes de
-cumplir esa interfaz. También faltan la persistencia de la secuencia, recuperación
-de índices y avisos tras reinicio, y pruebas con datos sintéticos propios.
-Se reutilizará el adaptador de libros existente. Las garantías de unicidad,
-concurrencia y transacción de la API docente requieren comprobación real.
+`IEventPublisher::publish(const Aviso&)` sigue siendo la frontera preparada.
+Los avisos se persisten pendientes en el mismo agregado. RabbitMQ, publicación,
+ack y worker siguen pendientes. El futuro worker deberá canalizar cambios por
+el único escritor o usar un registro separado con contrato verificado; no puede
+escribir avisos directamente en paralelo a reemplazos de esta instantánea.
 
 ## Diagramas editables
 
@@ -196,7 +201,13 @@ flowchart TD
     D --> G[GrafoTemas]
     D --> F[ColaReservas por libro]
     D --> I[IDomainRepository]
-    I --> M[MemoryDomainRepository]
+    I --> M[MemoryDomainRepository local]
+    I --> MR[MongoLibraryRepository]
+    C --> MR
+    MR --> P[Protocolo compartido con MongoApiBookRepository]
+    P --> T[curlRequest existente]
+    T --> N[API docente: un agregado libros y dominio]
+    MR --> JRN[Diario local de intención]
     D --> A[Avisos pendientes]
     A -. fase posterior .-> E[IEventPublisher]
 ```
@@ -208,7 +219,7 @@ sequenceDiagram
     participant Servicio as LibraryService
     participant RN as Rojo-Negro
     participant FIFO
-    participant Repo as Repositorio local
+    participant Repo as Repositorio local o Mongo confirmado
     Cliente->>HTTP: devolver préstamo de Ana
     HTTP->>Servicio: devolver(P-Ana)
     Servicio->>Servicio: preparar copia del estado y cerrar préstamo
@@ -228,4 +239,34 @@ sequenceDiagram
     Servicio->>Repo: replace(estado con E1 para Carla)
     Repo-->>Servicio: confirmado
     Servicio-->>Cliente: 200
+```
+
+El retorno confirmado del diagrama incluye GET de verificación en modo Mongo.
+Si queda incierto, no se ejecuta el intercambio ni se responde 200: se devuelve
+503, se bloquea la biblioteca y se ofrece recuperación por lectura.
+
+```mermaid
+classDiagram
+    IBookRepository <|.. JsonBookRepository
+    IBookRepository <|.. MongoLibraryRepository
+    IDomainRepository <|.. MemoryDomainRepository
+    IDomainRepository <|.. MongoLibraryRepository
+    CatalogService --> IBookRepository
+    LibraryService --> CatalogService
+    LibraryService --> IDomainRepository
+    MongoLibraryRepository --> MongoApiProtocol
+    MongoApiBookRepository --> MongoApiProtocol
+    MongoApiProtocol --> HttpTransport
+    MongoLibraryRepository --> PersistenceError
+    class MongoLibraryRepository {
+        refresh(initialize)
+        accept()
+        load()
+        save(libros)
+        replace(dominio)
+        ready()
+    }
+    class PersistenceError {
+        WriteOutcome outcome
+    }
 ```

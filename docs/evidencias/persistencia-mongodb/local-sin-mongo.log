@@ -1,0 +1,34 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/catalogo-web
+[  9%] Built target libro
+[ 14%] Building CXX object CMakeFiles/estructuras.dir/backend/src/PrestamosActivos.cpp.o
+[ 19%] Building CXX object CMakeFiles/bplus.dir/backend/src/BPlusTree.cpp.o
+[ 23%] Building CXX object CMakeFiles/estructuras.dir/backend/src/IndiceUsuarios.cpp.o
+[ 28%] Linking CXX static library libbplus.a
+[ 28%] Built target bplus
+[ 38%] Built target json_repository
+[ 42%] Building CXX object CMakeFiles/catalog_service.dir/backend/src/CatalogService.cpp.o
+[ 47%] Linking CXX static library libcatalog_service.a
+[ 47%] Built target catalog_service
+[ 52%] Building CXX object CMakeFiles/estructuras.dir/backend/src/GrafoTemas.cpp.o
+[ 57%] Building CXX object CMakeFiles/estructuras.dir/backend/src/ColaReservas.cpp.o
+[ 61%] Linking CXX static library libestructuras.a
+[ 61%] Built target estructuras
+[ 71%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryService.cpp.o
+[ 71%] Building CXX object CMakeFiles/library_service.dir/backend/src/Dominio.cpp.o
+[ 76%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryValidation.cpp.o
+[ 80%] Linking CXX static library liblibrary_service.a
+[ 80%] Built target library_service
+[ 85%] Building CXX object CMakeFiles/http_controller.dir/backend/src/HttpController.cpp.o
+[ 90%] Linking CXX static library libhttp_controller.a
+[ 90%] Built target http_controller
+[ 95%] Building CXX object CMakeFiles/catalogo_api.dir/backend/apps/catalogo_api.cpp.o
+[100%] Linking CXX executable catalogo_api
+[100%] Built target catalogo_api
+API de catálogo en http://127.0.0.1:59541 · local · /tmp/tmp7yfztcgc/catalogo.json
+Error: El archivo de trabajo ya está en uso por otra API
+API de catálogo en http://127.0.0.1:59541 · local · /tmp/tmp7yfztcgc/catalogo.json
+API de catálogo en http://127.0.0.1:59541 · local · /tmp/tmp7yfztcgc/catalogo.json
+Error: Carga rechazada [/tmp/tmp7yfztcgc/catalogo.json]: [json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal
+API HTTP: CRUD, errores, recuperación, reinicio y catálogo vacío comprobados.

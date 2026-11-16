@@ -285,3 +285,65 @@ Los resultados del runner de GitHub se registran por separado en el PR.
 Quedan pendientes los adaptadores MongoDB de entidades nuevas y sus garantías
 de recuperación, el publicador/worker RabbitMQ, autenticación y vistas del
 dominio. Los avisos observados son registros pendientes en memoria.
+
+## Prompt 4 — persistencia Mongo completa
+
+El 15 de noviembre de 2026 (America/Guatemala) se partió de main con PR #7
+integrado, `a0cec44`, y se verificó su
+[CI correcto](https://github.com/yrojasar-ui/Sistema-de-gestion-Academica/actions/runs/43798520621).
+El árbol estaba limpio; rama de trabajo `feat/persistencia-mongodb`.
+Se conserva `entregable-2` en `0cb6d3156b802fd27b66e5e7052bd7ab20986d87`.
+
+`MongoLibraryRepository` almacena libros y dominio en un agregado versionado.
+Reutiliza el transporte y protocolo del adaptador E2-B. El modo Mongo carga y
+valida completamente antes de habilitar operaciones, reconstruye los cinco
+índices y conserva historia, secuencias y avisos sin importación manual.
+El modo local JSON/memoria, la consola y la pantalla web se mantienen.
+
+Cada escritura se registra en un diario durable, se envía una sola vez y se
+confirma por GET antes de publicar en memoria. Se distinguen confirmación,
+rechazo e incertidumbre. Incertidumbre o carga inválida bloquean la biblioteca;
+healthz sigue informando el proceso y readyz informa almacenamiento y recuperación.
+El endpoint de recuperación solo relee/reconstruye. Un diario pendiente ilegible
+también impide inicializar y no se presenta como rechazo sin cambios.
+
+### Verificación real y alcance
+
+[Índice y logs de la fase](evidencias/persistencia-mongodb/README.md).
+
+- **Nube real:** GET inicial, objetos anidados, filtros de ID/revisión, un PUT
+  ganador en competencia acotada y aceptación de POST duplicados. Se limpiaron
+  solo ObjectId sintéticos creados. No acredita multiinstancia ni transacciones.
+- **Historia real:** primer reinicio conserva préstamo renovado de Ana, copia
+  prestada y turnos Bruno 1 → Carla 2; segundo conserva apartado Bruno y aviso
+  pendiente; tercero conserva historial de Ana/Carla, copia disponible y cuatro
+  avisos sin duplicados; cuarto conserva nueva reserva turno 3, siguiente 4 y
+  aviso AV-5. Edición de título/temas comprobada por B+ y grafo tras reinicio.
+  La demo final limpió su documento y confirmó GET vacío.
+- **WSL:** regresión Debug 13/13 (27,25 s), ASan/UBSan 13/13 (195,45 s),
+  consola y frontend correctos. Tras la revisión final de composición/diario
+  se repitieron las cuatro pruebas API/Mongo en ambos modos instrumentales.
+  También se compiló sin Mongo y se comprobó el recorrido HTTP local.
+- **Contrato:** 411 respuestas locales, 75 respuestas del modo Mongo y cuatro
+  snapshots de reinicio conformes con OpenAPI / JSON Schema.
+- **Fixtures:** lecturas fallidas, timeouts aplicados y tardíos, HTML, rechazo,
+  parcial, datos incompatibles, duplicados, truncamiento detectable y diario
+  incierto a través de reinicio. Se bloquea sin publicar estado parcial y se
+  recupera por GET cuando el remoto coincide exactamente. No se indujeron
+  fallos en el servidor compartido.
+
+GitHub Actions ejecuta otra verificación del HEAD publicado: el enlace y estado
+remoto se consignan en el PR, separados de estos resultados WSL.
+CI continúa aislado de la API docente.
+
+Límites pendientes: autenticación y aislamiento externos, unicidad servidor,
+paginación, transacciones, tamaño remoto y soporte multiinstancia no garantizados.
+La cota propia es 1 MiB por agregado. Un parcial/resultado irresoluble exige
+intervención del operador; no se descarta el diario para asumir rechazo.
+El worker futuro debe coordinar sus cambios por el escritor único o por un
+registro de entregas separado con contrato verificado; no puede sobrescribir
+avisos en el agregado directamente. RabbitMQ, entrega de avisos, autenticación,
+despliegue e informe final no se implementan en esta fase.
+
+[Diseño y recuperación](PERSISTENCIA_MONGODB.md), [API](openapi.json) y
+[diagramas](DOMINIO_API.md#diagramas-editables) actualizados.

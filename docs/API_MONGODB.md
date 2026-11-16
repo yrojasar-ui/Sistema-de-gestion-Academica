@@ -1,4 +1,10 @@
-# API MongoDB del catálogo
+# API MongoDB del catálogo y biblioteca
+
+El Prompt 4 añade el [agregado completo y recuperación](PERSISTENCIA_MONGODB.md)
+con [evidencias nuevas](evidencias/persistencia-mongodb/README.md).
+Comparte transporte y protocolo con el adaptador de catálogo descrito aquí.
+Las colecciones y el recorrido de consola E2-B se conservan separados.
+El esquema de libro individual siguiente no se usa para la biblioteca completa.
 
 El 10 de noviembre de 2026 se comprobó el CRUD en la colección `biblioteca_yoel_ed2_libros` desde Ubuntu en WSL. Las dos ejecuciones utilizaron libros sintéticos nuevos, cada uno con un `idLibro` generado para esa ejecución. La evidencia conserva los intercambios HTTP y la búsqueda desde otro proceso de consola. [Transcripción sanitizada](evidencias/e2b/nube.txt)
 

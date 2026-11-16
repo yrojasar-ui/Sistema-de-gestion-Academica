@@ -19,7 +19,8 @@ public:
     void update(const Libro& book);
     bool erase(const std::string& id);
     void save();
-    // Unidad de escritura JSON: el estado visible cambia después del guardado.
+    // Unidad de escritura de instantáneas confirmadas: el estado visible cambia después del guardado.
+    void swapState(CatalogService& other) noexcept;
     void commit(const std::function<void(CatalogService&)>& operation);
     std::optional<Libro> find(const std::string& id) const;
     std::string snapshot() const { requireLoaded(); return tree_.snapshot(); }

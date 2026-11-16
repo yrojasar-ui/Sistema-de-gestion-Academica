@@ -6,7 +6,7 @@ Responder, comentar y documentar en español. Este proyecto no es File-X.
 ## Alcance autorizado
 
 El segundo avance y el catálogo web están integrados en main. La integración continua está activa.
-La fase actual integra el dominio y la API del Prompt 3 con las estructuras propias.
+La fase actual completa la persistencia MongoDB del Prompt 4 sobre el dominio y API integrados.
 Segundo avance el 16 de noviembre de 2026 y entrega final el 24 de noviembre de 2026.
 Trabajar en este repositorio e historial; inspeccionar y conservar archivos existentes.
 
@@ -30,7 +30,7 @@ Trabajar en este repositorio e historial; inspeccionar y conservar archivos exis
 - Final: solo usuarios activos reciben préstamos; máximo uno activo por ejemplar;
   una reserva pendiente por lector/libro, primera reserva válida; una copia prestada,
   apartada o retirada no está disponible. Reserva por libro, no por ejemplar.
-- Persistencia tras IBookRepository: JSON ahora; API MongoDB docente después,
+- Persistencia tras IBookRepository: modo local JSON y modo Mongo explícito,
   con contrato real comprobado. Distinguir local, mock y nube; sin fallback silencioso.
 - Final: React/TypeScript/Vite en Pages; API y worker C++; RabbitMQ como base local.
   Proveedor remoto por decidir. No imponer Firebase/Firestore/Cloud Run/Pub/Sub.

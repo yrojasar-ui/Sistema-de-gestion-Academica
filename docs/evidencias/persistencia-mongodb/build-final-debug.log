@@ -1,0 +1,27 @@
+[  3%] Built target libro
+[  7%] Built target bplus
+[ 17%] Built target estructuras
+[ 25%] Built target json_repository
+[ 25%] Built target catalog_service
+[ 33%] Built target library_service
+[ 41%] Built target mongo_repository
+[ 45%] Built target test_rojo_negro
+[ 49%] Built target test_hash_extensible
+[ 52%] Built target test_grafo_temas
+[ 56%] Built target test_fifo_reservas
+[ 64%] Built target test_snapshot_bplus
+[ 64%] Built target test_bplus
+[ 72%] Built target http_controller
+[ 72%] Built target console_ui
+[ 74%] Building CXX object CMakeFiles/mongo_library_repository.dir/backend/src/MongoLibraryRepository.cpp.o
+[ 78%] Built target test_dominio
+[ 82%] Built target test_mongo
+[ 86%] Built target test_catalog
+[ 90%] Built target biblioteca
+[ 92%] Linking CXX static library libmongo_library_repository.a
+[ 92%] Built target mongo_library_repository
+[ 94%] Building CXX object CMakeFiles/test_mongo_library.dir/backend/tests/test_mongo_library.cpp.o
+[ 96%] Linking CXX executable catalogo_api
+[ 98%] Built target catalogo_api
+[100%] Linking CXX executable test_mongo_library
+[100%] Built target test_mongo_library
