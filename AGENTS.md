@@ -6,7 +6,7 @@ Responder, comentar y documentar en español. Este proyecto no es File-X.
 ## Alcance autorizado
 
 El segundo avance y el catálogo web están integrados en main. La integración continua está activa.
-La fase actual completa la persistencia MongoDB del Prompt 4 sobre el dominio y API integrados.
+La persistencia MongoDB está integrada. La fase actual prepara el frontend para Pages, sin desplegar backend ni implementar worker.
 Segundo avance el 16 de noviembre de 2026 y entrega final el 24 de noviembre de 2026.
 Trabajar en este repositorio e historial; inspeccionar y conservar archivos existentes.
 

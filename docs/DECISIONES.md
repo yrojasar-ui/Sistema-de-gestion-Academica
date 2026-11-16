@@ -168,3 +168,18 @@ negativo. Ambos servicios se reconstruyen en candidatos antes del intercambio.
 La cota propia de 1 MiB, el escritor único y la intervención ante un resultado
 permanentemente indeterminado son límites explícitos. El worker futuro no puede
 escribir este agregado por su cuenta. [Contrato, comandos y límites](PERSISTENCIA_MONGODB.md).
+
+## D14 — Pages estático y origen de API explícito
+
+El frontend de producción usa la subruta del repositorio; desarrollo mantiene
+la raíz y proxy local. VITE_API_URL contiene únicamente un origen HTTPS público:
+el cliente agrega /api/. Sin variable hay un aviso de configuración pendiente
+y no se hacen solicitudes de catálogo. Una URL no vacía inválida detiene el
+build antes de incluirla en el bundle.
+
+pages.yml es reutilizable y solo lo invoca CI para push main después de pasar
+backend Debug/ASan y frontend. Ambos checkout/build usan el commit del evento.
+El artefacto contiene únicamente frontend/dist; deploy usa github-pages con
+Pages/OIDC y sin secretos del backend. Los PR no despliegan.
+La publicación efectiva, HTTPS/CORS remoto, autenticación y alojamiento C++/
+RabbitMQ quedan separados de esta preparación. [Manual](../README.md#frontend-en-github-pages).

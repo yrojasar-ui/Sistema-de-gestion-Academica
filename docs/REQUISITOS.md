@@ -28,10 +28,20 @@ regresión de E2-B se recogen en `evidencias/e2b/`. Las capturas y la verificaci
 | P4-03 | Final | Datos incompatibles no publican biblioteca vacía | Validación completa y /readyz 503; /healthz 200 | Esquema, referencias, duplicados, lectura incompleta, HTTP y conservación del estado | Verificado con fixtures |
 | P4-04 | Final | Contrato real antes de elegir almacenamiento | Campo estado único con revisión; escritor único | [Sondeos](evidencias/persistencia-mongodb/capacidades.log), [filtro anidado](evidencias/persistencia-mongodb/filtro-anidado.log) | PUT condicionado observado; ID de negocio duplicable. Sin garantías de transacción/multiinstancia |
 | P4-05 | Final | Modo local, consola, web y CI aislada | JSON/memoria explícitos; adaptador E2-B conservado | Regresión Debug/ASan, frontend y Actions del PR | Resultados detallados en evidencia de fase |
-| F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Autenticación y despliegue pendientes |
+| F04 | Final | React, autenticación real, Git/CI y despliegue | Pantalla del catálogo y [flujo de CI](../.github/workflows/ci.yml) | CAT-WEB y comprobaciones del PR (CTest Debug, ASan/UBSan y build del frontend) | Parcial. Frontend preparado para Pages con CI previo; publicación y conexión HTTPS pendientes. Autenticación pendiente |
 | F05 | Final | Informe técnico, presentación y defensa | Sin iniciar | Sin artefactos | Pendiente |
 
 Los archivos `.cpp` de pruebas están en `backend/tests/`. No se interpreta un
 build local como CI remoto, JSON como nube, ni logs de terminal como capturas
 del informe. Las cotas, límites y protocolo de guardado se explican en README.
 El informe E2-C está integrado en main.
+
+## Preparación de Pages
+
+| Criterio | Implementación | Verificación | Pendiente |
+|---|---|---|---|
+| Subdirectorio del repositorio | base de Vite para build/preview | Build, archivos y GET 200 de JS/CSS; navegador integrado | Verificar URL pública tras merge |
+| URL de API configurable sin duplicar /api | VITE_API_URL como origen HTTPS; validación antes de build | 5 pruebas Node; build válido/rechazos; aviso real sin backend | Proveer backend HTTPS y variable |
+| WSL conservado | Raíz local y proxy /api a C++ | Navegador: 16 obras y búsqueda sin resultados | Ninguno en el recorrido comprobado |
+| Despliegue posterior a controles | CI llama pages.yml solo en push main, needs backend/frontend | actionlint y CI del PR; PR no despliega | Habilitar Pages, fusionar y verificar deploy real |
+| Secretos fuera del sitio | Artefacto exclusivo frontend/dist; variable pública; no secrets | Inspección de workflow y rechazo de credenciales en URL | Autenticación del backend en su fase |

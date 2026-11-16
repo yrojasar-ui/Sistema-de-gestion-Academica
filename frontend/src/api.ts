@@ -1,3 +1,7 @@
+import { resolveApiConfiguration } from './api-config'
+const configuration = resolveApiConfiguration(import.meta.env.VITE_API_URL, import.meta.env.PROD)
+export const apiConfigurationError = configuration.message
+
 export interface Libro {
   idLibro: string
   titulo: string
@@ -10,8 +14,9 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  if (!configuration.base) throw new ApiError(configuration.message!)
   let response: Response
-  try { response = await fetch('/api/' + path, { cache: 'no-store', ...options }) }
+  try { response = await fetch(configuration.base + path, { cache: 'no-store', ...options }) }
   catch (error) {
     if (options?.signal?.aborted) throw error
     throw new ApiError('API sin conexión', true)
