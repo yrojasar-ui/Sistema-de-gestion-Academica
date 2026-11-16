@@ -1,0 +1,67 @@
+UpdateCTestConfiguration  from :/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Parse Config file:/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: biblioteca_api
+
+2: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_library_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+2: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+2: Test timeout computed to be: 120
+2: A. Ana recibe E1; un préstamo activo en el Rojo-Negro.
+2: B. Bruno reserva con turno 1 y Carla con turno 2.
+2: C. Segundo préstamo rechazado con 409; datos, archivo e índices intactos.
+2: D. Ana devuelve; historial conservado, RN vacío y E1 apartada para Bruno.
+2: E. Bruno cancela; E1 queda apartada para Carla.
+2: F. Carla recibe y devuelve; dos préstamos históricos y E1 disponible.
+2: G. Estados, referencias, hash, Rojo-Negro y FIFO comprobados tras cada operación.
+2: Adicionales OK: inactivos, duplicados, dos copias, desactivación, renovación, edición, referencias, importación inválida, errores y guardado fallido.
+2: OK solicitudes HTTP=415; datos temporales; avisos pendientes en memoria.
+1/4 Test #2: biblioteca_api ...................   Passed    2.82 sec
+test 3
+    Start 3: catalogo_http_reinicio
+
+3: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_catalog_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+3: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+3: Test timeout computed to be: 1500
+3: API de catálogo en http://127.0.0.1:40865 · local · /tmp/tmp92eb7gb6/catalogo.json
+3: Error: El archivo de trabajo ya está en uso por otra API
+3: API de catálogo en http://127.0.0.1:40865 · local · /tmp/tmp92eb7gb6/catalogo.json
+3: API de catálogo en http://127.0.0.1:40865 · local · /tmp/tmp92eb7gb6/catalogo.json
+3: Error: Carga rechazada [/tmp/tmp92eb7gb6/catalogo.json]: [json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal
+3: API HTTP: CRUD, errores, recuperación, reinicio y catálogo vacío comprobados.
+2/4 Test #3: catalogo_http_reinicio ...........   Passed    0.45 sec
+test 4
+    Start 4: mongo_biblioteca_recuperacion
+
+4: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/test_mongo_library
+4: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+4: Test timeout computed to be: 60
+4: Historia y reinicios: activos, renovación, B+, grafo, FIFO, avisos, historial y secuencia OK.
+4: Fixtures: timeout aplicado/tardío, HTML, rechazo, lectura fallida, diario y parcial OK.
+4: HTTP local: health/ready, bloqueo y recuperación explícita OK.
+4: POST incierto y reinicio: un solo envío, recuperación por GET OK.
+3/4 Test #4: mongo_biblioteca_recuperacion ....   Passed    0.67 sec
+test 5
+    Start 5: mongo_contrato_simulado
+
+5: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/test_mongo
+5: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+5: Test timeout computed to be: 1500
+5: Fixtures Mongo OK: CRUD, identidad, reconciliación, fallos y reconstrucción del B+
+4/4 Test #5: mongo_contrato_simulado ..........   Passed    0.15 sec
+
+The following tests passed:
+	biblioteca_api
+	catalogo_http_reinicio
+	mongo_biblioteca_recuperacion
+	mongo_contrato_simulado
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =   4.09 sec

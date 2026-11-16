@@ -1,5 +1,5 @@
 #include "biblioteca/MongoApiBookRepository.hpp"
-#include <nlohmann/json.hpp>
+#include "biblioteca/MongoApiProtocol.hpp"
 #include <algorithm>
 #include <cctype>
 #include <unordered_set>
@@ -7,41 +7,17 @@
 namespace biblioteca {
 namespace {
 using Json = nlohmann::json;
-struct ApiRejection : std::runtime_error { using std::runtime_error::runtime_error; };
-Json responseJson(const HttpResponse& response) {
-    if (response.status >= 400 && response.status < 500)
-        throw ApiRejection("HTTP " + std::to_string(response.status));
-    if (response.status < 200 || response.status >= 300)
-        throw std::runtime_error("HTTP " + std::to_string(response.status));
-    auto type = response.contentType.substr(0, response.contentType.find(';'));
-    type.erase(type.find_last_not_of(" \t") + 1);
-    std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    if (type != "application/json") throw std::runtime_error("Content-Type inesperado: " + type);
-    auto json = Json::parse(response.body, [](int depth, Json::parse_event_t, Json&) {
-        if (depth > 32) throw std::runtime_error("Respuesta JSON demasiado anidada");
-        return true;
-    });
-    if (!json.is_object()) throw std::runtime_error("Se esperaba un objeto JSON");
-    if (json.contains("error")) throw ApiRejection("La API devolvió un error de aplicación");
-    return json;
-}
+using namespace mongo;
 Json fields(const Libro& b) { return {{"titulo", b.titulo}, {"autor", b.autor}, {"temas", b.temas}}; }
 Json exactFilter(const std::string& collection, const std::string& id, const std::string& oid) {
     return {{"_id", oid}, {"idLibro", id}, {"proyecto", collection}};
 }
-bool validOid(const std::string& oid) {
-    return oid.size() == 24 && oid.find_first_not_of("0123456789abcdefABCDEF") == std::string::npos;
-}
+
 }
 
 MongoApiBookRepository::MongoApiBookRepository(std::string endpoint, std::string collection, HttpTransport transport)
     : endpoint_(std::move(endpoint)), collection_(std::move(collection)), request_(std::move(transport)) {
-    if (endpoint_.compare(0, 8, "https://") != 0 || endpoint_.size() <= 8 ||
-        endpoint_.find_first_of("?#@ \t\r\n") != std::string::npos)
-        throw std::invalid_argument("El endpoint requiere una URL HTTPS sin consulta, fragmento ni credenciales");
-    if (collection_.empty() || collection_.size() > 100 ||
-        collection_.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") != std::string::npos)
-        throw std::invalid_argument("Nombre de colección inválido (1..100 letras ASCII, dígitos, - o _)");
+    mongo::validateConfig(endpoint_, collection_);
 }
 
 std::vector<MongoApiBookRepository::Record> MongoApiBookRepository::read(const std::string& id) const {

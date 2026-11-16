@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Biblioteca Académica — API local",
-    "version": "0.3.0",
-    "description": "Perfil administrativo local en 127.0.0.1, sin autenticación. CORS admite localhost:5173, 127.0.0.1:5173 y orígenes añadidos con --origin. JSON de libros persistido, dominio en memoria. Instantes UTC y fechas AAAA-MM-DD. Avisos pendientes. Escrituras serializadas en un trabajador; cuerpos de hasta 1 MiB. Los endpoints administrativos y snapshots requerirán autorización de bibliotecario al incorporar autenticación."
+    "version": "0.4.0",
+    "description": "Perfil administrativo local en 127.0.0.1 sin autenticación. Modo local: libros JSON y dominio en memoria. Modo mongo: instantánea completa confirmada en la API docente, reconstrucción automática de índices y diario duradero de incertidumbre. Sin fallback. CORS local y --origin. Un escritor; cuerpos de hasta 1 MiB. Avisos pendientes, sin RabbitMQ/worker. Ver PERSISTENCIA_MONGODB.md."
   },
   "servers": [
     {
@@ -61,7 +61,7 @@
     },
     "/readyz": {
       "get": {
-        "summary": "Catálogo, referencias e índices válidos",
+        "summary": "Almacenamiento, validación completa y estado real de recuperación",
         "operationId": "get_readyz",
         "responses": {
           "200": {
@@ -69,28 +69,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "listo": {
-                      "const": true
-                    },
-                    "libros": {
-                      "const": "json"
-                    },
-                    "dominio": {
-                      "const": "memoria"
-                    },
-                    "eventos": {
-                      "const": "pendientes"
-                    }
-                  },
-                  "required": [
-                    "listo",
-                    "libros",
-                    "dominio",
-                    "eventos"
-                  ]
+                  "$ref": "#/components/schemas/Disponibilidad"
                 }
               }
             }
@@ -114,9 +93,24 @@
             "$ref": "#/components/responses/Error415"
           },
           "503": {
-            "$ref": "#/components/responses/Error503"
+            "description": "Biblioteca bloqueada o validación fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Disponibilidad"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
           }
-        }
+        },
+        "description": "200 solo después de cargar y validar todos los datos e índices. Mongo bloqueado devuelve 503 con listo:false. healthz sigue en 200. No se publica una biblioteca vacía ante fallo de carga."
       }
     },
     "/api/libros": {
@@ -712,7 +706,7 @@
             }
           }
         },
-        "description": "Restauración administrativa explícita. Valida referencias contra los libros actuales, estados, IDs, fechas y turnos antes del reemplazo. Preserva llegada y siguienteLlegada. Los libros se restauran por su JSON separado."
+        "description": "Reemplazo administrativo explícito del dominio, validado contra los libros actuales. Conserva llegada, siguienteLlegada e IDs de avisos de la entrada válida. En Mongo guarda el agregado con esos mismos libros y confirma por GET; el reinicio normal no requiere este endpoint. En local el dominio sigue en memoria."
       }
     },
     "/api/usuarios": {
@@ -1843,6 +1837,65 @@
           }
         }
       }
+    },
+    "/api/recuperacion": {
+      "post": {
+        "summary": "Recuperar por lectura y reconstrucción íntegra",
+        "operationId": "post_api_recuperacion",
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "listo"
+                  ],
+                  "properties": {
+                    "listo": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error415"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Vacio"
+              }
+            }
+          }
+        },
+        "description": "En Mongo: lee el agregado, reconcilia el diario y reconstruye los cinco índices antes de publicar. Nunca reenvía POST/PUT. Si no observa exactamente la escritura pendiente, mantiene bloqueo con 503. Sin diario acepta una carga completa válida. En local valida el estado actual. No cambia de almacenamiento."
+      }
     }
   },
   "components": {
@@ -2243,6 +2296,15 @@
         "properties": {
           "error": {
             "type": "string"
+          },
+          "resultado": {
+            "type": "string",
+            "enum": [
+              "confirmado",
+              "rechazado",
+              "incierto"
+            ],
+            "description": "Resultado de persistencia cuando corresponde. Incierto no significa rechazo sin cambios."
           }
         },
         "required": [
@@ -2975,6 +3037,111 @@
           "limite",
           "desplazamiento"
         ]
+      },
+      "Disponibilidad": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "listo",
+          "libros",
+          "dominio",
+          "eventos",
+          "recuperacion",
+          "resultado"
+        ],
+        "properties": {
+          "listo": {
+            "type": "boolean"
+          },
+          "libros": {
+            "enum": [
+              "json",
+              "mongo"
+            ]
+          },
+          "dominio": {
+            "enum": [
+              "memoria",
+              "mongo"
+            ]
+          },
+          "eventos": {
+            "const": "pendientes"
+          },
+          "recuperacion": {
+            "type": "string"
+          },
+          "resultado": {
+            "enum": [
+              "confirmado",
+              "rechazado",
+              "incierto"
+            ]
+          }
+        }
+      },
+      "InstantaneaMongo": {
+        "description": "Esquema remoto 1; no es un endpoint público de reemplazo. Documento completo máximo 1 MiB. Ámbito de proyecto igual a colección, exactamente un documento.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "_id",
+          "proyecto",
+          "idBiblioteca",
+          "versionEsquema",
+          "estado"
+        ],
+        "properties": {
+          "_id": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "$oid"
+            ],
+            "properties": {
+              "$oid": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$"
+              }
+            }
+          },
+          "proyecto": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,100}$"
+          },
+          "idBiblioteca": {
+            "const": "principal"
+          },
+          "versionEsquema": {
+            "const": 1
+          },
+          "estado": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "revision",
+              "libros",
+              "dominio"
+            ],
+            "properties": {
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 18446744073709551615
+              },
+              "libros": {
+                "type": "array",
+                "maxItems": 10000,
+                "items": {
+                  "$ref": "#/components/schemas/Libro"
+                }
+              },
+              "dominio": {
+                "$ref": "#/components/schemas/Dominio"
+              }
+            }
+          }
+        }
       }
     },
     "responses": {
@@ -3039,7 +3206,7 @@
         }
       },
       "Error503": {
-        "description": "Fallo local de guardado, repositorio o disponibilidad",
+        "description": "Almacenamiento no disponible, escritura no confirmada o biblioteca bloqueada. resultado distingue rechazo de incertidumbre cuando corresponde. Consultar /readyz; recuperación explícita por POST /api/recuperacion. No reenviar POST a ciegas.",
         "content": {
           "application/json": {
             "schema": {

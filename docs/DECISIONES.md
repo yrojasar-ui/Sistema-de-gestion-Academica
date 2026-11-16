@@ -150,3 +150,21 @@ dominio. El endpoint administrativo de reconstrucción valida referencias y
 restaura ese orden. Los avisos se preparan pendientes; IEventPublisher define
 la futura frontera de publicación. La autorización por roles y el transporte
 de mensajes requieren sus fases de implementación.
+
+## D13 — Instantánea Mongo confirmada y recuperación conservadora
+
+Prompt 4: una colección propia contiene un documento `principal` de esquema 1,
+con libros y dominio dentro del campo `estado` versionado. La elección evita
+encadenar cambios entre colecciones sin transacciones. Se observó filtro exacto
+y de revisión anidada, incluso una competencia acotada de dos PUT; se observaron
+POST duplicados. No se extrapola a soporte multiinstancia o unicidad remota.
+
+Se extrae el protocolo común de MongoApiBookRepository y se reutiliza libcurl.
+Una intención durable precede al único envío; GET completo confirma antes de
+publicar. Timeout con lectura antigua no es rechazo: bloquea, conserva diario
+y exige recuperación GET. Arranque inválido mantiene healthz vivo y readyz
+negativo. Ambos servicios se reconstruyen en candidatos antes del intercambio.
+
+La cota propia de 1 MiB, el escritor único y la intervención ante un resultado
+permanentemente indeterminado son límites explícitos. El worker futuro no puede
+escribir este agregado por su cuenta. [Contrato, comandos y límites](PERSISTENCIA_MONGODB.md).

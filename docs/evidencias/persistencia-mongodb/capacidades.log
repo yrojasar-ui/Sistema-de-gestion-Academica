@@ -1,0 +1,19 @@
+2026-11-16T03:35:47.227631+00:00 PRUEBA-2cd393157fa840bc96b24e11af6eaed3
+POST 200 application/json; charset=UTF-8 {"mensaje": "Documento insertado correctamente en 'biblioteca_yoel_final_v1'"}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 1, "documentos": [{"_id": {"$oid": "6afa7a894263ebaff305e771"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 1, "estado": {"libros": [], "dominio": {"reservas": [], "siguienteLlegada": 1}}}]}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 1, "documentos": [{"_id": {"$oid": "6afa7a894263ebaff305e771"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 1, "estado": {"libros": [], "dominio": {"reservas": [], "siguienteLlegada": 1}}}]}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 0, "documentos": []}
+PUT 200 application/json; charset=UTF-8 {"mensaje": "Documentos actualizados", "modificados": 1}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 1, "documentos": [{"_id": {"$oid": "6afa7a894263ebaff305e771"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 2, "estado": {"libros": [{"idLibro": "SINTETICO"}], "dominio": {"reservas": ["R1", "R2"], "siguienteLlegada": 3}}}]}
+PUT 200 application/json; charset=UTF-8 {"mensaje": "Documentos actualizados", "modificados": 0}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 1, "documentos": [{"_id": {"$oid": "6afa7a894263ebaff305e771"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 2, "estado": {"libros": [{"idLibro": "SINTETICO"}], "dominio": {"reservas": ["R1", "R2"], "siguienteLlegada": 3}}}]}
+PUT 200 application/json; charset=UTF-8 {"mensaje": "Documentos actualizados", "modificados": 1}
+PUT 200 application/json; charset=UTF-8 {"mensaje": "Documentos actualizados", "modificados": 0}
+Competencia acotada modificados= [0, 1]
+POST 200 application/json; charset=UTF-8 {"mensaje": "Documento insertado correctamente en 'biblioteca_yoel_final_v1'"}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 2, "documentos": [{"_id": {"$oid": "6afa7a894263ebaff305e771"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 4, "estado": {"libros": [{"idLibro": "SINTETICO"}], "dominio": {"reservas": ["R1", "R2"], "siguienteLlegada": 3}}}, {"_id": {"$oid": "6afa7a8e4a8b0b321408bc92"}, "proyecto": "biblioteca_yoel_final_v1", "idBiblioteca": "PRUEBA-2cd393157fa840bc96b24e11af6eaed3", "versionEsquema": 1, "revision": 1, "estado": {"libros": [], "dominio": {"reservas": [], "siguienteLlegada": 1}}}]}
+Mismo idBiblioteca documentos= 2
+DELETE 200 application/json; charset=UTF-8 {"mensaje": "Documento eliminado", "eliminados": 1}
+DELETE 200 application/json; charset=UTF-8 {"mensaje": "Documento eliminado", "eliminados": 1}
+GET 200 application/json; charset=UTF-8 {"coleccion": "biblioteca_yoel_final_v1", "total": 0, "documentos": []}
+Limpieza verificada de los ObjectId creados.

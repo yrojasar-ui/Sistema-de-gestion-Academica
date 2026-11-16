@@ -93,8 +93,12 @@ std::optional<Libro> CatalogService::find(const std::string& id) const {
     if (pos == ids_.end()) return std::nullopt;
     return tree_.find(pos->second);
 }
+void CatalogService::swapState(CatalogService& other) noexcept {
+    tree_.swap(other.tree_); ids_.swap(other.ids_);
+    std::swap(needsReload_, other.needsReload_); std::swap(dirty_, other.dirty_);
+}
 void CatalogService::commit(const std::function<void(CatalogService&)>& operation) {
-    if (writesThrough()) throw std::logic_error("La unidad local requiere repositorio JSON");
+    if (writesThrough()) throw std::logic_error("La unidad requiere un repositorio de instantáneas");
     CatalogService candidate(*this);
     operation(candidate);
     candidate.save();

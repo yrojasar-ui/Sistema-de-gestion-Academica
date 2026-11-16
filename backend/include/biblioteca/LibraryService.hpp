@@ -9,7 +9,9 @@
 namespace biblioteca {
 class LibraryService {
 public:
-    LibraryService(CatalogService& catalogo, IDomainRepository& repositorio);
+    LibraryService(CatalogService& catalogo, IDomainRepository& repositorio, bool deferLoad = false);
+    void swapState(LibraryService& other) noexcept { actual_.swap(other.actual_); }
+    const IDomainRepository& repository() const { return repositorio_; }
     const EstadoBiblioteca& estado() const { return actual_->datos; }
     Usuario usuario(const std::string& id) const;
     void crearUsuario(const Usuario& usuario);

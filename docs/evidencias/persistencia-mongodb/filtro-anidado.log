@@ -1,0 +1,7 @@
+POST {'mensaje': "Documento insertado correctamente en 'biblioteca_yoel_final_v1'"}
+GET {'coleccion': 'biblioteca_yoel_final_v1', 'total': 1, 'documentos': [{'_id': {'$oid': '6afa7b476c81a34acd0100b1'}, 'proyecto': 'biblioteca_yoel_final_v1', 'idBiblioteca': 'PRUEBA-a01156bd94bb4124a20157cf611dfef5', 'estado': {'revision': 1, 'datos': []}}]}
+PUT {'mensaje': 'Documentos actualizados', 'modificados': 0}
+PUT {'mensaje': 'Documentos actualizados', 'modificados': 1}
+GET {'coleccion': 'biblioteca_yoel_final_v1', 'total': 1, 'documentos': [{'_id': {'$oid': '6afa7b476c81a34acd0100b1'}, 'proyecto': 'biblioteca_yoel_final_v1', 'idBiblioteca': 'PRUEBA-a01156bd94bb4124a20157cf611dfef5', 'estado': {'revision': 2, 'datos': ['sintetico']}}]}
+DELETE {'mensaje': 'Documento eliminado', 'eliminados': 1}
+GET {'coleccion': 'biblioteca_yoel_final_v1', 'total': 0, 'documentos': []}

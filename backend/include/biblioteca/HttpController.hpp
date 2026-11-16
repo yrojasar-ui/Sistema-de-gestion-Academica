@@ -4,5 +4,5 @@
 
 namespace biblioteca {
 void registrarHttp(httplib::Server& servidor, CatalogService& catalogo, LibraryService& biblioteca,
-                   const std::vector<std::string>& origenes);
+                   const std::vector<std::string>& origenes, std::function<void()> recover = {});
 } // namespace biblioteca

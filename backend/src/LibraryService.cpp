@@ -41,8 +41,9 @@ void fechaFutura(const std::string& fecha) {
     if (fecha <= ahoraUTC().substr(0,10)) throw std::invalid_argument("El vencimiento debe ser posterior a hoy UTC");
 }
 }
-LibraryService::LibraryService(CatalogService& catalogo, IDomainRepository& repositorio)
-    : catalogo_(catalogo), repositorio_(repositorio), actual_(construir(repositorio.load())) {}
+LibraryService::LibraryService(CatalogService& catalogo, IDomainRepository& repositorio, bool deferLoad)
+    : catalogo_(catalogo), repositorio_(repositorio),
+      actual_(deferLoad ? std::make_unique<Runtime>() : construir(repositorio.load())) {}
 std::unique_ptr<LibraryService::Runtime> LibraryService::construir(const EstadoBiblioteca& estado) const {
     auto nuevo = std::make_unique<Runtime>();
     nuevo->datos = estado;

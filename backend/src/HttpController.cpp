@@ -63,8 +63,8 @@ Json detalle(const std::vector<T>& filas, const std::string& id, F identificador
     return Json(*it);
 }
 }
-void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService& b, const std::vector<std::string>& origenes) {
-    s.set_pre_routing_handler([origenes](const Request& req, Response& res) {
+void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService& b, const std::vector<std::string>& origenes, std::function<void()> recover) {
+    s.set_pre_routing_handler([origenes, &b](const Request& req, Response& res) {
         const auto origen = req.get_header_value("Origin");
         if (!origen.empty()) {
             if (std::find(origenes.begin(), origenes.end(), origen) == origenes.end()) {
@@ -73,6 +73,12 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
             }
             res.set_header("Access-Control-Allow-Origin", origen);
             res.set_header("Vary", "Origin");
+        }
+        if (!b.repository().ready() && req.method != "OPTIONS" &&
+            req.path != "/healthz" && req.path != "/readyz" && req.path != "/api/recuperacion") {
+            responder(res, 503, {{"error","Biblioteca bloqueada; consulte /readyz y recupere explícitamente"},
+                                {"resultado",b.repository().outcome()}});
+            return httplib::Server::HandlerResponse::Handled;
         }
         return httplib::Server::HandlerResponse::Unhandled;
     });
@@ -83,8 +89,18 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     });
     s.Get("/healthz", [](const Request&, Response& res) { responder(res, 200, {{"proceso","activo"}}); });
     s.Get("/readyz", [&](const Request&, Response& res) {
+        const auto& repo = b.repository();
+        if (repo.ready()) b.validar();
+        responder(res, repo.ready() ? 200 : 503,
+                  {{"listo",repo.ready()},{"libros",repo.storage() == "mongo" ? "mongo" : "json"},
+                   {"dominio",repo.storage()},{"eventos","pendientes"},
+                   {"recuperacion",repo.recovery()},{"resultado",repo.outcome()}});
+    });
+    s.Post("/api/recuperacion", [&, recover](const Request& req, Response& res) {
+        parametros(req, {}); campos(cuerpo(req), {});
+        if (recover) recover();
         b.validar();
-        responder(res, 200, {{"listo",true},{"libros","json"},{"dominio","memoria"},{"eventos","pendientes"}});
+        responder(res, 200, {{"listo",b.repository().ready()}});
     });
     s.Get("/api/libros", [&](const Request& req, Response& res) {
         parametros(req, {"titulo","prefijo","limite","desplazamiento"});
@@ -221,6 +237,7 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         int codigo = 503;
         std::string mensaje;
         try { std::rethrow_exception(error); }
+        catch (const PersistenceError& e) { responder(res, 503, {{"error",e.what()},{"resultado",outcomeName(e.outcome)}}); return; }
         catch (const ErrorDominio& e) { codigo = e.status; mensaje = e.what(); }
         catch (const DuplicateBookId& e) { codigo = 409; mensaje = e.what(); }
         catch (const std::invalid_argument& e) { codigo = 400; mensaje = e.what(); }
