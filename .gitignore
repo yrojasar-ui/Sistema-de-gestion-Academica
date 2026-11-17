@@ -13,5 +13,9 @@
 /data/mongo-runtime/
 
 # Credenciales privadas y biblioteca local de demostración.
-/data/privado/
+/data/privado*/
 /data/biblioteca-local.json*
+
+__pycache__/
+
+docs/referencia/
