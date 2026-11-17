@@ -417,13 +417,3 @@ Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;
 las decisiones se tomaron de la guía adjunta, sin afirmar haber leído ese PDF.
 
-## Guion de demostración de tres minutos
-
-| Tiempo | Acción | Resultado visible |
-|---|---|---|
-| 0:00–0:30 | Abrí el catálogo con un archivo de trabajo nuevo y recorré sus dos páginas. | Aparecen las 16 obras iniciales, con título, autor e ID. |
-| 0:30–1:00 | En **Agregar libro**, ingresá E2C-01, «Atlas del campus», «Autor de prueba» y el tema «mapas». Guardá y buscá «Atl» por prefijo. | El total sube a 17. La búsqueda muestra el ID E2C-01. |
-| 1:00–1:30 | Elegí **Título exacto**, escribí «Atlas del campus» y abrí **Ver árbol B+**. | Aparece una obra. En la salida C++ se ve su clave en una hoja y al final la cadena de hojas. |
-| 1:30–2:10 | En la terminal 1, usá Ctrl+C. Recargá el navegador. Reiniciá el mismo backend con el mismo archivo, pulsá **Reintentar** y buscá otra vez «Atlas del campus». | Primero aparece **API sin conexión**. Tras reiniciar, vuelve a aparecer E2C-01. |
-| 2:10–2:40 | En la fila E2C-01, pulsá **Borrar** y **Confirmar borrado**. Repetí la búsqueda exacta. | El catálogo confirma el borrado y la consulta muestra **Sin resultados**. |
-| 2:40–3:00 | Abrí **Ver árbol B+** y pulsá **Validar invariantes**. | El árbol contiene 16 libros y el validador C++ confirma sus invariantes. |
