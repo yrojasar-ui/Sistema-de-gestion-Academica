@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import secrets
 import subprocess
 import sys
 import tempfile
@@ -32,6 +33,12 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     base = f"http://127.0.0.1:{port}"
+    password = secrets.token_urlsafe(24)
+    auth_store = root / "privado" / "cuentas.json"
+    args = [str(binary), "--initial", str(initial), "--working", str(working), "--auth-store", str(auth_store)]
+    subprocess.run(args + ["--bootstrap-admin", "Admin", "--admin-name", "Administrador sintético"],
+                   input=password+"\n", text=True, check=True, capture_output=True)
+    token = ""
     process = None
     output = open(root / "servidor.log", "w+")
 
@@ -40,7 +47,7 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         requests += 1
         payload = None if data is None else json.dumps(data).encode()
         req = Request(base + route, method=method, data=payload,
-                      headers={"Content-Type": "application/json", **(headers or {})})
+                      headers={"Content-Type": "application/json", "Authorization":"Bearer "+token, **(headers or {})})
         try:
             result = urlopen(req, timeout=8)
         except HTTPError as e:
@@ -48,20 +55,19 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         with result:
             raw = result.read()
             value = json.loads(raw) if raw else None
-            observed.append({"path":route.split("?",1)[0], "method":method.lower(), "status":str(result.status), "body":value})
+            if route != "/api/sesion/login": observed.append({"path":route.split("?",1)[0], "method":method.lower(), "status":str(result.status), "body":value})
             check(result.status == expected, f"{method} {route}: {result.status} {value}, esperado {expected}")
             return value
 
     def start():
-        global process
-        process = subprocess.Popen([str(binary), "--initial", str(initial),
-                                    "--working", str(working), "--port", str(port)],
-                                   stdout=output, stderr=output)
+        global process, token
+        process = subprocess.Popen(args + ["--port", str(port)], stdout=output, stderr=output)
         for _ in range(200):
             if process.poll() is not None:
                 raise RuntimeError("El backend terminó durante el arranque")
             try:
                 call("/readyz")
+                token=call("/api/sesion/login","POST",{"idUsuario":"Admin","password":password})["token"]
                 return
             except URLError:
                 time.sleep(.03)
@@ -176,7 +182,7 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         check(d["prestamos"][0]["devolucion"] and d["ejemplares"][0]["estado"] == "apartado", "Devolución conserva historial")
         check(call("/api/reservas/R-Bruno")["estado"] == "apartada", "Bruno recibe copia")
         print("D. Ana devuelve; historial conservado, RN vacío y E1 apartada para Bruno.")
-        mutate("reservas/R-Bruno/cancelacion", "POST", {})
+        mutate("reservas/R-Bruno/cancelacion", "POST", {"motivo":"Cambio de planes"})
         check(call("/api/reservas/R-Carla")["estado"] == "apartada", "Carla recibe siguiente turno")
         print("E. Bruno cancela; E1 queda apartada para Carla.")
         mutate("prestamos", "POST", loan("P-Carla", "Carla"), 201)

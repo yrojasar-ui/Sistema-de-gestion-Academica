@@ -30,6 +30,8 @@ jobs:
           sha256sum -c third_party/SHA256SUMS
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
+      - name: Preparar libsodium fijado y probar la biblioteca
+        run: bash scripts/preparar_sodium.sh
       - name: Configurar CMake
         run: |
           arch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)

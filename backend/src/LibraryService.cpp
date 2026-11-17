@@ -84,7 +84,8 @@ void LibraryService::crearUsuario(const Usuario& u) {
         e.datos.usuarios.push_back(u);
     });
 }
-void LibraryService::editarUsuario(const Usuario& u) {
+void LibraryService::editarUsuario(const Usuario& u, const std::string& responsable) {
+    validarId(responsable);
     nombreValido(u);
     cambiar([&](Runtime& e) {
         usuario(e, u.idUsuario);
@@ -92,7 +93,7 @@ void LibraryService::editarUsuario(const Usuario& u) {
             for (const auto& p : e.datos.prestamos)
                 exigir(p.idUsuario != u.idUsuario || !activo(p), "Usuario con préstamo activo");
             for (auto& r : e.datos.reservas)
-                if (r.idUsuario == u.idUsuario && pendiente(r)) liberar(e, r);
+                if (r.idUsuario == u.idUsuario && pendiente(r)) { liberar(e, r); r.cancelacion.responsable = responsable; }
         }
         e.usuarios.modificar(u);
         obtener(e.datos.usuarios, u.idUsuario, [](const auto& x) { return x.idUsuario; }) = u;

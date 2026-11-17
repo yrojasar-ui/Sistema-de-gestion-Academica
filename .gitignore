@@ -11,3 +11,7 @@
 
 # Diario durable y bloqueo del modo Mongo (conservar al reiniciar).
 /data/mongo-runtime/
+
+# Credenciales privadas y biblioteca local de demostración.
+/data/privado/
+/data/biblioteca-local.json*

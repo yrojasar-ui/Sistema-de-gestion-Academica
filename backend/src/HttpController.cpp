@@ -4,6 +4,7 @@
 #include <charconv>
 #include <set>
 #include <sstream>
+#include <regex>
 
 namespace biblioteca {
 namespace {
@@ -63,8 +64,8 @@ Json detalle(const std::vector<T>& filas, const std::string& id, F identificador
     return Json(*it);
 }
 }
-void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService& b, const std::vector<std::string>& origenes, std::function<void()> recover) {
-    s.set_pre_routing_handler([origenes, &b](const Request& req, Response& res) {
+void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService& b, AuthService& auth, const std::vector<std::string>& origenes, std::function<void()> recover) {
+    s.set_pre_routing_handler([origenes, &b, &auth](const Request& req, Response& res) {
         const auto origen = req.get_header_value("Origin");
         if (!origen.empty()) {
             if (std::find(origenes.begin(), origenes.end(), origen) == origenes.end()) {
@@ -74,8 +75,35 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
             res.set_header("Access-Control-Allow-Origin", origen);
             res.set_header("Vary", "Origin");
         }
+        if (req.method != "OPTIONS" && req.path != "/healthz" && req.path != "/readyz" &&
+            !(req.path == "/api/sesion/login" && req.method == "POST")) {
+            try {
+                if (req.get_header_value_count("Authorization") != 1) throw ErrorDominio(401,"Sesión requerida o vencida");
+                const auto user = auth.authenticate(req.get_header_value("Authorization"));
+                if (b.repository().ready()) {
+                    bool active = false;
+                    try { active = b.usuario(user.idUsuario).activo; } catch (const ErrorDominio&) {}
+                    if (!active) throw ErrorDominio(401,"Sesión requerida o vencida");
+                } else if (user.rol != "ADMIN") throw ErrorDominio(503,"Biblioteca no disponible");
+                if (user.rol != "ADMIN") {
+                    static const std::regex readCatalog(R"(/api/libros(/[A-Za-z0-9_-]{1,64}(/relacionados)?)?)");
+                    static const std::regex ownDetail(R"(/api/mis-(prestamos|reservas|pagos)/[A-Za-z0-9_-]{1,64})");
+                    static const std::regex cancel(R"(/api/mis-reservas/[A-Za-z0-9_-]{1,64}/cancelacion)");
+                    static const std::regex pay(R"(/api/mis-pagos/[A-Za-z0-9_-]{1,64}/simulacion)");
+                    const bool allowed =
+                        (req.method == "GET" && (std::regex_match(req.path,readCatalog) || std::regex_match(req.path,ownDetail) ||
+                         req.path == "/api/mi-biblioteca" || req.path == "/api/disponibilidad" || req.path == "/api/sesion")) ||
+                        (req.method == "POST" && (req.path == "/api/solicitudes" || req.path == "/api/sesion/logout" ||
+                         std::regex_match(req.path,cancel) || std::regex_match(req.path,pay)));
+                    if (!allowed) throw ErrorDominio(403,"Sin permisos para esta operación");
+                }
+            } catch (const ErrorDominio& e) {
+                responder(res,e.status,{{"error",e.what()}});
+                return httplib::Server::HandlerResponse::Handled;
+            }
+        }
         if (!b.repository().ready() && req.method != "OPTIONS" &&
-            req.path != "/healthz" && req.path != "/readyz" && req.path != "/api/recuperacion") {
+            req.path != "/healthz" && req.path != "/readyz" && req.path != "/api/recuperacion" && req.path != "/api/almacenamiento" && req.path.rfind("/api/sesion",0) != 0) {
             responder(res, 503, {{"error","Biblioteca bloqueada; consulte /readyz y recupere explícitamente"},
                                 {"resultado",b.repository().outcome()}});
             return httplib::Server::HandlerResponse::Handled;
@@ -84,17 +112,14 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     });
     s.Options(R"(/.*)", [](const Request&, Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        res.set_header("Access-Control-Allow-Headers", "Content-Type");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
         res.status = 204;
     });
     s.Get("/healthz", [](const Request&, Response& res) { responder(res, 200, {{"proceso","activo"}}); });
     s.Get("/readyz", [&](const Request&, Response& res) {
         const auto& repo = b.repository();
         if (repo.ready()) b.validar();
-        responder(res, repo.ready() ? 200 : 503,
-                  {{"listo",repo.ready()},{"libros",repo.storage() == "mongo" ? "mongo" : "json"},
-                   {"dominio",repo.storage()},{"eventos","pendientes"},
-                   {"recuperacion",repo.recovery()},{"resultado",repo.outcome()}});
+        responder(res, repo.ready() ? 200 : 503, {{"listo",repo.ready()}});
     });
     s.Post("/api/recuperacion", [&, recover](const Request& req, Response& res) {
         parametros(req, {}); campos(cuerpo(req), {});
@@ -102,6 +127,99 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         b.validar();
         responder(res, 200, {{"listo",b.repository().ready()}});
     });
+s.Post("/api/sesion/login", [&](const Request& req, Response& res) {
+        auto j = cuerpo(req); campos(j, {"idUsuario","password"});
+        const auto result = auth.login(j.at("idUsuario"),j.at("password"),req.remote_addr,[&](const Identidad& i) {
+            if (!b.repository().ready()) return i.rol == "ADMIN";
+            try { return b.usuario(i.idUsuario).activo; } catch (const ErrorDominio&) { return false; }
+        });
+        responder(res,200,result);
+    });
+    s.Get("/api/sesion", [&](const Request& req, Response& res) {
+        auto i = auth.authenticate(req.get_header_value("Authorization"));
+        responder(res,200,{{"idUsuario",i.idUsuario},{"rol",i.rol}});
+    });
+    s.Post("/api/sesion/logout", [&](const Request& req, Response& res) {
+        campos(cuerpo(req),{}); auth.logout(req.get_header_value("Authorization")); res.status=204;
+    });
+    s.Get("/api/cuentas", [&](const Request&, Response& res) { responder(res,200,{{"items",auth.accounts()}}); });
+    s.Post("/api/cuentas", [&](const Request& req, Response& res) {
+        auto j=cuerpo(req); campos(j,{"idUsuario","rol","password"});
+        const auto id=j.at("idUsuario").get<std::string>();
+        if (!b.usuario(id).activo) throw ErrorDominio(409,"Usuario inactivo");
+        auth.create(id,j.at("rol"),j.at("password"));
+        responder(res,201,{{"idUsuario",id},{"rol",j.at("rol")},{"activa",true}});
+    });
+    s.Put(R"(/api/cuentas/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
+        auto j=cuerpo(req); campos(j,{"rol","activa","password"});
+        if (j.at("activa").get<bool>() && !b.usuario(req.matches[1]).activo) throw ErrorDominio(409,"Usuario inactivo");
+        auth.update(req.matches[1],j.at("rol"),j.at("activa"),j.at("password"));
+        responder(res,200,{{"ok",true}});
+    });
+    s.Get("/api/almacenamiento", [&](const Request&, Response& res) {
+        const auto& repo=b.repository();
+        responder(res,200,{{"listo",repo.ready()},{"almacenamiento",repo.storage()},{"recuperacion",repo.recovery()},{"resultado",repo.outcome()}});
+    });
+    s.Get("/api/disponibilidad", [&](const Request&, Response& res) {
+        auto rows=Json::array();
+        for (const auto& libro:catalogo.all()) {
+            int disponibles=0,apartados=0,prestados=0;
+            for (const auto& e:b.estado().ejemplares) if (e.idLibro==libro.idLibro) {
+                disponibles+=e.estado=="disponible"; apartados+=e.estado=="apartado"; prestados+=e.estado=="prestado";
+            }
+            rows.push_back({{"idLibro",libro.idLibro},{"disponibles",disponibles},{"apartados",apartados},{"prestados",prestados}});
+        }
+        responder(res,200,{{"items",rows}});
+    });
+    s.Get("/api/mi-biblioteca", [&](const Request& req, Response& res) {
+        auto i=auth.authenticate(req.get_header_value("Authorization"));
+        auto owned=[&](const auto& rows) { auto out=Json::array(); for (const auto& row:rows) if (row.idUsuario==i.idUsuario) out.push_back(row); return out; };
+        // Los préstamos activos se recorren desde el Rojo-Negro.
+        responder(res,200,{{"usuario",b.usuario(i.idUsuario)},{"activos",owned(b.activos())},
+            {"prestamos",owned(b.estado().prestamos)},{"reservas",owned(b.estado().reservas)},
+            {"cargos",owned(b.estado().cargos)},{"comprobantes",owned(b.estado().comprobantes)}});
+    });
+    s.Get(R"(/api/mis-(prestamos|reservas|pagos)/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
+        const auto i=auth.authenticate(req.get_header_value("Authorization"));
+        const std::string type=req.matches[1], id=req.matches[2];
+        Json row;
+        if (type=="prestamos") row=detalle(b.estado().prestamos,id,[](const auto& x){return x.idPrestamo;});
+        else if (type=="reservas") row=detalle(b.estado().reservas,id,[](const auto& x){return x.idReserva;});
+        else row=detalle(b.estado().cargos,id,[](const auto& x){return x.idPrestamo;});
+        if (row.at("idUsuario")!=i.idUsuario) throw ErrorDominio(404,"Registro ausente");
+        responder(res,200,row);
+    });
+    s.Post("/api/solicitudes", [&](const Request& req, Response& res) {
+        auto j=cuerpo(req); campos(j,{"idLibro"});
+        const auto i=auth.authenticate(req.get_header_value("Authorization"));
+        const auto id="SOL-"+std::to_string(b.estado().siguienteLlegada);
+        b.reservar(id,j.at("idLibro"),i.idUsuario);
+        responder(res,201,detalle(b.estado().reservas,id,[](const auto& r){return r.idReserva;}));
+    });
+    s.Post(R"(/api/mis-reservas/([A-Za-z0-9_-]{1,64})/cancelacion)", [&](const Request& req, Response& res) {
+        auto j=cuerpo(req); campos(j,{"motivo"});
+        const auto i=auth.authenticate(req.get_header_value("Authorization"));
+        const auto r=detalle(b.estado().reservas,req.matches[1],[](const auto& x){return x.idReserva;});
+        if (r.at("idUsuario")!=i.idUsuario) throw ErrorDominio(404,"Registro ausente");
+        b.cancelar(req.matches[1],j.at("motivo"),i.idUsuario); responder(res,200,{{"ok",true}});
+    });
+    s.Get("/api/pagos", [&](const Request&, Response& res) {
+        responder(res,200,{{"cargos",b.estado().cargos},{"comprobantes",b.estado().comprobantes}});
+    });
+    s.Post(R"(/api/mis-pagos/([A-Za-z0-9_-]{1,64})/simulacion)", [&](const Request& req, Response& res) {
+        campos(cuerpo(req),{});
+        auto i=auth.authenticate(req.get_header_value("Authorization"));
+        auto c=detalle(b.estado().cargos,req.matches[1],[](const auto& x){return x.idPrestamo;});
+        if (c.at("idUsuario")!=i.idUsuario) throw ErrorDominio(404,"Registro ausente");
+        responder(res,200,b.pagar(req.matches[1]));
+    });
+    s.Post(R"(/api/prestamos/([A-Za-z0-9_-]{1,64})/anulacion)", [&](const Request& req, Response& res) {
+        auto j=cuerpo(req); campos(j,{"motivo","copiaRecuperada"});
+        const auto i=auth.authenticate(req.get_header_value("Authorization"));
+        b.anular(req.matches[1],j.at("motivo"),i.idUsuario,j.at("copiaRecuperada"));
+        responder(res,200,{{"ok",true}});
+    });
+
     s.Get("/api/libros", [&](const Request& req, Response& res) {
         parametros(req, {"titulo","prefijo","limite","desplazamiento"});
         if (req.has_param("titulo") && req.has_param("prefijo")) throw std::invalid_argument("Use título o prefijo");
@@ -153,7 +271,13 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     });
     s.Get("/api/dominio", [&](const Request&, Response& res) { responder(res, 200, Json(b.estado())); });
     s.Put("/api/dominio", [&](const Request& req, Response& res) {
-        b.reconstruir(cuerpo(req).get<EstadoBiblioteca>());
+        auto next = cuerpo(req).get<EstadoBiblioteca>();
+        auth.validateAdministrators(next);
+        b.reconstruir(next);
+        for (const auto& a : auth.accounts()) {
+            const auto id=a.at("idUsuario").get<std::string>();
+            try { if (!b.usuario(id).activo) auth.invalidate(id); } catch (const ErrorDominio&) { auth.invalidate(id); }
+        }
         responder(res, 200, {{"ok",true}});
     });
     s.Get("/api/usuarios", [&](const Request& req, Response& res) {
@@ -167,10 +291,14 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     });
     s.Put(R"(/api/usuarios/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
         auto j = cuerpo(req); mismoId(j, "idUsuario", req);
-        auto u = j.get<Usuario>(); b.editarUsuario(u); responder(res, 200, Json(u));
+        auto u = j.get<Usuario>();
+        if (!u.activo && auth.admin(u.idUsuario)) throw ErrorDominio(409,"Deshabilite primero la cuenta administrativa");
+        b.editarUsuario(u,auth.authenticate(req.get_header_value("Authorization")).idUsuario);
+        if (!u.activo) auth.invalidate(u.idUsuario); responder(res, 200, Json(u));
     });
     s.Delete(R"(/api/usuarios/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
-        b.borrarUsuario(req.matches[1]); responder(res, 200, {{"ok",true}});
+        if (auth.admin(req.matches[1])) throw ErrorDominio(409,"Deshabilite primero la cuenta administrativa");
+        b.borrarUsuario(req.matches[1]); auth.invalidate(req.matches[1]); responder(res, 200, {{"ok",true}});
     });
     s.Get("/api/ejemplares", [&](const Request& req, Response& res) {
         parametros(req, {"limite","desplazamiento"}); pagina(res, req, b.estado().ejemplares);
@@ -228,7 +356,8 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         responder(res, 200, detalle(b.estado().reservas, req.matches[1], [](const auto& v) { return v.idReserva; }));
     });
     s.Post(R"(/api/reservas/([A-Za-z0-9_-]{1,64})/cancelacion)", [&](const Request& req, Response& res) {
-        campos(cuerpo(req), {}); b.cancelar(req.matches[1]); responder(res, 200, {{"ok",true}});
+        auto j = cuerpo(req); campos(j, {"motivo"});
+        b.cancelar(req.matches[1],j.at("motivo"),auth.authenticate(req.get_header_value("Authorization")).idUsuario); responder(res, 200, {{"ok",true}});
     });
     s.Get("/api/avisos", [&](const Request& req, Response& res) {
         parametros(req, {"limite","desplazamiento"}); pagina(res, req, b.estado().avisos);
@@ -242,7 +371,7 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         catch (const DuplicateBookId& e) { codigo = 409; mensaje = e.what(); }
         catch (const std::invalid_argument& e) { codigo = 400; mensaje = e.what(); }
         catch (const Json::exception&) { codigo = 400; mensaje = "JSON inválido o tipo incorrecto"; }
-        catch (const std::exception& e) { mensaje = e.what(); }
+        catch (const std::exception&) { mensaje = "Operación no disponible"; }
         if (req.path == "/readyz") codigo = 503;
         responder(res, codigo, {{"error",mensaje}});
     });

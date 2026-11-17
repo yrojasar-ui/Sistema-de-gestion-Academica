@@ -15,7 +15,7 @@ public:
     const EstadoBiblioteca& estado() const { return actual_->datos; }
     Usuario usuario(const std::string& id) const;
     void crearUsuario(const Usuario& usuario);
-    void editarUsuario(const Usuario& usuario);
+    void editarUsuario(const Usuario& usuario, const std::string& responsable = "servicio");
     void borrarUsuario(const std::string& id);
     void crearEjemplar(const std::string& id, const std::string& libro);
     void estadoEjemplar(const std::string& id, const std::string& estado);
