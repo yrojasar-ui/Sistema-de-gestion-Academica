@@ -1,5 +1,6 @@
 #include "biblioteca/HttpController.hpp"
 #include "biblioteca/JsonBookRepository.hpp"
+#include "biblioteca/LocalLibraryRepository.hpp"
 #include <httplib.h>
 #ifdef BIBLIOTECA_MONGO
 #include "biblioteca/MongoLibraryRepository.hpp"
@@ -39,13 +40,14 @@ struct Settings {
     int port = 8080;
     std::string storage = "local", endpoint, collection;
     fs::path mongoState;
-    bool initialize = false;
+    bool initialize = false, migrate = false;
     std::vector<std::string> origins{"http://localhost:5173", "http://127.0.0.1:5173"};
 };
 Settings settings(int argc, char** argv) {
     Settings cfg;
     for (int i = 1; i < argc; ++i) {
         std::string flag = argv[i];
+        if (flag == "--migrate") { cfg.migrate = true; continue; }
         if (flag == "--initialize") { cfg.initialize = true; continue; }
         if (++i == argc) throw std::invalid_argument("Falta valor para " + flag);
         std::string value = argv[i];
@@ -76,22 +78,22 @@ Settings settings(int argc, char** argv) {
 int main(int argc, char** argv) {
     try {
         const auto cfg = settings(argc, argv);
-        std::unique_ptr<JsonBookRepository> repository;
-        if (cfg.storage == "local") repository = std::make_unique<JsonBookRepository>(cfg.initial, cfg.working);
-        MemoryDomainRepository localDomain;
+        WriterLock writer(cfg.storage == "mongo" ? cfg.mongoState : cfg.working);
+        std::unique_ptr<LocalLibraryRepository> repository;
+        if (cfg.storage == "local") repository = std::make_unique<LocalLibraryRepository>(cfg.initial, cfg.working, cfg.migrate);
         IBookRepository* books = repository.get();
-        IDomainRepository* domain = &localDomain;
+        IDomainRepository* domain = repository.get();
 #ifdef BIBLIOTECA_MONGO
         std::unique_ptr<MongoLibraryRepository> remote;
         if (cfg.storage == "mongo") {
             remote = std::make_unique<MongoLibraryRepository>(cfg.endpoint, cfg.collection,
                                                              cfg.mongoState.string() + ".pending.json");
+            remote->allowMigration(cfg.migrate);
             books = remote.get(); domain = remote.get();
         }
 #else
         if (cfg.storage == "mongo") throw std::invalid_argument("Compilación sin soporte Mongo");
 #endif
-        WriterLock writer(cfg.storage == "mongo" ? cfg.mongoState : repository->workingPath());
         CatalogService service(*books);
         httplib::Server server;
         // Un único trabajador serializa mutación, guardado y recuperación con las lecturas.
@@ -104,8 +106,7 @@ int main(int argc, char** argv) {
         server.set_default_headers({{"Cache-Control", "no-store"}});
         if (!server.bind_to_port("127.0.0.1", cfg.port)) throw std::runtime_error("Puerto local no disponible");
         if (cfg.storage == "local") {
-            if (fs::exists(cfg.working)) service.load(cfg.working);
-            else { service.load(cfg.initial); service.save(); }
+            service.load(repository->workingPath());
         }
         LibraryService biblioteca(service, *domain, cfg.storage == "mongo");
         std::function<void()> recover;
@@ -113,6 +114,7 @@ int main(int argc, char** argv) {
         auto rebuild = [&](bool initialize) {
             try {
                 remote->refresh(initialize);
+                if (cfg.migrate) remote->migrateDomain();
                 CatalogService candidate(*remote);
                 candidate.load(remote->workingPath());
                 LibraryService candidateLibrary(candidate, *remote);

@@ -89,7 +89,9 @@ with tempfile.TemporaryDirectory() as directory:
         process.terminate()
         process.wait(timeout=3)
 
-    working.write_text("[]")
+    saved = json.loads(working.read_text())
+    saved["libros"] = []
+    working.write_text(json.dumps(saved))
     process = start()
     try:
         assert request("libros")[1]["libros"] == []

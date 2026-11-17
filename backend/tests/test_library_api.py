@@ -164,7 +164,7 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         (root / "dominio.json").write_text(json.dumps(exported))
         stop()
         start()
-        check(domain()["usuarios"] == [], "Repositorio local en memoria tras reinicio")
+        check(domain() == exported, "Repositorio local persistente tras reinicio")
         check(call("/api/libros/DEMO-L") == book, "Libro persistido en JSON")
         imported = json.loads((root / "dominio.json").read_text())
         imported["reservas"].reverse()
@@ -266,7 +266,7 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-dominio-") as folder:
         check(initial.read_bytes() == original, "Fixture inicial alterado")
         if "--contract-log" in sys.argv:
             Path(sys.argv[sys.argv.index("--contract-log") + 1]).write_text(json.dumps(observed))
-        print(f"OK solicitudes HTTP={requests}; datos temporales; avisos pendientes en memoria.")
+        print(f"OK solicitudes HTTP={requests}; datos temporales; avisos pendientes persistentes.")
     finally:
         stop()
         output.seek(0)

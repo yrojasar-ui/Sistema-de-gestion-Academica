@@ -6,7 +6,7 @@ Responder, comentar y documentar en español. Este proyecto no es File-X.
 ## Alcance autorizado
 
 El segundo avance y el catálogo web están integrados en main. La integración continua está activa.
-La persistencia MongoDB está integrada. La fase actual prepara el frontend para Pages, sin desplegar backend ni implementar worker.
+La persistencia MongoDB está integrada. La fase actual integra autenticación, paneles y pagos exclusivamente simulados, sin desplegar backend ni implementar worker.
 Segundo avance el 16 de noviembre de 2026 y entrega final el 24 de noviembre de 2026.
 Trabajar en este repositorio e historial; inspeccionar y conservar archivos existentes.
 
@@ -21,7 +21,7 @@ Trabajar en este repositorio e historial; inspeccionar y conservar archivos exis
 - Libro es una obra; Ejemplar es copia física. Entidades finales: Libro, Ejemplar,
   Usuario, Prestamo y Reserva; preservar historial de préstamos.
 - Una biblioteca, lectores y bibliotecarios, ejemplares físicos y avisos internos.
-  Sin pagos, multas monetarias, sedes ni recomendaciones con IA.
+  Solo pagos ficticios autorizados para demostración; sin cobros reales, multas monetarias, sedes ni recomendaciones con IA.
 - Final: Rojo-Negro para préstamos activos `(fechaVencimiento,idPrestamo)`;
   quitar al devolver conservando historia, retirar/reinsertar al cambiar vencimiento.
 - Final: hash extensible propio por idUsuario (directorio, profundidades y cubetas);

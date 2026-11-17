@@ -27,6 +27,16 @@ void LibraryService::validar(const Runtime& e) const {
     idsUnicos(d.prestamos, [](const auto& x) { return x.idPrestamo; });
     idsUnicos(d.reservas, [](const auto& x) { return x.idReserva; });
     idsUnicos(d.avisos, [](const auto& x) { return x.idAviso; });
+    idsUnicos(d.cargos, [](const auto& x) { return x.idPrestamo; });
+    idsUnicos(d.comprobantes, [](const auto& x) { return x.idComprobante; });
+    auto auditoria = [&](const Auditoria& a, bool cancelada, const std::string& inicio) {
+        if (!cancelada) {
+            comprobar(a.fecha.empty() && a.motivo.empty() && a.responsable.empty(), "auditoría inesperada");
+            return;
+        }
+        validarInstante(a.fecha); validarId(a.responsable);
+        comprobar(a.fecha >= inicio && !normalizeTitle(a.motivo).empty() && a.motivo.size() <= 512, "auditoría de cancelación");
+    };
     std::string razon;
     comprobar(catalogo_.validate(razon), razon);
     comprobar(e.activos.validar(), "invariantes Rojo-Negro");
@@ -46,12 +56,14 @@ void LibraryService::validar(const Runtime& e) const {
         validarFecha(p.vencimiento);
         validarInstante(p.inicio);
         comprobar(p.vencimiento > p.inicio.substr(0,10), "vencimiento anterior al préstamo");
+        auditoria(p.cancelacion, !p.cancelacion.fecha.empty(), p.inicio);
+        comprobar(p.cancelacion.fecha.empty() || p.devolucion.empty(), "préstamo cancelado y devuelto");
         ejemplar(p.idEjemplar);
         auto u = usuario(e, p.idUsuario);
-        if (p.devolucion.empty()) {
+        if (activo(p)) {
             comprobar(u.activo && prestados.insert(p.idEjemplar).second, "usuario inactivo o doble préstamo");
             claves.emplace_back(p.vencimiento, p.idPrestamo);
-        } else {
+        } else if (!p.devolucion.empty()) {
             validarInstante(p.devolucion);
             comprobar(p.devolucion >= p.inicio, "devolución anterior al préstamo");
         }
@@ -66,6 +78,7 @@ void LibraryService::validar(const Runtime& e) const {
         comprobar(catalogo_.find(r.idLibro).has_value(), "libro de reserva ausente");
         auto u = usuario(e, r.idUsuario);
         validarInstante(r.creada);
+        auditoria(r.cancelacion, r.estado == "cancelada", r.creada);
         comprobar(r.llegada > 0 && r.llegada < d.siguienteLlegada && llegadas.insert(r.llegada).second, "turno de reserva inválido");
         comprobar(r.estado == "pendiente" || r.estado == "apartada" || r.estado == "cancelada" || r.estado == "atendida", "estado de reserva");
         if (pendiente(r)) comprobar(u.activo && turnos.emplace(r.idLibro, r.idUsuario).second, "reserva duplicada o usuario inactivo");
@@ -127,6 +140,24 @@ void LibraryService::validar(const Runtime& e) const {
                 }), "referencia del aviso de devolución");
         }
     }
+    std::set<std::string> pagados;
+    for (const auto& cargo : d.cargos) {
+        auto p = std::find_if(d.prestamos.begin(), d.prestamos.end(), [&](const auto& x) { return x.idPrestamo == cargo.idPrestamo; });
+        comprobar(p != d.prestamos.end() && p->idUsuario == cargo.idUsuario, "propietario de cargo");
+        comprobar(cargo.importe >= 0 && cargo.importe <= 100000000 && cargo.moneda.size() == 3 &&
+            std::all_of(cargo.moneda.begin(), cargo.moneda.end(), [](char c) { return c >= 'A' && c <= 'Z'; }), "importe/moneda");
+        comprobar(cargo.estado == "pendiente" || cargo.estado == "pagado" || cargo.estado == "anulado", "estado de cargo");
+        comprobar((cargo.estado == "anulado") == !p->cancelacion.fecha.empty(), "anulación préstamo/cargo");
+    }
+    for (const auto& pago : d.comprobantes) {
+        validarInstante(pago.fecha);
+        auto c = std::find_if(d.cargos.begin(), d.cargos.end(), [&](const auto& x) { return x.idPrestamo == pago.idPrestamo; });
+        comprobar(c != d.cargos.end() && c->estado != "pendiente" && c->idUsuario == pago.idUsuario &&
+            c->importe == pago.importe && c->moneda == pago.moneda && pago.etiqueta == "SIMULADO" &&
+            pagados.insert(pago.idPrestamo).second, "comprobante/cargo o pago duplicado");
+    }
+    for (const auto& c : d.cargos)
+        comprobar(c.estado != "pagado" || pagados.count(c.idPrestamo), "cargo pagado sin comprobante");
     for (const auto& b : catalogo_.all()) {
         std::vector<std::string> vecinos;
         for (const auto& otro : catalogo_.all()) {

@@ -50,7 +50,7 @@ std::unique_ptr<LibraryService::Runtime> LibraryService::construir(const EstadoB
     for (const auto& libro : catalogo_.all()) nuevo->grafo.insertar(libro);
     for (const auto& u : estado.usuarios) exigir(nuevo->usuarios.insertar(u), "Usuario repetido");
     for (const auto& p : estado.prestamos)
-        if (p.devolucion.empty()) exigir(nuevo->activos.insertar({p.vencimiento, p.idPrestamo}), "Préstamo repetido");
+        if (activo(p)) exigir(nuevo->activos.insertar({p.vencimiento, p.idPrestamo}), "Préstamo repetido");
     for (const auto& r : estado.reservas) {
         auto& cola = nuevo->colas.try_emplace(r.idLibro, r.idLibro).first->second;
         if (r.estado == "pendiente") exigir(cola.encolar(r.idReserva, r.llegada), "Reserva repetida");
@@ -90,7 +90,7 @@ void LibraryService::editarUsuario(const Usuario& u) {
         usuario(e, u.idUsuario);
         if (!u.activo) {
             for (const auto& p : e.datos.prestamos)
-                exigir(p.idUsuario != u.idUsuario || !p.devolucion.empty(), "Usuario con préstamo activo");
+                exigir(p.idUsuario != u.idUsuario || !activo(p), "Usuario con préstamo activo");
             for (auto& r : e.datos.reservas)
                 if (r.idUsuario == u.idUsuario && pendiente(r)) liberar(e, r);
         }
@@ -103,7 +103,7 @@ void LibraryService::borrarUsuario(const std::string& id) {
     cambiar([&](Runtime& e) {
         auto u = usuario(e, id);
         for (const auto& p : e.datos.prestamos)
-            exigir(p.idUsuario != id || !p.devolucion.empty(), "Usuario con préstamo activo");
+            exigir(p.idUsuario != id || !activo(p), "Usuario con préstamo activo");
         for (const auto& r : e.datos.reservas)
             exigir(r.idUsuario != id || !pendiente(r), "Usuario con reserva pendiente");
         bool historial = false;
@@ -162,14 +162,15 @@ void LibraryService::prestar(const std::string& id, const std::string& ejemplar,
             apartado->estado = "atendida";
         }
         c.estado = "prestado";
-        e.datos.prestamos.push_back({id, ejemplar, lector, ahoraUTC(), vence, ""});
+        e.datos.prestamos.push_back({id, ejemplar, lector, ahoraUTC(), vence, "", {}});
         exigir(e.activos.insertar({vence, id}), "Clave de préstamo duplicada");
+        e.datos.cargos.push_back({id, lector, importeDemo_, monedaDemo_, "pendiente"});
     });
 }
 void LibraryService::devolver(const std::string& id) {
     cambiar([&](Runtime& e) {
         auto& p = prestamo(e.datos, id);
-        exigir(p.devolucion.empty(), "Préstamo ya devuelto");
+        exigir(activo(p), "Préstamo ya devuelto");
         p.devolucion = ahoraUTC();
         exigir(e.activos.eliminar({p.vencimiento, id}), "Índice activo inconsistente");
         auto& c = copia(e.datos, p.idEjemplar);
@@ -182,7 +183,7 @@ void LibraryService::renovar(const std::string& id, const std::string& vence) {
     fechaFutura(vence);
     cambiar([&](Runtime& e) {
         auto& p = prestamo(e.datos, id);
-        exigir(p.devolucion.empty(), "Préstamo devuelto");
+        exigir(activo(p), "Préstamo devuelto");
         exigir(vence > p.vencimiento, "Renovación debe ampliar el vencimiento", 400);
         exigir(e.activos.cambiarVencimiento({p.vencimiento, id}, vence), "Índice activo inconsistente");
         p.vencimiento = vence;
@@ -197,22 +198,61 @@ void LibraryService::reservar(const std::string& id, const std::string& libro, c
             exigir(!(pendiente(r) && r.idLibro == libro && r.idUsuario == lector), "Reserva pendiente duplicada");
         exigir(e.datos.siguienteLlegada < 9007199254740991ULL, "Secuencia agotada");
         const auto turno = e.datos.siguienteLlegada++;
-        e.datos.reservas.push_back({id, libro, lector, turno, "pendiente", "", ahoraUTC()});
+        e.datos.reservas.push_back({id, libro, lector, turno, "pendiente", "", ahoraUTC(), {}});
         e.colas.try_emplace(libro, libro).first->second.encolar(id, turno);
         asignar(e, libro);
     });
 }
 void LibraryService::liberar(Runtime& e, Reserva& r) {
     if (r.estado == "apartada") copia(e.datos, r.idEjemplar).estado = "disponible";
+    r.cancelacion = {ahoraUTC(), "Desactivación del usuario", "servicio"};
     r.estado = "cancelada"; // Su ID puede permanecer en FIFO hasta descartarse al atender.
 }
-void LibraryService::cancelar(const std::string& id) {
+void LibraryService::cancelar(const std::string& id, const std::string& motivo, const std::string& responsable) {
+    validarId(responsable);
+    exigir(!normalizeTitle(motivo).empty() && motivo.size() <= 512, "Motivo requerido (máximo 512 bytes)", 400);
     cambiar([&](Runtime& e) {
         auto& r = reserva(e.datos, id);
         exigir(pendiente(r), "Reserva ya finalizada");
         liberar(e, r);
+        r.cancelacion = {ahoraUTC(), motivo, responsable};
         asignar(e, r.idLibro);
     });
+}
+void LibraryService::configurarCargo(std::int64_t importe, const std::string& moneda) {
+    exigir(importe >= 0 && importe <= 100000000, "Importe demo fuera de rango", 400);
+    exigir(moneda.size() == 3 && std::all_of(moneda.begin(), moneda.end(), [](char c) { return c >= 'A' && c <= 'Z'; }),
+           "Moneda ISO de tres letras", 400);
+    importeDemo_ = importe; monedaDemo_ = moneda;
+}
+void LibraryService::anular(const std::string& id, const std::string& motivo, const std::string& responsable, bool recuperada) {
+    validarId(responsable);
+    exigir(recuperada, "Confirme que la copia no salió o fue recuperada", 400);
+    exigir(!normalizeTitle(motivo).empty() && motivo.size() <= 512, "Motivo requerido (máximo 512 bytes)", 400);
+    cambiar([&](Runtime& e) {
+        auto& p = prestamo(e.datos, id);
+        exigir(activo(p), "Solo se anulan préstamos activos");
+        p.cancelacion = {ahoraUTC(), motivo, responsable};
+        exigir(e.activos.eliminar({p.vencimiento, id}), "Índice activo inconsistente");
+        auto& c = copia(e.datos, p.idEjemplar);
+        c.estado = "disponible";
+        for (auto& cargo : e.datos.cargos) if (cargo.idPrestamo == id) cargo.estado = "anulado";
+        asignar(e, c.idLibro);
+    });
+}
+Comprobante LibraryService::pagar(const std::string& id) {
+    Comprobante resultado;
+    cambiar([&](Runtime& e) {
+        auto& cargo = obtener(e.datos.cargos, id, [](const auto& c) { return c.idPrestamo; });
+        exigir(cargo.estado != "anulado", "Cargo anulado");
+        for (const auto& c : e.datos.comprobantes)
+            if (c.idPrestamo == id) { resultado = c; return; }
+        resultado = {"PG-" + std::to_string(e.datos.comprobantes.size() + 1), ahoraUTC(), cargo.idUsuario,
+                     id, cargo.importe, cargo.moneda, "SIMULADO"};
+        e.datos.comprobantes.push_back(resultado);
+        cargo.estado = "pagado";
+    });
+    return resultado;
 }
 void LibraryService::aviso(Runtime& e, const std::string& tipo, const std::string& lector,
                            const std::string& reservaId, const std::string& prestamoId) {
