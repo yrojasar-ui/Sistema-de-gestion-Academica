@@ -1,5 +1,6 @@
 #include "biblioteca/HttpController.hpp"
 #include "biblioteca/JsonBookRepository.hpp"
+#include "biblioteca/LocalLibraryRepository.hpp"
 #include <httplib.h>
 #ifdef BIBLIOTECA_MONGO
 #include "biblioteca/MongoLibraryRepository.hpp"
@@ -9,6 +10,8 @@
 #include <unistd.h>
 #include <charconv>
 #include <iostream>
+#include <termios.h>
+#include <limits>
 
 using namespace biblioteca;
 namespace fs = std::filesystem;
@@ -38,18 +41,33 @@ struct Settings {
     fs::path working = "data/catalogo_web.json";
     int port = 8080;
     std::string storage = "local", endpoint, collection;
-    fs::path mongoState;
-    bool initialize = false;
+    fs::path mongoState, authStore = "data/privado/cuentas.json";
+    std::string bootstrap, adminName, moneda = "CRC";
+    int sessionSeconds = 1800;
+    std::int64_t charge = 10000;
+    bool initialize = false, migrate = false;
     std::vector<std::string> origins{"http://localhost:5173", "http://127.0.0.1:5173"};
 };
 Settings settings(int argc, char** argv) {
     Settings cfg;
     for (int i = 1; i < argc; ++i) {
         std::string flag = argv[i];
+        if (flag == "--migrate") { cfg.migrate = true; continue; }
         if (flag == "--initialize") { cfg.initialize = true; continue; }
         if (++i == argc) throw std::invalid_argument("Falta valor para " + flag);
         std::string value = argv[i];
-        if (flag == "--storage") cfg.storage = value;
+        if (flag == "--auth-store") cfg.authStore = value;
+        else if (flag == "--bootstrap-admin") cfg.bootstrap = value;
+        else if (flag == "--admin-name") cfg.adminName = value;
+        else if (flag == "--currency") cfg.moneda = value;
+        else if (flag == "--demo-charge" || flag == "--session-seconds") {
+            std::int64_t n = 0;
+            auto r = std::from_chars(value.data(),value.data()+value.size(),n);
+            if (r.ec != std::errc{} || r.ptr != value.data()+value.size() || n < 0 || n > 100000000)
+                throw std::invalid_argument("Importe o duración inválida");
+            if (flag == "--demo-charge") cfg.charge = n; else cfg.sessionSeconds = static_cast<int>(n);
+        }
+        else if (flag == "--storage") cfg.storage = value;
         else if (flag == "--endpoint") cfg.endpoint = value;
         else if (flag == "--collection") cfg.collection = value;
         else if (flag == "--mongo-state") cfg.mongoState = value;
@@ -76,22 +94,23 @@ Settings settings(int argc, char** argv) {
 int main(int argc, char** argv) {
     try {
         const auto cfg = settings(argc, argv);
-        std::unique_ptr<JsonBookRepository> repository;
-        if (cfg.storage == "local") repository = std::make_unique<JsonBookRepository>(cfg.initial, cfg.working);
-        MemoryDomainRepository localDomain;
+        WriterLock writer(cfg.storage == "mongo" ? cfg.mongoState : cfg.working);
+        std::unique_ptr<LocalLibraryRepository> repository;
+        if (cfg.storage == "local") repository = std::make_unique<LocalLibraryRepository>(cfg.initial, cfg.working, cfg.migrate);
         IBookRepository* books = repository.get();
-        IDomainRepository* domain = &localDomain;
+        IDomainRepository* domain = repository.get();
 #ifdef BIBLIOTECA_MONGO
         std::unique_ptr<MongoLibraryRepository> remote;
         if (cfg.storage == "mongo") {
             remote = std::make_unique<MongoLibraryRepository>(cfg.endpoint, cfg.collection,
                                                              cfg.mongoState.string() + ".pending.json");
+            remote->allowMigration(cfg.migrate);
             books = remote.get(); domain = remote.get();
         }
 #else
         if (cfg.storage == "mongo") throw std::invalid_argument("Compilación sin soporte Mongo");
 #endif
-        WriterLock writer(cfg.storage == "mongo" ? cfg.mongoState : repository->workingPath());
+        AuthService auth(cfg.authStore,cfg.sessionSeconds);
         CatalogService service(*books);
         httplib::Server server;
         // Un único trabajador serializa mutación, guardado y recuperación con las lecturas.
@@ -102,10 +121,9 @@ int main(int argc, char** argv) {
         server.set_write_timeout(5);
         server.set_keep_alive_max_count(1);
         server.set_default_headers({{"Cache-Control", "no-store"}});
-        if (!server.bind_to_port("127.0.0.1", cfg.port)) throw std::runtime_error("Puerto local no disponible");
+
         if (cfg.storage == "local") {
-            if (fs::exists(cfg.working)) service.load(cfg.working);
-            else { service.load(cfg.initial); service.save(); }
+            service.load(repository->workingPath());
         }
         LibraryService biblioteca(service, *domain, cfg.storage == "mongo");
         std::function<void()> recover;
@@ -113,6 +131,7 @@ int main(int argc, char** argv) {
         auto rebuild = [&](bool initialize) {
             try {
                 remote->refresh(initialize);
+                if (cfg.migrate) remote->migrateDomain();
                 CatalogService candidate(*remote);
                 candidate.load(remote->workingPath());
                 LibraryService candidateLibrary(candidate, *remote);
@@ -135,7 +154,34 @@ int main(int argc, char** argv) {
             catch (const std::exception& e) { std::cerr << "Mongo no listo: " << e.what() << '\n'; }
         }
 #endif
-        registrarHttp(server, service, biblioteca, cfg.origins, recover);
+        biblioteca.configurarCargo(cfg.charge,cfg.moneda);
+        if (!cfg.bootstrap.empty()) {
+            if (!auth.empty()) throw std::runtime_error("Bootstrap solo admite almacén de cuentas vacío");
+            if (!domain->ready()) throw std::runtime_error("Bootstrap requiere biblioteca validada");
+            validarId(cfg.bootstrap);
+            if (normalizeTitle(cfg.adminName).empty()) throw std::invalid_argument("--admin-name requerido");
+            std::cerr << "Contraseña nueva (12–256 bytes): " << std::flush;
+            termios previous{};
+            const bool terminal = ::isatty(STDIN_FILENO) && ::tcgetattr(STDIN_FILENO,&previous)==0;
+            if (terminal) { auto hidden=previous; hidden.c_lflag &= static_cast<tcflag_t>(~ECHO); ::tcsetattr(STDIN_FILENO,TCSAFLUSH,&hidden); }
+            std::string password;
+            std::getline(std::cin,password);
+            if (terminal) ::tcsetattr(STDIN_FILENO,TCSAFLUSH,&previous);
+            std::cerr << '\n';
+            if (password.size()<12 || password.size()>256) throw std::invalid_argument("Contraseña de 12 a 256 bytes requerida");
+            bool exists=false;
+            try { if (!biblioteca.usuario(cfg.bootstrap).activo) throw std::runtime_error("Usuario de bootstrap inactivo"); exists=true; }
+            catch (const ErrorDominio& e) { if (e.status!=404) throw; }
+            if (!exists) biblioteca.crearUsuario({cfg.bootstrap,cfg.adminName,true});
+            // Aprovisionamiento reanudable: si falla el almacén privado, el usuario no tiene acceso.
+            auth.create(cfg.bootstrap,"ADMIN",password);
+            std::fill(password.begin(),password.end(),'\0');
+            std::cout << "Administrador creado. Inicie la API sin --bootstrap-admin.\n";
+            return 0;
+        }
+        if (auth.empty()) throw std::runtime_error("Sin cuentas: ejecute primero --bootstrap-admin ID --admin-name Nombre");
+        if (!server.bind_to_port("127.0.0.1", cfg.port)) throw std::runtime_error("Puerto local no disponible");
+        registrarHttp(server, service, biblioteca, auth, cfg.origins, recover);
         std::cout << "API de catálogo en http://127.0.0.1:" << cfg.port << " · " << cfg.storage << " · " << (cfg.storage == "mongo" ? cfg.collection : cfg.working.string()) << std::endl;
         return server.listen_after_bind() ? 0 : 1;
     } catch (const std::exception& e) { std::cerr << "Error: " << e.what() << '\n'; return 1; }

@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import secrets
 import subprocess
 import sys
 import tempfile
@@ -27,10 +28,16 @@ with tempfile.TemporaryDirectory() as directory:
     base = f"http://127.0.0.1:{port}/api/"
     args = [str(binary), "--initial", str(initial), "--working", str(working)]
 
+    password = secrets.token_urlsafe(24)
+    args += ["--auth-store", str(root / "privado" / "cuentas.json")]
+    subprocess.run(args + ["--bootstrap-admin","Admin","--admin-name","Administrador sintético"],
+                   input=password+"\n", text=True, check=True, capture_output=True)
+    token = ""
+
     def request(route, method="GET", body=None):
         payload = None if body is None else json.dumps(body).encode()
         req = Request(base + route, data=payload, method=method,
-                      headers={"Content-Type": "application/json"})
+                      headers={"Content-Type": "application/json", "Authorization":"Bearer "+token})
         try:
             response = urlopen(req, timeout=2)
         except HTTPError as error:
@@ -40,13 +47,16 @@ with tempfile.TemporaryDirectory() as directory:
             return response.status, json.loads(data) if data else None
 
     def start():
+        global token
         process = subprocess.Popen(args + ["--port", str(port)])
         try:
             for _ in range(100):
                 if process.poll() is not None:
                     raise RuntimeError("La API terminó durante el arranque")
                 try:
-                    if request("libros")[0] == 200:
+                    status, result = request("sesion/login","POST",{"idUsuario":"Admin","password":password})
+                    if status == 200:
+                        token = result["token"]
                         return process
                 except URLError:
                     time.sleep(0.03)
@@ -89,7 +99,9 @@ with tempfile.TemporaryDirectory() as directory:
         process.terminate()
         process.wait(timeout=3)
 
-    working.write_text("[]")
+    saved = json.loads(working.read_text())
+    saved["libros"] = []
+    working.write_text(json.dumps(saved))
     process = start()
     try:
         assert request("libros")[1]["libros"] == []

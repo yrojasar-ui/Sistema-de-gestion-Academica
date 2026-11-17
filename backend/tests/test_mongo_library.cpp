@@ -183,18 +183,43 @@ int main() {
         check(f.writes == count && !h.repo.ready(), "Cambio externo detectado antes de escribir");
         h.recover();
 
+        // Migración explícita de dominio v1; el sobre remoto sigue versión 1.
+        Fixture legacy;
+        legacy.document = f.document;
+        auto& old = legacy.document["estado"]["dominio"];
+        old["version"] = 1; old.erase("cargos"); old.erase("comprobantes");
+        for (auto& p : old["prestamos"]) { p.erase("estado"); p.erase("cancelacion"); }
+        for (auto& r : old["reservas"]) r.erase("cancelacion");
+        Harness migration(legacy,root/"migracion.pending.json");
+        fails([&] { migration.recover(); });
+        check(legacy.writes == 0 && !migration.repo.ready(), "V1 no migra silenciosamente");
+        migration.repo.allowMigration(true);
+        migration.repo.refresh();
+        migration.repo.migrateDomain();
+        migration.recover();
+        check(migration.library.estado().cargos.empty() && legacy.document["estado"]["dominio"]["version"] == 2,
+              "Migración validada y persistida sin cargos retroactivos");
+        check(migration.library.estado().reservas.size() == h.library.estado().reservas.size(), "Migración conserva reservas");
+        std::cout << "Migración explícita v1/v2 y rechazo sin permiso OK (fixture).\n";
+
         // Contrato HTTP real sobre loopback, con transporte Mongo inyectado, sin nube.
         httplib::Server server;
         server.new_task_queue = [] { return new httplib::ThreadPool(1); };
-        registrarHttp(server, h.catalog, h.library, {}, [&] { h.recover(); });
+        AuthService auth(root / "cuentas.json");
+        const auto password = root.filename().string() + "-fixture-efimero";
+        auth.create("Ana","ADMIN",password);
+        registrarHttp(server, h.catalog, h.library, auth, {}, [&] { h.recover(); });
         const auto port = server.bind_to_any_port("127.0.0.1");
         check(port > 0, "Puerto fixture");
         std::thread worker([&] { server.listen_after_bind(); });
         try {
             server.wait_until_ready();
             httplib::Client client("127.0.0.1", port);
+            auto login = client.Post("/api/sesion/login", Json{{"idUsuario","Ana"},{"password",password}}.dump(),"application/json");
+            check(login && login->status == 200, "Login real del fixture");
+            client.set_default_headers({{"Authorization","Bearer "+Json::parse(login->body).at("token").get<std::string>()}});
             auto ready = client.Get("/readyz");
-            check(ready && ready->status == 200 && Json::parse(ready->body)["dominio"] == "mongo", "Ready Mongo");
+            check(ready && ready->status == 200 && Json::parse(ready->body)["listo"] == true, "Ready Mongo");
             f.fault = "unreadable";
             auto result = client.Post("/api/usuarios", R"({"idUsuario":"HTTP","nombre":"Sintético","activo":true})", "application/json");
             check(result && result->status == 503 && Json::parse(result->body)["resultado"] == "incierto", "HTTP resultado incierto");

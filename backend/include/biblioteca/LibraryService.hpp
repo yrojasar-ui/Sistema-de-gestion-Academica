@@ -15,7 +15,7 @@ public:
     const EstadoBiblioteca& estado() const { return actual_->datos; }
     Usuario usuario(const std::string& id) const;
     void crearUsuario(const Usuario& usuario);
-    void editarUsuario(const Usuario& usuario);
+    void editarUsuario(const Usuario& usuario, const std::string& responsable = "servicio");
     void borrarUsuario(const std::string& id);
     void crearEjemplar(const std::string& id, const std::string& libro);
     void estadoEjemplar(const std::string& id, const std::string& estado);
@@ -24,7 +24,10 @@ public:
     void devolver(const std::string& id);
     void renovar(const std::string& id, const std::string& vence);
     void reservar(const std::string& id, const std::string& libro, const std::string& usuario);
-    void cancelar(const std::string& id);
+    void cancelar(const std::string& id, const std::string& motivo = "Cancelación solicitada", const std::string& responsable = "servicio");
+    void anular(const std::string& id, const std::string& motivo, const std::string& responsable, bool copiaRecuperada);
+    Comprobante pagar(const std::string& id);
+    void configurarCargo(std::int64_t importe, const std::string& moneda);
     void crearLibro(const Libro& libro);
     void editarLibro(const Libro& libro);
     void borrarLibro(const std::string& id);
@@ -41,6 +44,8 @@ private:
         GrafoTemas grafo;
         std::map<std::string, ColaReservas> colas;
     };
+    std::int64_t importeDemo_ = 10000;
+    std::string monedaDemo_ = "CRC";
     CatalogService& catalogo_;
     IDomainRepository& repositorio_;
     std::unique_ptr<Runtime> actual_;

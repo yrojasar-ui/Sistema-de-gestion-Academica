@@ -23,3 +23,14 @@ sha256sum -c third_party/SHA256SUMS
 El ejecutable `catalogo_api` lo utiliza para HTTP en loopback. La licencia se
 conserva junto al encabezado. Las sumas se verifican con
 `sha256sum -c third_party/SHA256SUMS` desde la raíz.
+
+## Autenticación
+
+libsodium **1.0.22**, licencia ISC incluida en el archivo fuente oficial.
+scripts/preparar_sodium.sh descarga la versión exacta, verifica SHA-256
+adbdd8f16149e81ac6078a03aca6fc03b592b89ef7b5ed83841c086191be3349,
+compila y ejecuta make check antes de instalar en build/deps.
+CMake enlaza ese archivo estático. No sustituye ninguna estructura académica.
+Origen: https://download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz
+API oficial: https://doc.libsodium.org/password_hashing/default_phf
+y https://doc.libsodium.org/generating_random_data.

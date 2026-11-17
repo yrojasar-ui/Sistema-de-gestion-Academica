@@ -65,6 +65,11 @@ void probar(Caso& c) {
     repositorio.fallar = true;
     rechazar([&] { servicio.devolver("P1"); });
     repositorio.fallar = false;
+    repositorio.fallar = true;
+    rechazar([&] { servicio.pagar("P1"); });
+    repositorio.fallar = false;
+    const auto recibo = servicio.pagar("P1");
+    c.exigir(Json(servicio.pagar("P1")) == Json(recibo), "Pago idempotente y persistente");
     operar([&] { servicio.devolver("P1"); });
     repositorio.fallar = true;
     rechazar([&] { servicio.cancelar("R1"); });
@@ -90,6 +95,18 @@ void probar(Caso& c) {
     invalido = servicio.estado();
     invalido.usuarios[2].activo = false;
     rechazar([&] { servicio.reconstruir(invalido); });
+    rechazar([&] { servicio.anular("P2", "Error de entrega", "U1", false); });
+    repositorio.fallar = true;
+    rechazar([&] { servicio.anular("P2", "Error de entrega", "U1", true); });
+    repositorio.fallar = false;
+    operar([&] { servicio.pagar("P2"); });
+    operar([&] { servicio.anular("P2", "Copia recuperada", "U1", true); });
+    c.exigir(servicio.activos().empty() && servicio.estado().prestamos[1].devolucion.empty() &&
+             estadoPrestamo(servicio.estado().prestamos[1]) == "cancelado", "Anular no inventa devolución");
+    c.exigir(servicio.estado().cargos[1].estado == "anulado" && servicio.estado().comprobantes.size() == 2,
+             "Anulación conserva comprobante y anula cargo");
+    rechazar([&] { servicio.devolver("P2"); });
+    rechazar([&] { servicio.pagar("P2"); });
     EstadoBiblioteca excesivo;
     for (unsigned i = 0; i < 5000; ++i)
         excesivo.usuarios.push_back({"X-" + std::to_string(i), std::string(256, 'x'), true});

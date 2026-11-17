@@ -1,5 +1,7 @@
 #include "biblioteca/MongoLibraryRepository.hpp"
 #include <fstream>
+#include "biblioteca/DomainMigration.hpp"
+#include "biblioteca/LibraryService.hpp"
 #include <limits>
 #include <fcntl.h>
 #include <unistd.h>
@@ -64,7 +66,9 @@ void MongoLibraryRepository::validateDocument(const Json& doc) const {
         !state.at("libros").is_array() || state.at("libros").size() > 10000 || doc.dump().size() > maxSnapshot)
         throw std::runtime_error("Revisión o tamaño de instantánea incompatible");
     for (const auto& book : state.at("libros")) validateBook(book.get<Libro>());
-    (void)state.at("dominio").get<EstadoBiblioteca>(); // Referencias e índices se validan en los servicios.
+    if (state.at("dominio").at("version") == 1 && migration_)
+        (void)migrarDominioV1(state.at("dominio")).get<EstadoBiblioteca>();
+    else (void)state.at("dominio").get<EstadoBiblioteca>(); // Referencias e índices se validan en los servicios.
 }
 Json MongoLibraryRepository::read() const {
     const auto response = mongo::responseJson(request_("GET", endpoint_ + "?coleccion=" + collection_, ""));
@@ -191,6 +195,18 @@ void MongoLibraryRepository::replaceState(Json state) const {
 }
 void MongoLibraryRepository::save(const std::vector<Libro>& books) const {
     auto state = current_.at("estado"); state["libros"] = books; replaceState(std::move(state));
+}
+void MongoLibraryRepository::migrateDomain() {
+    if (!migration_) throw std::runtime_error("Migración no autorizada");
+    if (current_.at("estado").at("dominio").at("version") == 2) return;
+    auto migrated = migrarDominioV1(current_.at("estado").at("dominio"));
+    CatalogService catalog(*this); catalog.load(workingPath());
+    MemoryDomainRepository domain; domain.replace(migrated.get<EstadoBiblioteca>());
+    LibraryService candidate(catalog, domain); candidate.validar();
+    auto state = current_.at("estado"); state["dominio"] = migrated;
+    ready_ = true;
+    try { replaceState(std::move(state)); ready_ = false; }
+    catch (...) { ready_ = false; throw; }
 }
 void MongoLibraryRepository::replace(const EstadoBiblioteca& domain) {
     auto state = current_.at("estado"); state["dominio"] = domain; replaceState(std::move(state));

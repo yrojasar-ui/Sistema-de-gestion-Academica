@@ -19,6 +19,8 @@ public:
     std::string outcome() const override { return outcomeName(outcome_); }
     // refresh solo lee/reconcilia; accept se llama después de reconstruir y validar TODOS los índices.
     void refresh(bool initialize = false);
+    void allowMigration(bool allow) { migration_ = allow; }
+    void migrateDomain();
     void accept() { ready_ = true; detail_ = "validado"; outcome_ = WriteOutcome::confirmado; }
     void block(const std::string& detail) const { ready_ = false; detail_ = detail; }
 private:
@@ -26,6 +28,7 @@ private:
     std::filesystem::path journal_;
     HttpTransport request_;
     mutable Json current_;
+    bool migration_ = false;
     mutable bool ready_ = false;
     mutable std::string detail_ = "sin cargar";
     mutable WriteOutcome outcome_ = WriteOutcome::rechazado;
