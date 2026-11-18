@@ -415,3 +415,9 @@ No se realizaron escrituras cloud en esta fase: migración y pagos Mongo están
 comprobados con fixtures. Pendientes: backend HTTPS público, despliegue remoto
 del backend, RabbitMQ/worker y entrega real de avisos; no se implementa cobro real.
 Segundo avance: 16 de noviembre; entrega final: 24 de noviembre de 2026.
+
+Al continuar el 17 de noviembre, main ya contenía PR #10 (integración realizada
+por el usuario de las etapas de dominio/autenticación) y 4c9d21b, que retiró el
+guion antiguo de tres minutos. Se incorporó ese main a la rama, conservando esa
+retirada y el nuevo guion de 5–7 minutos solicitado para esta fase. PR #11
+completa paneles, documentación y verificación; permanece sin fusionar.
