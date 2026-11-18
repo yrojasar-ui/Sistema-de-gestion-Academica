@@ -14,6 +14,7 @@ binary, initial = (Path(x).resolve() for x in sys.argv[1:3])
 passwords = {u: secrets.token_urlsafe(24) for u in ("Admin", "Ana", "Bruno", "Carla")}
 original = initial.read_bytes()
 count = 0
+observed = []
 
 with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
     root = Path(folder)
@@ -46,6 +47,8 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         with response:
             raw = response.read()
             value = json.loads(raw) if raw else None
+            if path != "/api/sesion/login":
+                observed.append({"path":path.split("?",1)[0],"method":method.lower(),"status":str(response.status),"body":value})
             assert response.status == status, f"{method} {path}: {response.status}, esperaba {status}: {value}"
             return value
 
@@ -181,6 +184,15 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         finally:
             root.chmod(0o700)
         assert snapshot() == before
+        accounts_before=call("/api/cuentas",token=admin)
+        private_before=private.read_bytes()
+        private.parent.chmod(0o500)
+        try:
+            call("/api/cuentas/Ana","PUT",{"rol":"USUARIO","activa":True,"password":secrets.token_urlsafe(24)},admin,503)
+        finally:
+            private.parent.chmod(0o700)
+        assert call("/api/cuentas",token=admin) == accounts_before and private.read_bytes() == private_before
+        assert call("/api/sesion",token=a)["idUsuario"] == "Ana"
         call("/api/usuarios/Bruno","PUT",{"idUsuario":"Bruno","nombre":"Bruno sintético","activo":False},admin)
         call("/api/mi-biblioteca",token=b,status=401)
         call("/api/sesion/login","POST",{"idUsuario":"Bruno","password":passwords["Bruno"]},status=401)
@@ -202,7 +214,21 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         for secret in [*passwords.values(),a,b,c,admin]:
             assert secret not in business
         assert "argon2" not in business and initial.read_bytes() == original
+        legacy=root/"legacy.json"
+        legacy.write_bytes(original)
+        old_args=[str(binary),"--initial",str(initial),"--working",str(legacy),
+                  "--auth-store",str(root/"privado-migracion"/"cuentas.json"),
+                  "--bootstrap-admin","Admin","--admin-name","Admin de migración"]
+        rejected=subprocess.run(old_args,input=passwords["Admin"]+"\n",text=True,capture_output=True)
+        assert rejected.returncode!=0 and legacy.read_bytes()==original
+        migrated=subprocess.run(old_args+["--migrate"],input=passwords["Admin"]+"\n",text=True,capture_output=True)
+        assert migrated.returncode==0,migrated.stderr
+        recovered=json.loads(legacy.read_text())
+        assert recovered["version"]==2 and len(recovered["libros"])==16 and recovered["dominio"]["usuarios"][0]["idUsuario"]=="Admin"
+        print("Migración local explícita: rechazo conserva archivo; actualización conserva las 16 obras.")
         print(f"OK: {count} solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.")
+        if "--contract-log" in sys.argv:
+            Path(sys.argv[sys.argv.index("--contract-log")+1]).write_text(json.dumps(observed))
     finally:
         root.chmod(0o700)
         stop()

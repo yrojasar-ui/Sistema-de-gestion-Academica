@@ -1,0 +1,65 @@
+Comando: cmake --build build/asan -j2
+[  3%] Built target libro
+[  7%] Built target bplus
+[ 16%] Built target estructuras
+[ 20%] Built target json_repository
+[ 21%] Building CXX object CMakeFiles/catalog_service.dir/backend/src/CatalogService.cpp.o
+[ 23%] Building CXX object CMakeFiles/mongo_repository.dir/backend/src/MongoApiBookRepository.cpp.o
+[ 25%] Linking CXX static library libcatalog_service.a
+[ 25%] Built target catalog_service
+[ 29%] Built target test_rojo_negro
+[ 32%] Built target test_hash_extensible
+[ 36%] Built target test_grafo_temas
+[ 40%] Built target test_fifo_reservas
+[ 43%] Built target test_snapshot_bplus
+[ 47%] Built target test_bplus
+[ 49%] Building CXX object CMakeFiles/console_ui.dir/backend/src/ConsoleUI.cpp.o
+[ 50%] Linking CXX static library libconsole_ui.a
+[ 50%] Built target console_ui
+[ 52%] Building CXX object CMakeFiles/library_service.dir/backend/src/Dominio.cpp.o
+[ 54%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryService.cpp.o
+[ 56%] Building CXX object CMakeFiles/mongo_repository.dir/backend/src/MongoApiProtocol.cpp.o
+[ 58%] Linking CXX static library libmongo_repository.a
+[ 60%] Built target mongo_repository
+[ 61%] Building CXX object CMakeFiles/test_catalog.dir/backend/tests/test_catalog.cpp.o
+[ 63%] Linking CXX executable test_catalog
+[ 65%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryValidation.cpp.o
+[ 65%] Built target test_catalog
+[ 67%] Building CXX object CMakeFiles/biblioteca.dir/backend/apps/main.cpp.o
+[ 69%] Linking CXX executable biblioteca
+[ 69%] Built target biblioteca
+[ 70%] Building CXX object CMakeFiles/test_mongo.dir/backend/tests/test_mongo.cpp.o
+[ 72%] Linking CXX static library liblibrary_service.a
+[ 72%] Built target library_service
+[ 74%] Building CXX object CMakeFiles/local_library_repository.dir/backend/src/LocalLibraryRepository.cpp.o
+[ 76%] Linking CXX executable test_mongo
+[ 76%] Built target test_mongo
+[ 78%] Building CXX object CMakeFiles/auth_service.dir/backend/src/AuthService.cpp.o
+[ 80%] Linking CXX static library libauth_service.a
+[ 80%] Built target auth_service
+[ 81%] Building CXX object CMakeFiles/mongo_library_repository.dir/backend/src/MongoLibraryRepository.cpp.o
+[ 83%] Linking CXX static library liblocal_library_repository.a
+[ 83%] Built target local_library_repository
+[ 85%] Building CXX object CMakeFiles/test_dominio.dir/backend/tests/test_dominio.cpp.o
+[ 87%] Linking CXX executable test_dominio
+[ 87%] Built target test_dominio
+[ 89%] Building CXX object CMakeFiles/http_controller.dir/backend/src/HttpController.cpp.o
+/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/src/HttpController.cpp: In lambda function:
+/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/src/HttpController.cpp:297:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  297 |         if (!u.activo) auth.invalidate(u.idUsuario); responder(res, 200, Json(u));
+      |         ^~
+/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/src/HttpController.cpp:297:54: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  297 |         if (!u.activo) auth.invalidate(u.idUsuario); responder(res, 200, Json(u));
+      |                                                      ^~~~~~~~~
+[ 90%] Linking CXX static library libmongo_library_repository.a
+[ 90%] Built target mongo_library_repository
+[ 92%] Linking CXX static library libhttp_controller.a
+[ 92%] Built target http_controller
+[ 96%] Building CXX object CMakeFiles/test_mongo_library.dir/backend/tests/test_mongo_library.cpp.o
+[ 96%] Building CXX object CMakeFiles/catalogo_api.dir/backend/apps/catalogo_api.cpp.o
+[ 98%] Linking CXX executable catalogo_api
+[ 98%] Built target catalogo_api
+[100%] Linking CXX executable test_mongo_library
+[100%] Built target test_mongo_library
+
+Código de retorno: 0

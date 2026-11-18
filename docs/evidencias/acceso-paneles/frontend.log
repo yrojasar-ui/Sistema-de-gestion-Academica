@@ -1,0 +1,47 @@
+
+added 25 packages, and audited 26 packages in 5s
+
+8 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> biblioteca-academica-catalogo@0.1.0 test
+> node --test src/*.test.ts
+
+✔ desarrollo conserva el proxy incluso si existe una variable de producción (0.73319ms)
+✔ producción sin URL presenta el mensaje requerido, sin backend implícito (0.598826ms)
+✔ origen HTTPS con o sin barra produce exactamente un prefijo api (0.282277ms)
+✔ producción rechaza /api, rutas, credenciales, consulta, fragmento y URL no HTTPS (0.270248ms)
+✔ producción nunca configura loopback como backend (0.199565ms)
+✔ credencial en Authorization y sin cookies; cierre limpia credencial (24.175768ms)
+✔ una respuesta tardía de A se descarta al cambiar a B, aunque fetch ignore abort (1.177161ms)
+✔ 401 invalida la sesión; 403 distingue permisos de desconexión (1.157581ms)
+✔ sin servidor configurado no realiza solicitudes ni inventa datos (0.261757ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.477932
+
+> biblioteca-academica-catalogo@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2088 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:  0.32 kB
+dist/assets/index-fswyX6Xc.css    9.95 kB │ gzip:  3.19 kB
+dist/assets/index-DJy4I-v0.js   254.23 kB │ gzip: 78.62 kB
+
+✓ built in 222ms
+
+> biblioteca-academica-catalogo@0.1.0 verify:dist
+> node verify-dist.mjs
+
+Pages: recursos JS/CSS existentes bajo /Sistema-de-gestion-Academica/

@@ -1,0 +1,26 @@
+[  3%] Built target libro
+[ 10%] Built target bplus
+[ 16%] Built target estructuras
+[ 23%] Built target catalog_service
+[ 23%] Built target json_repository
+[ 30%] Built target library_service
+[ 38%] Built target mongo_repository
+[ 41%] Built target test_rojo_negro
+[ 45%] Built target test_hash_extensible
+[ 49%] Built target test_grafo_temas
+[ 52%] Built target test_fifo_reservas
+[ 56%] Built target test_snapshot_bplus
+[ 60%] Built target test_bplus
+[ 63%] Built target console_ui
+[ 67%] Built target local_library_repository
+[ 70%] Built target auth_service
+[ 74%] Built target mongo_library_repository
+[ 78%] Built target test_dominio
+[ 81%] Built target test_mongo
+[ 85%] Built target test_catalog
+[ 89%] Built target biblioteca
+[ 92%] Built target http_controller
+[ 94%] Building CXX object CMakeFiles/catalogo_api.dir/backend/apps/catalogo_api.cpp.o
+[ 98%] Built target test_mongo_library
+[100%] Linking CXX executable catalogo_api
+[100%] Built target catalogo_api

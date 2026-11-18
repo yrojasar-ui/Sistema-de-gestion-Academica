@@ -183,3 +183,32 @@ El artefacto contiene únicamente frontend/dist; deploy usa github-pages con
 Pages/OIDC y sin secretos del backend. Los PR no despliegan.
 La publicación efectiva, HTTPS/CORS remoto, autenticación y alojamiento C++/
 RabbitMQ quedan separados de esta preparación. [Manual](../README.md#frontend-en-github-pages).
+
+## D15 — Sesiones y almacenamiento privado
+
+AuthService usa libsodium 1.0.22 fijado, Argon2id interactivo y tokens opacos
+aleatorios de 256 bits. Bearer en RAM del cliente; sin cookies/localStorage,
+sin credenciales ambientales para CSRF. CORS limita orígenes y Authorization.
+Expiración absoluta, revocación y limitación de intentos. El backend deniega
+por defecto; USUARIO accede a recursos propios y ADMIN a administración.
+[Detalles, respaldo y límites](ACCESO_PANELES.md). La cuenta privada no se
+duplica en Mongo. Aprovisionamiento de entidad y cuenta son operaciones separadas.
+
+## D16 — Dominio v2 y pagos simulados
+
+Sustituye la limitación local en RAM descrita en D12. LocalLibraryRepository
+guarda un agregado JSON durable. El protocolo Mongo de D13 se conserva: mismo
+sobre, dominio versión 2, migración explícita confirmada. Las cinco estructuras
+se reconstruyen sin reiniciar turnos ni avisos. Cancelaciones y anulaciones
+tienen auditoría; devolución sigue siendo una transición distinta.
+Cargo entero por préstamo y comprobante único SIMULADO; anular el préstamo
+anula su cargo y conserva el comprobante previo. No se integra un proveedor de pagos.
+
+## D17 — Paneles y aislamiento en el navegador
+
+Conserva D14 (Pages, subruta, proxy y VITE_API_URL). La sesión solo vive en RAM;
+al cambiar cuenta se abortan peticiones y se descartan respuestas de generaciones
+anteriores. Los paneles se desmontan, sin cachés compartidas de biblioteca personal.
+Todas las acciones llaman la API real; los menús no son el control de autorización.
+Los snapshots administrativos se muestran como JSON/texto del C++, sin reconstruir
+estructuras académicas en JavaScript.

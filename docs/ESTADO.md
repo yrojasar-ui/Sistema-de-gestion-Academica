@@ -1,5 +1,8 @@
 # Estado del proyecto
 
+Estado vigente: fase de acceso y paneles al final de este documento. Los apartados
+anteriores conservan los resultados y límites de cada entrega histórica.
+
 ## Prompt 0 — contexto registrado
 
 Inspección del 9 de noviembre de 2026 (America/Guatemala): copia existente en
@@ -377,3 +380,38 @@ variable VITE_API_URL está ausente. Publicación real y conexión HTTPS/CORS
 quedan pendientes de revisión/merge y configuración. El enlace de Actions del
 PR distingue los resultados GitHub de los de WSL. No se contrató alojamiento
 ni se desplegaron C++ o RabbitMQ.
+
+
+## Acceso, paneles y pagos simulados — 16 de noviembre de 2026
+
+Base: main 8b860935 con PR #9 integrado. Árbol limpio al comenzar, rama
+feat/acceso-paneles-biblioteca. Se conservan entregable-2, informes, catálogo
+inicial, consola, Pages y proxy WSL. No se fusionan PR ni se publica el backend.
+
+Implementados AuthService (libsodium/Argon2id, sesiones opacas, expiración,
+logout, roles y limitación de intentos), cuentas privadas persistentes y
+autorización por propietario. Todos los endpoints sensibles requieren sesión;
+salud pública mínima. Paneles ADMIN/USUARIO en español conectados a API real.
+Mi biblioteca separa solicitudes/préstamos y pagos propios; cambio de sesión
+aborta solicitudes y descarta respuestas anteriores.
+
+Dominio v2: auditoría de cancelaciones, anulación administrativa con confirmación
+física, cargos enteros y comprobantes SIMULADO idempotentes. Repositorio local
+agregado persistente; Mongo conserva confirmación, diario y bloqueo. Migración
+explícita, sin cargos retroactivos ni credenciales en el agregado.
+README contiene bootstrap, dos terminales, respaldo y guion de 5–7 minutos.
+OpenAPI y diagramas actualizados.
+
+WSL: 14/14 CTest Debug y 14/14 ASan/UBSan, demo de consola preservada.
+Pruebas adicionales posteriores amplían pago Mongo, migración y fallo del
+almacén privado; sus logs están separados. Frontend: npm ci, 9/9 tests,
+build y verificación de recursos bajo subruta Pages.
+Navegador integrado real: edición administrativa, copia, solicitud de Ana,
+entrega, comprobante simulado, cambio a Bruno sin datos de Ana, devolución y
+reinicio con historial conservado. Capturas auténticas de viewport estrecho.
+
+[Evidencia y resultados definitivos](evidencias/acceso-paneles/README.md).
+No se realizaron escrituras cloud en esta fase: migración y pagos Mongo están
+comprobados con fixtures. Pendientes: backend HTTPS público, despliegue remoto
+del backend, RabbitMQ/worker y entrega real de avisos; no se implementa cobro real.
+Segundo avance: 16 de noviembre; entrega final: 24 de noviembre de 2026.

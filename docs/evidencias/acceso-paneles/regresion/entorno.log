@@ -1,0 +1,60 @@
+2026-11-16T18:44:44-06:00
+Linux KernelOS-PC 6.18.54.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Tue Oct  6 19:13:07 UTC 2026 x86_64 GNU/Linux
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04.1 LTS (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+cmake version 4.2.3
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+GNU Make 4.4.1
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+git version 2.53.0
+## feat/acceso-paneles-biblioteca
+ M .github/workflows/ci.yml
+ M .gitignore
+ M CMakeLists.txt
+ M backend/apps/catalogo_api.cpp
+ M backend/include/biblioteca/HttpController.hpp
+ M backend/include/biblioteca/LibraryService.hpp
+ M backend/src/HttpController.cpp
+ M backend/src/LibraryService.cpp
+ M backend/tests/test_catalog_api.py
+ M backend/tests/test_library_api.py
+ M backend/tests/test_mongo_library.cpp
+ M frontend/package.json
+ M frontend/src/App.tsx
+ M frontend/src/api.ts
+ M frontend/src/style.css
+?? backend/include/biblioteca/AuthService.hpp
+?? backend/include/biblioteca/FileLock.hpp
+?? backend/src/AuthService.cpp
+?? backend/tests/test_acceso_api.py
+?? docs/evidencias/acceso-paneles/
+?? frontend/src/CatalogView.tsx
+?? frontend/src/Panels.tsx
+?? frontend/src/session-client.test.ts
+?? frontend/src/session-client.ts
+?? frontend/src/ui.tsx
+?? scripts/preparar_sodium.sh
+origin	https://github.com/yrojasar-ui/Sistema-de-gestion-Academica.git (fetch)
+origin	https://github.com/yrojasar-ui/Sistema-de-gestion-Academica.git (push)
+c346a08f2c9398427f3f4b344e9fef209cdc21ae

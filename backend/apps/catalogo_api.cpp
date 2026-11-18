@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
             std::cerr << "Contraseña nueva (12–256 bytes): " << std::flush;
             termios previous{};
             const bool terminal = ::isatty(STDIN_FILENO) && ::tcgetattr(STDIN_FILENO,&previous)==0;
-            if (terminal) { auto hidden=previous; hidden.c_lflag &= static_cast<tcflag_t>(~ECHO); ::tcsetattr(STDIN_FILENO,TCSAFLUSH,&hidden); }
+            if (terminal) { auto hidden=previous; hidden.c_lflag &= static_cast<tcflag_t>(~ECHO); if (::tcsetattr(STDIN_FILENO,TCSAFLUSH,&hidden)) throw std::runtime_error("No se pudo ocultar la contraseña"); }
             std::string password;
             std::getline(std::cin,password);
             if (terminal) ::tcsetattr(STDIN_FILENO,TCSAFLUSH,&previous);

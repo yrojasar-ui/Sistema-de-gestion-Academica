@@ -103,6 +103,7 @@ int main() {
         const auto writes = f.writes;
         fails([&] { h.library.prestar("PD","E","Bruno","2099-10-01"); });
         check(f.writes == writes && before == Json(h.library.estado()), "Rechazo de dominio no escribe");
+        const auto paidAna = h.library.pagar("PA");
         h.library.renovar("PA","2099-11-01");
         auto edited = book; edited.titulo = "Geografía"; edited.temas = {"geografia"};
         h.library.editarLibro(edited);
@@ -111,6 +112,8 @@ int main() {
             check(restart.library.activos().size() == 1 && restart.library.activos()[0].vencimiento == "2099-11-01", "Reinicio conserva RN renovado");
             check(restart.catalog.byTitle("Atlas del campus").empty() && restart.catalog.byPrefix("geografia").size() == 1, "B+ editado reconstruido");
             check(restart.library.estado().reservas[0].llegada == 1 && restart.library.estado().reservas[1].llegada == 2, "Secuencia recuperada");
+            check(restart.library.estado().comprobantes.size() == 1 &&
+                  Json(restart.library.estado().comprobantes[0]) == Json(paidAna), "Comprobante Mongo reconstruido sin duplicar");
             restart.library.devolver("PA"); restart.library.validar();
         }
         h.recover();
@@ -120,7 +123,14 @@ int main() {
         check(Json(h.library.estado().avisos) == notices && !notices.empty(), "Avisos estables tras recarga");
         h.library.cancelar("RB");
         check(h.library.estado().reservas[1].estado == "apartada", "Apartado Carla");
-        h.library.prestar("PC","E","Carla","2099-10-01"); h.library.devolver("PC"); h.recover();
+        h.library.prestar("PC","E","Carla","2099-10-01");
+        before = Json(h.library.estado());
+        f.fault = "reject"; fails([&] { h.library.pagar("PC"); });
+        check(before == Json(h.library.estado()), "Pago rechazado conserva estado");
+        f.fault = "timeout"; const auto paidCarla = h.library.pagar("PC");
+        h.library.devolver("PC"); h.recover();
+        check(Json(h.library.pagar("PC")) == Json(paidCarla) && h.library.estado().comprobantes.size() == 2,
+              "Timeout de pago confirmado y reinicio idempotente");
         check(h.library.activos().empty() && h.library.estado().prestamos.size() == 2 &&
               h.library.estado().ejemplares[0].estado == "disponible", "Historial conservado");
         h.library.reservar("R3","L","Ana");
