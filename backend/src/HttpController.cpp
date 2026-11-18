@@ -294,7 +294,8 @@ s.Post("/api/sesion/login", [&](const Request& req, Response& res) {
         auto u = j.get<Usuario>();
         if (!u.activo && auth.admin(u.idUsuario)) throw ErrorDominio(409,"Deshabilite primero la cuenta administrativa");
         b.editarUsuario(u,auth.authenticate(req.get_header_value("Authorization")).idUsuario);
-        if (!u.activo) auth.invalidate(u.idUsuario); responder(res, 200, Json(u));
+        if (!u.activo) auth.invalidate(u.idUsuario);
+        responder(res, 200, Json(u));
     });
     s.Delete(R"(/api/usuarios/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
         if (auth.admin(req.matches[1])) throw ErrorDominio(409,"Deshabilite primero la cuenta administrativa");

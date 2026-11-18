@@ -15,7 +15,7 @@ en API docente durante esta fase. No se fusiona ni despliega el backend.
 | Contrato OpenAPI | 442 respuestas de regresión y 146 de acceso validadas contra esquemas; login/token excluido del registro | [Log](openapi.log) |
 | Workflows | actionlint retornó 0, sin diagnósticos | [Salida vacía](actionlint.log) |
 | Navegador real integrado | Recorrido completo y reinicio; viewport estrecho | [Operaciones](navegador.md), capturas abajo |
-| GitHub Actions | Se registra tras publicar el HEAD final | [Seguimiento](actions.md) |
+| GitHub Actions | Controles del HEAD publicado en PR #11 | [Seguimiento](actions.md) |
 
 La regresión completa se ejecutó antes de ampliar los casos de pago Mongo,
 migración local y fallo del almacén privado. Las ampliaciones están verificadas
@@ -52,3 +52,6 @@ integración real Pages/API remota, RabbitMQ/worker y entrega de avisos.
 La API docente sigue sin garantías de autenticación, aislamiento, transacciones
 o soporte multiinstancia. Un solo escritor; credenciales fuera de ella.
 No se cobran pagos reales. No se hizo auditoría externa ni prueba de carga.
+
+La advertencia de indentación de HttpController observada en el build ASan
+inicial se corrigió separando la respuesta HTTP del if; no cambia el comportamiento.
