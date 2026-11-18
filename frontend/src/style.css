@@ -99,3 +99,38 @@ dialog::backdrop { background: #132b4180 }.dialog-head { margin-bottom: 18px }.d
   td:first-child, th:first-child { width: 62%; padding-left: 13px }th:nth-child(2),td.author { display: none }th:last-child { width: 38px }
   .tree-head { align-items: flex-start; flex-direction: column }.tree-detail { padding: 14px }
 }
+/* Paneles: conserva paleta y componentes del catálogo; navegación según sesión. */
+fieldset { margin:0; padding:0; border:0; min-width:0 }
+.form-fields select { display:block; width:100%; padding:8px; border:1px solid #bfccd7; border-radius:5px; margin-top:4px }
+.form-fields input[type=checkbox] { width:auto; display:inline-block; margin:8px }
+.role-nav { display:flex; flex-wrap:wrap; gap:8px; margin:24px 0 }
+.session { display:flex; align-items:center; gap:16px; font-size:13px }
+.top-inner { min-height:67px; height:auto; padding-block:12px; gap:16px }
+.login { max-width:440px; margin:60px auto; padding:30px }
+.login h1 { font-size:40px; margin-bottom:12px }
+.login form { margin-top:24px }
+.muted { color:#607180; font-size:13px; margin-top:20px }
+.book-grid,.records { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:16px }
+.book-grid { padding:16px 22px }
+.records { margin-bottom:26px }
+.record { background:white; border:1px solid var(--line); border-radius:10px; padding:20px; display:flex; flex-direction:column; gap:9px; overflow-wrap:anywhere }
+.record h3 { font:600 22px Georgia,serif }
+.book-record { box-shadow:none }
+.actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+.stock,.audit { font-size:13px; color:#526578 }
+.badge { align-self:flex-start; padding:3px 9px; background:#e9f1f7; color:#315b7b; border-radius:6px; font-size:13px }
+.panel-section { margin-bottom:32px }
+.panel-section h2 { margin-bottom:16px }
+.filter { display:flex; gap:10px; align-items:center; margin-bottom:18px }
+.filter select { padding:7px; border:1px solid var(--line); border-radius:5px }
+.simulation { padding:14px; background:#fff4d9; border-radius:8px; margin-bottom:18px }
+.receipt { background:#f4f7f9; padding:13px; border:1px dashed #8ba0ad; border-radius:5px }
+.receipt h4 { margin:0 0 8px }
+@media (max-width:600px) {
+ .top-inner { flex-wrap:wrap; padding-block:12px }
+ .session { width:100%; justify-content:space-between }
+ .role-nav { gap:6px; margin:16px 0 }
+ .role-nav button { font-size:13px; padding:8px 10px }
+ .book-grid { padding:12px }
+ .login { margin:24px auto; padding:24px }
+}

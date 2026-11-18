@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "node --test src/api-config.test.ts",
+    "test": "node --test src/*.test.ts",
     "verify:dist": "node verify-dist.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
