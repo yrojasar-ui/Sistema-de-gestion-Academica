@@ -148,17 +148,35 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         assert snapshot()["ejemplares"][0]["estado"] == "prestado"
         assert len(own(a)["activos"]) == 1 and own(b)["activos"] == []
         assert len(own(b)["reservas"]) == 1 and own(b)["comprobantes"] == []
+        expected_book={key:edited[key] for key in ("idLibro","titulo","autor")}
+        def check_personal(token, user):
+            personal=own(token)
+            assert personal["usuario"]["idUsuario"] == user
+            for field in ("activos","prestamos","reservas","cargos","comprobantes"):
+                assert all(row["idUsuario"] == user for row in personal[field]), (user,field)
+            for field in ("activos","prestamos","reservas"):
+                assert all(row["libro"] == expected_book for row in personal[field]), (user,field)
+            assert "ejemplares" not in personal and "usuarios" not in personal
+            return personal
+        assert check_personal(a,"Ana")["activos"][0]["libro"] == expected_book
+        assert check_personal(b,"Bruno")["reservas"][0]["libro"] == expected_book
+        # A tampoco puede leer la solicitud privada de B directamente.
+        call("/api/mis-reservas/"+rb["idReserva"],token=a,status=404)
+        assert all(r["idReserva"] != rb["idReserva"] for r in own(a)["reservas"])
         valid()
         before=snapshot()
         stop(); start()
         call("/api/sesion",token=a,status=401)
         admin=login("Admin"); a=login("Ana"); b=login("Bruno"); c=login("Carla")
         assert snapshot() == before
+        check_personal(a,"Ana"); check_personal(b,"Bruno"); check_personal(c,"Carla")
         valid()
         print("Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.")
         post("prestamos/PA/devolucion",{},admin)
         assert own(b)["reservas"][0]["estado"] == "apartada"
-        assert own(a)["prestamos"][0]["estado"] == "devuelto"
+        history=check_personal(a,"Ana")["prestamos"][0]
+        assert history["estado"] == "devuelto" and history["libro"] == expected_book
+        assert history["idPrestamo"] == "PA" and history["devolucion"]
         post("mis-reservas/"+rb["idReserva"]+"/cancelacion",{"motivo":"Cambio de planes"},b)
         cancelled=own(b)["reservas"][0]
         assert cancelled["estado"] == "cancelada" and cancelled["cancelacion"]["responsable"] == "Bruno"
@@ -202,7 +220,20 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         before=snapshot(); stop(); start(); admin=login("Admin"); c=login("Carla")
         assert snapshot() == before and len(own(c)["prestamos"]) == 2
         assert snapshot()["ejemplares"][0]["estado"] == "disponible"
+        check_personal(c,"Carla")
+        a=login("Ana")
+        history_before=check_personal(a,"Ana")["prestamos"][0]
+        edited={**edited,"titulo":"Atlas revisado después de la devolución","autor":"Autora de revisión"}
+        call("/api/libros/DEMO","PUT",edited,admin)
+        expected_book={key:edited[key] for key in ("idLibro","titulo","autor")}
+        history_after=check_personal(a,"Ana")["prestamos"][0]
+        assert {k:v for k,v in history_before.items() if k!="libro"} == {k:v for k,v in history_after.items() if k!="libro"}
+        check_personal(c,"Carla")
+        # A no puede consultar el préstamo ni el comprobante de Carla.
+        call("/api/mis-prestamos/PC",token=a,status=404)
+        call("/api/mis-pagos/PC",token=a,status=404)
         valid()
+        print("Mi biblioteca: título/autor en activo, solicitud e historial; edición no altera historia; aislamiento A/B/C.")
         print("Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.")
         generic1=post("sesion/login",{"idUsuario":"NoExiste","password":passwords["Ana"]},"",401)
         generic2=post("sesion/login",{"idUsuario":"Ana","password":"incorrecta"},"",401)

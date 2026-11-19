@@ -1,0 +1,33 @@
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+      Start  1: dominio_repositorios
+ 1/14 Test  #1: dominio_repositorios .............   Passed    0.21 sec
+      Start  2: acceso_paneles_api
+ 2/14 Test  #2: acceso_paneles_api ...............   Passed    3.53 sec
+      Start  3: biblioteca_api
+ 3/14 Test  #3: biblioteca_api ...................   Passed    1.12 sec
+      Start  4: catalogo_http_reinicio
+ 4/14 Test  #4: catalogo_http_reinicio ...........   Passed    0.69 sec
+      Start  5: mongo_biblioteca_recuperacion
+ 5/14 Test  #5: mongo_biblioteca_recuperacion ....   Passed    0.38 sec
+      Start  6: mongo_contrato_simulado
+ 6/14 Test  #6: mongo_contrato_simulado ..........   Passed    0.03 sec
+      Start  7: rojo_negro
+ 7/14 Test  #7: rojo_negro .......................   Passed    0.30 sec
+      Start  8: hash_extensible
+ 8/14 Test  #8: hash_extensible ..................   Passed    0.17 sec
+      Start  9: grafo_temas
+ 9/14 Test  #9: grafo_temas ......................   Passed    0.16 sec
+      Start 10: fifo_reservas
+10/14 Test #10: fifo_reservas ....................   Passed    0.06 sec
+      Start 11: snapshot_bplus
+11/14 Test #11: snapshot_bplus ...................   Passed    0.02 sec
+      Start 12: bplus_oraculo
+12/14 Test #12: bplus_oraculo ....................   Passed   23.84 sec
+      Start 13: catalogo_json_consola
+13/14 Test #13: catalogo_json_consola ............   Passed    0.07 sec
+      Start 14: demo_reinicio
+14/14 Test #14: demo_reinicio ....................   Passed    0.17 sec
+
+100% tests passed, 0 tests failed out of 14
+
+Total Test time (real) =  30.78 sec

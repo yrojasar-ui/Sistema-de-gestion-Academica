@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { personalSummary } from './reconciliation-summary'
 import { api, send, type BibliotecaPersonal, type Cargo, type Comprobante, type Cuenta, type Ejemplar, type Libro, type Prestamo, type Reserva, type Usuario } from './api'
 import { Audit, Empty, FormDialog, LoadState, money, useData, type Field } from './ui'
 
@@ -6,14 +7,14 @@ interface Domain {usuarios:Usuario[];ejemplares:Ejemplar[];prestamos:Prestamo[];
 type DialogSpec={title:string;fields?:Field[];children?:ReactNode;label?:string;submit:(v:Record<string,string>)=>Promise<void>}
 const motivo:Field={name:'motivo',label:'Motivo',maxLength:512}
 function Records({children}:{children:ReactNode}) {return <div className="records">{children}</div>}
-function LoanCard({loan,children}:{loan:Prestamo;children?:ReactNode}) {
+export function LoanCard({loan,children}:{loan:Prestamo & {libro?:Pick<Libro,'idLibro'|'titulo'|'autor'>};children?:ReactNode}) {
   const overdue=loan.estado==='activo'&&loan.vencimiento<new Date().toISOString().slice(0,10)
-  return <article className="record"><h3>Préstamo {loan.idPrestamo}</h3><p>Usuario: {loan.idUsuario} · Ejemplar: {loan.idEjemplar}</p>
+  return <article className="record"><h3>{loan.libro?.titulo??'Préstamo '+loan.idPrestamo}</h3>{loan.libro&&<><p>{loan.libro.autor}</p><p>Libro: {loan.libro.idLibro} · Préstamo: {loan.idPrestamo}</p></>}<p>Usuario: {loan.idUsuario} · Ejemplar: {loan.idEjemplar}</p>
     <p className="badge">{overdue?'Vencido':loan.estado}</p><p>Inicio: {loan.inicio}<br/>Vencimiento: {loan.vencimiento}</p>
     {loan.devolucion&&<p>Devuelto: {loan.devolucion}</p>}<Audit audit={loan.cancelacion}/><div className="actions">{children}</div></article>
 }
-function ReserveCard({reserve,children}:{reserve:Reserva;children?:ReactNode}) {
-  return <article className="record"><h3>Solicitud {reserve.idReserva}</h3><p>Libro: {reserve.idLibro} · Usuario: {reserve.idUsuario}</p>
+export function ReserveCard({reserve,children}:{reserve:Reserva & {libro?:Pick<Libro,'idLibro'|'titulo'|'autor'>};children?:ReactNode}) {
+  return <article className="record"><h3>{reserve.libro?.titulo??'Solicitud '+reserve.idReserva}</h3>{reserve.libro&&<><p>{reserve.libro.autor}</p><p>Solicitud: {reserve.idReserva}</p></>}<p>Libro: {reserve.idLibro} · Usuario: {reserve.idUsuario}</p>
     <p className="badge">{reserve.estado} · Turno {reserve.llegada}</p><p>Solicitada: {reserve.creada}</p>
     {reserve.idEjemplar&&<p>Ejemplar asignado: {reserve.idEjemplar}</p>}<Audit audit={reserve.cancelacion}/><div className="actions">{children}</div></article>
 }
@@ -59,7 +60,10 @@ export function PersonalPanel({payments=false}:{payments?:boolean}) {
         <section className="panel-section"><h2>Solicitudes atendidas y canceladas</h2>
           {!data.reservas.some(r=>['atendida','cancelada'].includes(r.estado))&&<Empty>No hay solicitudes finalizadas.</Empty>}
           <Records>{data.reservas.filter(r=>['atendida','cancelada'].includes(r.estado)).map(r=><ReserveCard key={r.idReserva} reserve={r}/>)}</Records></section></>)}
-    {dialog&&<FormDialog title={dialog.title} fields={dialog.fields} submitLabel={dialog.label} close={()=>setDialog(null)} submit={dialog.submit}>{dialog.children}</FormDialog>}
+    {dialog&&<FormDialog title={dialog.title} fields={dialog.fields} submitLabel={dialog.label} close={()=>setDialog(null)} reconcile={async()=>{
+      const current=await state.reload()
+      return personalSummary(current)
+    }} submit={dialog.submit}>{dialog.children}</FormDialog>}
   </>
 }
 
@@ -150,7 +154,16 @@ export function AdminPanel({section}:{section:'ejemplares'|'usuarios'|'prestamos
           submit:async v=>{await send('reservas/'+r.idReserva+'/cancelacion',v)}})}>Cancelar solicitud</button>}
       </ReserveCard>)}</Records></>}
     {ready&&section==='pagos'&&<Payments cargos={data.cargos} comprobantes={data.comprobantes}/>}
-    {dialog&&<FormDialog title={dialog.title} fields={dialog.fields} submitLabel={dialog.label} close={()=>setDialog(null)} submit={dialog.submit}>{dialog.children}</FormDialog>}
+    {dialog&&<FormDialog title={dialog.title} fields={dialog.fields} submitLabel={dialog.label} close={()=>setDialog(null)} reconcile={async()=>{
+      const [current,,users]=await Promise.all([state.reload(),catalog.reload(),accounts.reload(),active.reload()])
+      const rows=section==='usuarios'
+        ? current.usuarios.map(u=>u.nombre+' · '+u.idUsuario+' · '+(u.activo?'activo':'inactivo')+' · cuenta: '+(users.items.find(a=>a.idUsuario===u.idUsuario)?.rol??'sin cuenta'))
+        : section==='prestamos' ? current.prestamos.map(p=>p.idPrestamo+' · '+p.idUsuario+' · '+p.idEjemplar+' · '+p.estado+' · vence '+p.vencimiento)
+        : section==='reservas' ? current.reservas.map(r=>r.idReserva+' · '+r.idUsuario+' · '+r.estado+' · turno '+r.llegada)
+        : section==='ejemplares' ? current.ejemplares.map(e=>e.idEjemplar+' · '+e.idLibro+' · '+e.estado)
+        : current.cargos.map(c=>c.idPrestamo+' · '+c.estado)
+      return rows.join('\n')||'Sin registros en la consulta actual.'
+    }} submit={dialog.submit}>{dialog.children}</FormDialog>}
   </>
 }
 export function StructuresPanel() {

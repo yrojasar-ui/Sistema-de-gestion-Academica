@@ -212,3 +212,20 @@ anteriores. Los paneles se desmontan, sin cachés compartidas de biblioteca pers
 Todas las acciones llaman la API real; los menús no son el control de autorización.
 Los snapshots administrativos se muestran como JSON/texto del C++, sin reconstruir
 estructuras académicas en JavaScript.
+
+## D18 — Reconciliar por lectura y enriquecer solo recursos propios
+
+Una escritura con resultado incierto bloquea el reenvío de ese formulario.
+Se releen recurso y listas mediante GET; consultar no cambia el resultado
+original ni demuestra por sí solo el resultado causal de la escritura.
+Errores de negocio, transporte y protocolo se distinguen; el resultado explícito
+del servidor se conserva. La recuperación del repositorio sigue siendo una
+operación administrativa explícita. La generación de sesión abarca toda la
+cadena mutación → reconsulta, no solo cada petición individual.
+
+El resumen de libro se incorpora en el DTO de mi-biblioteca después de filtrar
+por propietario. Se evita abrir consultas administrativas o realizar un GET por
+tarjeta. Se muestran metadatos actuales; no se altera el historial ni el esquema
+persistido. No se introduce un índice sustituto de las estructuras C++.
+
+Pruebas: [correcciones del PR #11](evidencias/acceso-paneles/correcciones-pr11/README.md).

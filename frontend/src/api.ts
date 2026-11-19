@@ -28,6 +28,9 @@ export interface Comprobante {
   importe: number; moneda: string; etiqueta: 'SIMULADO'
 }
 export interface BibliotecaPersonal {
-  usuario: Usuario; activos: Prestamo[]; prestamos: Prestamo[]; reservas: Reserva[]
+  usuario: Usuario; activos: PrestamoPersonal[]; prestamos: PrestamoPersonal[]; reservas: ReservaPersonal[]
   cargos: Cargo[]; comprobantes: Comprobante[]
 }
+
+export type PrestamoPersonal = Prestamo & { libro: Pick<Libro,'idLibro'|'titulo'|'autor'> }
+export type ReservaPersonal = Reserva & { libro: Pick<Libro,'idLibro'|'titulo'|'autor'> }

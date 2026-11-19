@@ -471,3 +471,18 @@ bash scripts/demo_acceso.sh build/debug/catalogo_api
 
 Crea contraseñas aleatorias en memoria y archivos temporales privados; no las
 imprime. [Evidencias reales y límites](docs/evidencias/acceso-paneles/README.md).
+
+### Revisión del PR #11: respuesta perdida y Mi biblioteca
+
+Si una escritura queda incierta, el formulario informa que puede haberse
+guardado, relee el recurso y las listas, y ofrece **Consultar estado** sin
+repetir la operación. Si la API sigue bloqueada o inaccesible, conserva esa
+advertencia; la recuperación administrativa sigue siendo explícita.
+Cerrar permite revisar el estado leído antes de decidir una nueva acción.
+Cambiar de cuenta invalida la consulta anterior.
+
+Mi biblioteca muestra título y autor en préstamos, historial y solicitudes
+con una única respuesta autorizada del servidor. Los metadatos son actuales;
+se conservan IDs, estados, fechas y auditoría histórica.
+
+[Pruebas, capturas y límites de estas correcciones](docs/evidencias/acceso-paneles/correcciones-pr11/README.md).

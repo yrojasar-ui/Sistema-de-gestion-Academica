@@ -59,3 +59,16 @@ El informe E2-C está integrado en main.
 | Cargo entero y recibo único SIMULADO | Cargo/Comprobante en agregado; idempotencia por préstamo | Doble pago, devolución independiente, anulación con recibo conservado | Sin dinero real ni pasarela |
 | Reinicio y migración | JSON agregado v2, Mongo mismo protocolo, privado aparte | Dos reinicios API + navegador; migración local y Mongo fixture | No nueva prueba cloud del esquema v2 |
 | Regresión y CI | CTest + npm test/build + Pages conservado | [Logs y capturas](evidencias/acceso-paneles/README.md) | RabbitMQ, HTTPS y entrega de avisos pendientes |
+
+### Correcciones de revisión del PR #11
+
+| Requisito | Implementación | Verificación y evidencia |
+|---|---|---|
+| Resultado confirmado/rechazado/incierto y rechazo distinto de desconexión | ApiError conserva resultado/HTTP/origen; FormDialog bloquea reenvío incierto | Fixtures POST/PUT/DELETE aplicados con respuesta perdida; rechazo 409, 503, HTML y JSON truncado |
+| Releer recurso/listas sin duplicar escritura | Intento único; GET automático y botón Consultar estado en catálogo y paneles | Pruebas del controlador usado por FormDialog y navegador real: un POST, GET posteriores, reserva apartada |
+| Reconsulta aislada por sesión | Generación capturada durante todo el intento | Cambio de A a B durante GET y entre error/GET; respuestas tardías descartadas |
+| Libros reconocibles en Mi biblioteca | DTO propio con libro por fila; título/autor en tarjetas; IDs/fechas secundarios | API local, renderizado de tarjetas activas/devueltas/anuladas y solicitudes; navegador |
+| Privacidad e historial | Filtrar por propietario antes de resolver referencias; metadatos actuales sin cambiar historia | A/B/C, endpoints ajenos 404, administrativos 403, edición posterior y reinicios |
+
+Registros: [correcciones-pr11](evidencias/acceso-paneles/correcciones-pr11/README.md).
+No se atribuye a nube la simulación de respuestas perdidas.

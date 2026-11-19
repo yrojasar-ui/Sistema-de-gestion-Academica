@@ -421,3 +421,24 @@ por el usuario de las etapas de dominio/autenticación) y 4c9d21b, que retiró e
 guion antiguo de tres minutos. Se incorporó ese main a la rama, conservando esa
 retirada y el nuevo guion de 5–7 minutos solicitado para esta fase. PR #11
 completa paneles, documentación y verificación; permanece sin fusionar.
+
+## Correcciones del PR #11 — 18 de noviembre de 2026
+
+Rama feat/acceso-paneles-biblioteca, PR abierto sin fusionar. Reconciliación
+de mutaciones inciertas integrada en catálogo y paneles: resultado explícito,
+consulta de estado/listas y envío bloqueado para ese intento. Lecturas y
+respuestas tardías quedan ligadas a la sesión original. Mi biblioteca incluye
+título/autor desde un DTO autorizado; conserva historial, permisos e índices.
+
+WSL: CTest Debug **14/14** y ASan/UBSan **14/14**; frontend **18/18**,
+npm ci, TypeScript/Vite y verify:dist correctos. Recorrido API: **195 solicitudes**;
+**119 respuestas JSON** contrastadas con OpenAPI. Navegador real: solicitud
+aplicada con respuesta perdida por proxy local; reconsulta automática y manual
+sin repetir POST; títulos en activos/solicitud/historial; Bruno no ve datos de Ana.
+La carrera de cambio de cuenta durante la lectura y backend bloqueado se
+verificaron con fixtures deterministas, no forzando fallos en nube.
+
+[Evidencias y comandos](evidencias/acceso-paneles/correcciones-pr11/README.md).
+GitHub Actions del nuevo HEAD se verifica al publicar y se enlaza en el PR;
+estos registros son locales. Se conservan entregable-2, catálogo inicial,
+persistencia, Pages y las evidencias históricas. Sin despliegue ni escrituras cloud.

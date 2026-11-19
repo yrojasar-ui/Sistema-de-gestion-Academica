@@ -1,0 +1,5 @@
+Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.
+Mi biblioteca: título/autor en activo, solicitud e historial; edición no altera historia; aislamiento A/B/C.
+Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.
+Migración local explícita: rechazo conserva archivo; actualización conserva las 16 obras.
+OK: 195 solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.

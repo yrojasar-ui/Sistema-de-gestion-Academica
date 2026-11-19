@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BookOpen, Search, Plus, Network } from 'lucide-react'
-import { api, send, type Libro } from './api'
+import { api, send, ApiError, type BibliotecaPersonal, type Libro } from './api'
 import { Empty, FormDialog, LoadState, useData } from './ui'
 type Modal = {kind:'add'} | {kind:'edit'|'delete'|'request'|'related';book:Libro}
 interface Availability { idLibro:string; disponibles:number;apartados:number;prestados:number }
@@ -20,7 +20,7 @@ export function CatalogView({admin}: {admin:boolean}) {
   const rows=books.data?.libros??[]
   return <>
     <div className="title-row"><div><h1>Catálogo de libros</h1><p>{admin?'Administrá las obras y sus temas.':'Explorá, consultá disponibilidad y solicitá tu próximo libro.'}</p></div>
-      {admin&&<button className="primary" onClick={()=>setModal({kind:'add'})}><Plus size={18}/>Agregar libro</button>}</div>
+      {admin&&<button className="primary" disabled={!books.data||!availability.data} onClick={()=>setModal({kind:'add'})}><Plus size={18}/>Agregar libro</button>}</div>
     <div className="tools"><section className="search-card card"><label className="card-heading" htmlFor="search">Buscar en el catálogo</label>
       <div className="search-fields"><div className="input-wrap"><Search size={18}/><input id="search" placeholder="Buscar por título…" value={query}
         onChange={e=>{setQuery(e.target.value);setPage(0)}}/></div>
@@ -30,7 +30,7 @@ export function CatalogView({admin}: {admin:boolean}) {
     </div>
     {tree&&admin&&<Tree revision={revision}/>}
     <LoadState error={books.error||availability.error} retry={()=>{books.retry();availability.retry()}} loading={!books.data&&!books.error}/>
-    {books.data&&!books.error&&<section className="collection card"><div className="collection-head"><h2>{query?'Resultados de búsqueda':'Colección'}</h2><span className="count">{rows.length}</span></div>
+    {books.data&&availability.data&&!books.error&&<section className="collection card"><div className="collection-head"><h2>{query?'Resultados de búsqueda':'Colección'}</h2><span className="count">{rows.length}</span></div>
       {!rows.length?<Empty>{query?'Sin resultados':'El catálogo está vacío'}</Empty>:<div className="book-grid">
         {rows.slice(page*8,page*8+8).map(book=>{
           const stock=availability.data?.items.find(s=>s.idLibro===book.idLibro)
@@ -56,6 +56,23 @@ export function CatalogView({admin}: {admin:boolean}) {
         ...(modal.kind==='add'?[{name:'idLibro',label:'ID del libro',maxLength:64}]:[]),
         {name:'titulo',label:'Título',value:selected?.titulo,maxLength:512},{name:'autor',label:'Autor',value:selected?.autor},
         {name:'temas',label:'Temas (separados por comas)',value:selected?.temas.join(', '),required:false}]:[]}
+      reconcile={async values=>{
+        const id=selected?.idLibro??values.idLibro.trim()
+        // Las tres lecturas se inician en la misma sesión; ningún POST de recuperación.
+        const resource=api<Libro>('libros/'+encodeURIComponent(id)).catch(e=>{
+          if(e instanceof ApiError && e.status===404) return null
+          throw e
+        })
+        const own=modal.kind==='request'?api<BibliotecaPersonal>('mi-biblioteca'):Promise.resolve(null)
+        const [book,personal]=await Promise.all([resource,own,books.reload(),availability.reload()])
+        setPage(0)
+        // Actualiza también el snapshot del B+ si estaba abierto.
+        if(tree) refresh()
+        return personal
+          ? (personal.reservas.filter(r=>r.idLibro===id).map(r=>r.libro.titulo+' · '+r.libro.autor+'\nSolicitud '+r.idReserva+' · '+r.estado+' · turno '+r.llegada+(r.idEjemplar?' · ejemplar '+r.idEjemplar:'')).join('\n\n')||'Sin solicitudes de este libro en la consulta actual.')
+          : book ? book.titulo+' · '+book.autor+' · '+book.idLibro+'\nTemas: '+book.temas.join(', ')
+          : 'El libro '+id+' no aparece en la consulta actual.'
+      }}
       submit={async values=>{
         if(modal.kind==='add'||modal.kind==='edit') {
           const book={idLibro:selected?.idLibro??values.idLibro.trim(),titulo:values.titulo.trim(),autor:values.autor.trim(),

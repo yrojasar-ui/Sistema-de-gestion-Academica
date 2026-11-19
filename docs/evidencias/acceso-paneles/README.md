@@ -55,3 +55,10 @@ No se cobran pagos reales. No se hizo auditoría externa ni prueba de carga.
 
 La advertencia de indentación de HttpController observada en el build ASan
 inicial se corrigió separando la respuesta HTTP del if; no cambia el comportamiento.
+
+## Correcciones de revisión del PR #11
+
+La [verificación adicional](correcciones-pr11/README.md) registra la
+reconciliación de escrituras inciertas, el cambio de sesión durante lecturas
+y título/autor en Mi biblioteca. Conserva estos resultados anteriores como
+evidencia histórica; el frontend ampliado tiene 18 pruebas.

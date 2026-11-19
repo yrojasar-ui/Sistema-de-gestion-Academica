@@ -284,3 +284,14 @@ Cargo demo de 10000 centésimos CRC, servidor configurable, solo SIMULADO.
 Un comprobante por préstamo, reintento idempotente. Anulación invalida el cargo,
 conserva comprobante y no ejecuta cobro/reembolso real. El esquema de dominio
 v2 se migra explícitamente; credenciales y sesiones nunca viajan en exportaciones.
+
+### Biblioteca personal enriquecida (PR #11)
+
+GET /api/mi-biblioteca sigue filtrado por sesión. Las listas activos y
+prestamos devuelven PrestamoPersonal; reservas, ReservaPersonal.
+Cada fila añade libro: {idLibro, titulo, autor}, resuelto en el servidor
+sobre sus referencias válidas. Las filas de otros lectores nunca se enriquecen
+ni incluyen. Es un resumen actual del catálogo, no una fotografía del título
+al prestar. El dominio persistido, detalle administrativo y auditoría histórica
+conservan sus esquemas. Véase [OpenAPI](openapi.json) y la
+[reconciliación del cliente](ACCESO_PANELES.md#corrección-del-pr-11-escrituras-inciertas-y-biblioteca-reconocible).

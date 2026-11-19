@@ -174,9 +174,27 @@ s.Post("/api/sesion/login", [&](const Request& req, Response& res) {
     s.Get("/api/mi-biblioteca", [&](const Request& req, Response& res) {
         auto i=auth.authenticate(req.get_header_value("Authorization"));
         auto owned=[&](const auto& rows) { auto out=Json::array(); for (const auto& row:rows) if (row.idUsuario==i.idUsuario) out.push_back(row); return out; };
+        // Enriquecer solo las filas propias. Es un DTO de lectura, no cambia
+        // el historial persistido ni abre consultas administrativas al lector.
+        auto libroResumen=[&](const std::string& id) {
+            const auto libro=catalogo.find(id);
+            if (!libro) throw ErrorDominio(500,"Referencia de libro incompatible");
+            return Json{{"idLibro",libro->idLibro},{"titulo",libro->titulo},{"autor",libro->autor}};
+        };
+        auto prestamosPropios=[&](const auto& rows) {
+            Json out=owned(rows);
+            for (auto& row:out) {
+                const Json ejemplar=detalle(b.estado().ejemplares,row.at("idEjemplar").get<std::string>(),
+                    [](const auto& e){return e.idEjemplar;});
+                row["libro"]=libroResumen(ejemplar.at("idLibro").get<std::string>());
+            }
+            return out;
+        };
+        auto reservas=owned(b.estado().reservas);
+        for (auto& row:reservas) row["libro"]=libroResumen(row.at("idLibro").get<std::string>());
         // Los préstamos activos se recorren desde el Rojo-Negro.
-        responder(res,200,{{"usuario",b.usuario(i.idUsuario)},{"activos",owned(b.activos())},
-            {"prestamos",owned(b.estado().prestamos)},{"reservas",owned(b.estado().reservas)},
+        responder(res,200,{{"usuario",b.usuario(i.idUsuario)},{"activos",prestamosPropios(b.activos())},
+            {"prestamos",prestamosPropios(b.estado().prestamos)},{"reservas",reservas},
             {"cargos",owned(b.estado().cargos)},{"comprobantes",owned(b.estado().comprobantes)}});
     });
     s.Get(R"(/api/mis-(prestamos|reservas|pagos)/([A-Za-z0-9_-]{1,64}))", [&](const Request& req, Response& res) {
