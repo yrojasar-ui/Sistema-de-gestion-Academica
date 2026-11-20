@@ -1,0 +1,40 @@
+UpdateCTestConfiguration  from :/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/DartConfiguration.tcl
+Parse Config file:/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/DartConfiguration.tcl
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: acceso_paneles_api
+
+2: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_acceso_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+2: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+2: Test timeout computed to be: 120
+2: Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.
+2: Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.
+2: Migración local explícita: rechazo conserva archivo; actualización conserva las 16 obras.
+2: OK: 177 solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.
+1/2 Test #2: acceso_paneles_api ...............   Passed    3.26 sec
+test 5
+    Start 5: mongo_biblioteca_recuperacion
+
+5: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_mongo_library
+5: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+5: Test timeout computed to be: 60
+5: Historia y reinicios: activos, renovación, B+, grafo, FIFO, avisos, historial y secuencia OK.
+5: Fixtures: timeout aplicado/tardío, HTML, rechazo, lectura fallida, diario y parcial OK.
+5: Migración explícita v1/v2 y rechazo sin permiso OK (fixture).
+5: HTTP local: health/ready, bloqueo y recuperación explícita OK.
+5: POST incierto y reinicio: un solo envío, recuperación por GET OK.
+2/2 Test #5: mongo_biblioteca_recuperacion ....   Passed    0.35 sec
+
+The following tests passed:
+	acceso_paneles_api
+	mongo_biblioteca_recuperacion
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   3.61 sec

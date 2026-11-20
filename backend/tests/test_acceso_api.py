@@ -14,6 +14,7 @@ binary, initial = (Path(x).resolve() for x in sys.argv[1:3])
 passwords = {u: secrets.token_urlsafe(24) for u in ("Admin", "Ana", "Bruno", "Carla")}
 original = initial.read_bytes()
 count = 0
+observed = []
 
 with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
     root = Path(folder)
@@ -46,6 +47,8 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         with response:
             raw = response.read()
             value = json.loads(raw) if raw else None
+            if path != "/api/sesion/login":
+                observed.append({"path":path.split("?",1)[0],"method":method.lower(),"status":str(response.status),"body":value})
             assert response.status == status, f"{method} {path}: {response.status}, esperaba {status}: {value}"
             return value
 
@@ -145,17 +148,35 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         assert snapshot()["ejemplares"][0]["estado"] == "prestado"
         assert len(own(a)["activos"]) == 1 and own(b)["activos"] == []
         assert len(own(b)["reservas"]) == 1 and own(b)["comprobantes"] == []
+        expected_book={key:edited[key] for key in ("idLibro","titulo","autor")}
+        def check_personal(token, user):
+            personal=own(token)
+            assert personal["usuario"]["idUsuario"] == user
+            for field in ("activos","prestamos","reservas","cargos","comprobantes"):
+                assert all(row["idUsuario"] == user for row in personal[field]), (user,field)
+            for field in ("activos","prestamos","reservas"):
+                assert all(row["libro"] == expected_book for row in personal[field]), (user,field)
+            assert "ejemplares" not in personal and "usuarios" not in personal
+            return personal
+        assert check_personal(a,"Ana")["activos"][0]["libro"] == expected_book
+        assert check_personal(b,"Bruno")["reservas"][0]["libro"] == expected_book
+        # A tampoco puede leer la solicitud privada de B directamente.
+        call("/api/mis-reservas/"+rb["idReserva"],token=a,status=404)
+        assert all(r["idReserva"] != rb["idReserva"] for r in own(a)["reservas"])
         valid()
         before=snapshot()
         stop(); start()
         call("/api/sesion",token=a,status=401)
         admin=login("Admin"); a=login("Ana"); b=login("Bruno"); c=login("Carla")
         assert snapshot() == before
+        check_personal(a,"Ana"); check_personal(b,"Bruno"); check_personal(c,"Carla")
         valid()
         print("Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.")
         post("prestamos/PA/devolucion",{},admin)
         assert own(b)["reservas"][0]["estado"] == "apartada"
-        assert own(a)["prestamos"][0]["estado"] == "devuelto"
+        history=check_personal(a,"Ana")["prestamos"][0]
+        assert history["estado"] == "devuelto" and history["libro"] == expected_book
+        assert history["idPrestamo"] == "PA" and history["devolucion"]
         post("mis-reservas/"+rb["idReserva"]+"/cancelacion",{"motivo":"Cambio de planes"},b)
         cancelled=own(b)["reservas"][0]
         assert cancelled["estado"] == "cancelada" and cancelled["cancelacion"]["responsable"] == "Bruno"
@@ -181,6 +202,15 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         finally:
             root.chmod(0o700)
         assert snapshot() == before
+        accounts_before=call("/api/cuentas",token=admin)
+        private_before=private.read_bytes()
+        private.parent.chmod(0o500)
+        try:
+            call("/api/cuentas/Ana","PUT",{"rol":"USUARIO","activa":True,"password":secrets.token_urlsafe(24)},admin,503)
+        finally:
+            private.parent.chmod(0o700)
+        assert call("/api/cuentas",token=admin) == accounts_before and private.read_bytes() == private_before
+        assert call("/api/sesion",token=a)["idUsuario"] == "Ana"
         call("/api/usuarios/Bruno","PUT",{"idUsuario":"Bruno","nombre":"Bruno sintético","activo":False},admin)
         call("/api/mi-biblioteca",token=b,status=401)
         call("/api/sesion/login","POST",{"idUsuario":"Bruno","password":passwords["Bruno"]},status=401)
@@ -190,7 +220,20 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         before=snapshot(); stop(); start(); admin=login("Admin"); c=login("Carla")
         assert snapshot() == before and len(own(c)["prestamos"]) == 2
         assert snapshot()["ejemplares"][0]["estado"] == "disponible"
+        check_personal(c,"Carla")
+        a=login("Ana")
+        history_before=check_personal(a,"Ana")["prestamos"][0]
+        edited={**edited,"titulo":"Atlas revisado después de la devolución","autor":"Autora de revisión"}
+        call("/api/libros/DEMO","PUT",edited,admin)
+        expected_book={key:edited[key] for key in ("idLibro","titulo","autor")}
+        history_after=check_personal(a,"Ana")["prestamos"][0]
+        assert {k:v for k,v in history_before.items() if k!="libro"} == {k:v for k,v in history_after.items() if k!="libro"}
+        check_personal(c,"Carla")
+        # A no puede consultar el préstamo ni el comprobante de Carla.
+        call("/api/mis-prestamos/PC",token=a,status=404)
+        call("/api/mis-pagos/PC",token=a,status=404)
         valid()
+        print("Mi biblioteca: título/autor en activo, solicitud e historial; edición no altera historia; aislamiento A/B/C.")
         print("Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.")
         generic1=post("sesion/login",{"idUsuario":"NoExiste","password":passwords["Ana"]},"",401)
         generic2=post("sesion/login",{"idUsuario":"Ana","password":"incorrecta"},"",401)
@@ -202,7 +245,21 @@ with tempfile.TemporaryDirectory(prefix="biblioteca-acceso-") as folder:
         for secret in [*passwords.values(),a,b,c,admin]:
             assert secret not in business
         assert "argon2" not in business and initial.read_bytes() == original
+        legacy=root/"legacy.json"
+        legacy.write_bytes(original)
+        old_args=[str(binary),"--initial",str(initial),"--working",str(legacy),
+                  "--auth-store",str(root/"privado-migracion"/"cuentas.json"),
+                  "--bootstrap-admin","Admin","--admin-name","Admin de migración"]
+        rejected=subprocess.run(old_args,input=passwords["Admin"]+"\n",text=True,capture_output=True)
+        assert rejected.returncode!=0 and legacy.read_bytes()==original
+        migrated=subprocess.run(old_args+["--migrate"],input=passwords["Admin"]+"\n",text=True,capture_output=True)
+        assert migrated.returncode==0,migrated.stderr
+        recovered=json.loads(legacy.read_text())
+        assert recovered["version"]==2 and len(recovered["libros"])==16 and recovered["dominio"]["usuarios"][0]["idUsuario"]=="Admin"
+        print("Migración local explícita: rechazo conserva archivo; actualización conserva las 16 obras.")
         print(f"OK: {count} solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.")
+        if "--contract-log" in sys.argv:
+            Path(sys.argv[sys.argv.index("--contract-log")+1]).write_text(json.dumps(observed))
     finally:
         root.chmod(0o700)
         stop()

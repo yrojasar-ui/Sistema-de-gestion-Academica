@@ -7,13 +7,14 @@ La pantalla del catálogo continúa usando `/api/libros` y la vista textual del 
 
 El modo `--storage mongo` persiste la biblioteca completa y la reconstruye al
 reiniciar. Ver [configuración y recuperación](PERSISTENCIA_MONGODB.md).
-Las instrucciones de demo de esta sección corresponden al modo local JSON/memoria.
+Las instrucciones de demo de esta sección corresponden al modo local JSON persistente.
 
 ## Ejecutar y demostrar
 
 Desde la raíz del repositorio en WSL, con las dependencias C++ ya instaladas:
 
 ```bash
+bash scripts/preparar_sodium.sh
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
 cmake --build build/debug -j2
 bash scripts/demo_biblioteca.sh
@@ -21,22 +22,18 @@ bash scripts/demo_biblioteca.sh
 
 El script crea un JSON temporal, arranca su propio backend en un puerto libre y
 ejecuta Ana → Bruno → Carla. Comprueba estados, referencias y snapshots tras cada
-mutación. Exporta las entidades, reinicia el proceso e importa las reservas en
+mutación. Verifica recuperación automática tras reiniciar y luego importa reservas en
 orden inverso para comprobar que la llegada original determina el turno.
 Los archivos y procesos de demostración se limpian al terminar.
 
-Para usar la API manualmente:
+Para usar la API manualmente, seguir los comandos de dos terminales y bootstrap
+privado del [README](../README.md#arrancar-el-catálogo-web-en-dos-terminales-wsl).
+No hay acceso administrativo anónimo. Todas las rutas sensibles requieren Bearer;
+ADMIN administra/exporta/recupera/visualiza índices. USUARIO usa catálogo y rutas
+propias; identidad y rol se calculan en el servidor. Health/ready son públicos
+mínimos. El 401 indica sesión inválida, 403 permisos/origen, 429 intentos de
+login limitados. Ver [acceso y transiciones](ACCESO_PANELES.md).
 
-```bash
-./build/debug/catalogo_api --storage local --initial data/libros_iniciales.json --working data/catalogo_web.json --port 8080
-```
-
-CORS permite los orígenes locales de Vite en el puerto 5173.
-Se pueden añadir orígenes con `--origin https://origen-elegido.example`.
-El perfil local permite administrar la biblioteca sin iniciar sesión. La
-autorización de bibliotecario para administración, exportación y snapshots
-requiere la futura fase de autenticación. El 403 actual señala un origen CORS
-rechazado. La API emite 400, 404, 409, 413, 415 y 503 según OpenAPI.
 El límite de cuerpo es 1 MiB y cada colección admite hasta 10 000 registros.
 El dominio serializado también tiene un límite total de 1 MiB para permitir
 restaurar toda exportación aceptada. Se rechaza la operación que lo exceda.
@@ -49,12 +46,12 @@ Los límites de texto se aplican en bytes UTF-8.
 | Libro | `idLibro` inmutable. Se reutiliza `Libro`. La edición retira la clave anterior e inserta la nueva en B+, y recalcula las aristas afectadas al cambiar temas. |
 | Usuario | `idUsuario`, nombre y `activo`. Se reutiliza el registro del hash. Consultar por ID utiliza `IndiceUsuarios::buscar`. |
 | Ejemplar | `idEjemplar` y `idLibro`. Disponible, prestado, apartado o retirado. Retirar o reincorporar solo se permite sobre copias libres o ya retiradas. |
-| Prestamo | `idPrestamo`, ejemplar, usuario, inicio UTC, vencimiento y devolución UTC. Devolución vacía significa activo. Se conserva el registro después de devolver. |
+| Prestamo | `idPrestamo`, ejemplar, usuario, inicio UTC, vencimiento y devolución UTC. Activo requiere devolución y cancelación vacías; estado devuelto/cancelado es explícito. Se conserva el registro después de devolver. |
 | Reserva | `idReserva`, libro, usuario, llegada, estado, copia asignada y creación UTC. Pendiente → apartada → atendida. Pendiente y apartada pueden pasar a cancelada. |
 | Aviso | `idAviso` generado por el servicio, tipo, destinatario, referencia y creación UTC. Los eventos de devolución y apartado quedan pendientes. |
 
 Los IDs admiten entre 1 y 64 letras ASCII, números, guiones y guiones bajos.
-Los IDs de negocio los aporta el cliente y se comprueba unicidad por entidad.
+Los IDs administrativos se validan por entidad. POST /api/solicitudes genera ID y llegada desde el servicio y obtiene el lector de la sesión.
 El servicio asigna instantes `AAAA-MM-DDTHH:MM:SSZ` y secuencias de llegada
 enteras positivas representables exactamente en JSON/JavaScript.
 Las fechas `AAAA-MM-DD` se validan según calendario gregoriano y años bisiestos.
@@ -90,14 +87,12 @@ Las operaciones de préstamo y reserva históricas se conservan.
 web como `LibraryService` lo consultan. `JsonBookRepository` conserva el
 archivo de trabajo y la protección del catálogo inicial.
 
-**En modo local**, `MemoryDomainRepository` guarda usuarios, ejemplares, préstamos, reservas,
-avisos y la próxima secuencia durante la vida del proceso. Reiniciar vacía
-esas entidades. Para conservar una sesión, exportar `GET /api/dominio`,
-mantener el JSON de libros correspondiente y restaurar con `PUT /api/dominio`.
-La importación es una operación administrativa explícita que reemplaza el
-dominio completo. Valida todas las referencias contra los libros presentes.
-Reconstruye hash y Rojo-Negro, y reordena las reservas pendientes por su llegada.
-Las canceladas o ya atendidas no necesitan reconstruir un turno en espera.
+**En modo local**, LocalLibraryRepository conserva libros y dominio en una
+instantánea JSON. Carga y valida referencias antes de servir. El reinicio no
+vacía ninguna entidad. La importación ADMIN sigue disponible para recuperación
+explícita, pero no es necesaria para reiniciar. Se reconstruyen hash, Rojo-Negro,
+grafo, B+ y FIFO por llegada, sin reiniciar avisos ni comprobantes.
+MemoryDomainRepository queda para pruebas y candidatos de validación.
 
 Cada mutación de dominio copia sus registros y nodos reales, aplica los
 algoritmos de las estructuras y verifica invariantes antes de llamar al
@@ -133,7 +128,7 @@ escribir avisos directamente en paralelo a reemplazos de esta instantánea.
 ## Diagramas editables
 
 El caso de uso distingue las acciones del lector y de administración. Los
-actores representan el diseño objetivo de autorización.
+actores son roles comprobados por AuthService en cada solicitud.
 
 ```mermaid
 flowchart LR
@@ -153,6 +148,10 @@ classDiagram
     Libro "1" --> "0..*" Reserva
     Reserva "0..*" --> "0..1" Ejemplar : copia asignada
     Usuario "1" --> "0..*" Aviso
+    Usuario "1" --> "0..1" CuentaPrivada
+    Prestamo "1" --> "0..1" CargoSimulado
+    CargoSimulado "1" --> "0..1" Comprobante
+    CuentaPrivada "1" --> "0..1" SesionEnRAM
     class Libro {
         string idLibro
         string titulo
@@ -190,18 +189,21 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    UI[Catálogo React] --> HTTP[HttpController]
+    UI[Paneles React por rol] --> HTTP[HttpController]
+    HTTP --> AUTH[AuthService: identidad y permisos]
+    AUTH --> PRIV[Archivo privado 0600: cuentas Argon2id]
+    AUTH --> SES[Sesiones efímeras en RAM]
     HTTP --> D[LibraryService]
     HTTP --> C[CatalogService]
     D --> C
     C --> BP[BPlusTree]
-    C --> J[JsonBookRepository]
+    C --> J[LocalLibraryRepository: agregado JSON]
     D --> H[IndiceUsuarios]
     D --> R[PrestamosActivos]
     D --> G[GrafoTemas]
     D --> F[ColaReservas por libro]
     D --> I[IDomainRepository]
-    I --> M[MemoryDomainRepository local]
+    I --> J
     I --> MR[MongoLibraryRepository]
     C --> MR
     MR --> P[Protocolo compartido con MongoApiBookRepository]
@@ -249,7 +251,8 @@ Si queda incierto, no se ejecuta el intercambio ni se responde 200: se devuelve
 classDiagram
     IBookRepository <|.. JsonBookRepository
     IBookRepository <|.. MongoLibraryRepository
-    IDomainRepository <|.. MemoryDomainRepository
+    IDomainRepository <|.. LocalLibraryRepository
+    IBookRepository <|.. LocalLibraryRepository
     IDomainRepository <|.. MongoLibraryRepository
     CatalogService --> IBookRepository
     LibraryService --> CatalogService
@@ -270,3 +273,25 @@ classDiagram
         WriteOutcome outcome
     }
 ```
+
+
+## Cancelaciones, anulación y simulación
+
+[Transiciones completas](ACCESO_PANELES.md#transiciones-antes-de-implementar).
+Reserva cancelada conserva auditoría; anular préstamo requiere ADMIN, motivo y
+copiaRecuperada=true. Se retira RN y se atiende FIFO; no inventa devolución.
+Cargo demo de 10000 centésimos CRC, servidor configurable, solo SIMULADO.
+Un comprobante por préstamo, reintento idempotente. Anulación invalida el cargo,
+conserva comprobante y no ejecuta cobro/reembolso real. El esquema de dominio
+v2 se migra explícitamente; credenciales y sesiones nunca viajan en exportaciones.
+
+### Biblioteca personal enriquecida (PR #11)
+
+GET /api/mi-biblioteca sigue filtrado por sesión. Las listas activos y
+prestamos devuelven PrestamoPersonal; reservas, ReservaPersonal.
+Cada fila añade libro: {idLibro, titulo, autor}, resuelto en el servidor
+sobre sus referencias válidas. Las filas de otros lectores nunca se enriquecen
+ni incluyen. Es un resumen actual del catálogo, no una fotografía del título
+al prestar. El dominio persistido, detalle administrativo y auditoría histórica
+conservan sus esquemas. Véase [OpenAPI](openapi.json) y la
+[reconciliación del cliente](ACCESO_PANELES.md#corrección-del-pr-11-escrituras-inciertas-y-biblioteca-reconocible).

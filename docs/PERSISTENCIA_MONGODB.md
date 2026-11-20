@@ -2,7 +2,7 @@
 
 La API C++ tiene modos **local** y **mongo** explícitos. El modo Mongo carga
 automáticamente toda la biblioteca al arrancar; no importa exportaciones manuales.
-El modo local conserva libros en JSON y dominio en memoria, como en Prompt 3.
+El modo local también conserva libros y dominio en un agregado JSON durable.
 No se cambia de modo después de un error. No hay RabbitMQ ni worker en esta fase.
 
 ## Contrato observado y decisión
@@ -59,12 +59,14 @@ de negocio. No hay migración automática desde las colecciones de E2-B.
     "revision": 1,
     "libros": [],
     "dominio": {
-      "version": 1,
+      "version": 2,
       "usuarios": [],
       "ejemplares": [],
       "prestamos": [],
       "reservas": [],
       "avisos": [],
+      "cargos": [],
+      "comprobantes": [],
       "siguienteLlegada": 1
     }
   }
@@ -134,19 +136,19 @@ inválido, incompatible o fallido deja la API **no lista**, sin publicar un cat�
 vacío ni recurrir a JSON/memoria. El proceso HTTP permanece disponible.
 
 - `GET /healthz`: 200 si el proceso HTTP responde.
-- `GET /readyz`: 200 con `listo:true`, almacenamiento y recuperación reales;
-  503 con `listo:false` cuando está bloqueada. `resultado` describe la última
-  confirmación/carga o problema; los modos local y Mongo se identifican.
+- `GET /readyz`: público mínimo, 200 con `listo:true`; 503 con `listo:false`.
+  `GET /api/almacenamiento` exige ADMIN y entrega almacenamiento, recuperación
+  y resultado reales. El detalle de datos bloqueados no es público.
 - Mientras está bloqueada, las rutas de biblioteca devuelven 503, incluidas
-  lecturas. Solo salud, disponibilidad, OPTIONS y recuperación siguen habilitadas.
+  lecturas. Solo salud, OPTIONS, sesión y recuperación/diagnóstico ADMIN siguen habilitados.
 - `POST /api/recuperacion`, cuerpo `{}`: GET y reconstrucción íntegra,
   sin reenvío de POST/PUT. En local valida el estado actual.
 
 ```bash
 curl -sS http://127.0.0.1:8080/healthz
 curl -sS http://127.0.0.1:8080/readyz
-curl -sS -X POST http://127.0.0.1:8080/api/recuperacion \
-  -H 'Content-Type: application/json' --data '{}'
+# POST /api/recuperacion requiere Authorization: Bearer de una sesión ADMIN.
+# No coloque credenciales o tokens literales en comandos guardados/versionados.
 ```
 
 Si existe intención pendiente, la recuperación automática exige observar
@@ -197,30 +199,14 @@ de aviso enviado siguen pendientes.
 
 ## Comandos reproducibles (WSL)
 
-Desde la raíz, con libcurl de desarrollo instalada:
-
-```bash
-cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DENABLE_MONGO=ON
-cmake --build build/debug -j2
-mkdir -p data/mongo-runtime
-./build/debug/catalogo_api --storage mongo \
-  --endpoint https://paginas-web-cr.com/Api/apis/mongodb.php \
-  --collection biblioteca_yoel_final_v1 \
-  --mongo-state data/mongo-runtime/biblioteca_yoel_final_v1 --port 8080 --initialize
-```
-
-`--initialize` se usa solo para crear explícitamente la biblioteca vacía si la
-colección propia está vacía. Si ya hay una instantánea válida, la carga sin
-reemplazarla. Después de Ctrl+C, repetir **sin `--initialize`**.
-No usar una colección E2-B que contenga libros individuales.
-El frontend se inicia con los mismos comandos de README; ninguna función UI nueva.
-
-Modo local:
-
-```bash
-./build/debug/catalogo_api --storage local --initial data/libros_iniciales.json \
-  --working data/catalogo_web.json --port 8080
-```
+Seguir el [README vigente](../README.md#persistencia-completa-en-mongodb-prompt-4):
+preparar libsodium, compilar con libcurl, crear el primer ADMIN con bootstrap
+local y conservar --auth-store y --mongo-state al reiniciar.
+No usar una colección E2-B de libros individuales. --initialize solo crea si está
+vacía. Un dominio v1 exige respaldo y --migrate explícito: se valida, escribe y
+confirma v2 antes de servir. El sobre Mongo mantiene versionEsquema=1; el
+contenido estado.dominio.version=2 contiene auditoría, cargos y comprobantes.
+Las cuentas permanecen en archivo privado, fuera de ese documento.
 
 Demostración real aislada (Python estándar; no ejecutar desde CI):
 
@@ -247,3 +233,12 @@ cd frontend && npm ci && npm run build
 ```
 
 Ver [resultados y evidencia](evidencias/persistencia-mongodb/README.md).
+
+
+## Evidencia de la fase de acceso
+
+La evidencia cloud anterior corresponde a dominio v1, antes de autenticación y
+pagos. Esta fase no realizó escrituras cloud. Migración v1/v2, cargos,
+comprobantes, fallo/reintento y recuperación se verifican con transporte
+determinista en mongo_biblioteca_recuperacion. Los reinicios con cuentas y paneles
+se verifican en JSON local. Ver [evidencias](evidencias/acceso-paneles/README.md).

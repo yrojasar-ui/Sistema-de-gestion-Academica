@@ -59,9 +59,10 @@ persistente y almacenamiento configurado, y preparar el worker/broker en su fase
 La API actual escucha en loopback: un proxy HTTPS del alojamiento deberá
 reenviar hacia ese puerto y permitir GET, POST, PUT, DELETE y OPTIONS.
 Arrancar C++ con `--origin https://yrojasar-ui.github.io` (origen sin la subruta)
-para autorizar CORS; verificar el preflight y `Content-Type`.
-CORS no sustituye autenticación ni autorización. El perfil administrativo actual
-no tiene autenticación: la protección de un backend público queda pendiente.
+para autorizar CORS; verificar el preflight, `Content-Type` y `Authorization`.
+La API exige sesiones reales y aplica roles/propiedad en cada ruta. CORS no
+sustituye autenticación. Para publicar todavía faltan HTTPS, alojamiento privado,
+respaldo y límites de conexión en el proxy; no se publica el backend en esta fase.
 No se contrataron servicios ni se configuró un proveedor remoto.
 
 Desarrollo WSL conserva `http://127.0.0.1:5173/` y el proxy
@@ -88,66 +89,98 @@ Referencias oficiales:
 
 La API puede recuperar automáticamente libros, usuarios, ejemplares, préstamos,
 reservas, secuencias y avisos pendientes desde una instantánea remota confirmada.
-Conserva el modo local JSON/memoria. No hay cambio silencioso de almacenamiento.
+El modo local también persiste el dominio completo en JSON. No hay cambio silencioso de almacenamiento.
 La consola y el informe del segundo avance se conservan.
 
-Desde la raíz en WSL, con libcurl de desarrollo instalada:
+Con las dependencias C++ y libsodium preparadas, use exclusivamente su colección
+propia. No introduzca cuentas, hashes ni sesiones en esa API.
 
 ~~~bash
-cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DENABLE_MONGO=ON
-cmake --build build/debug -j2
+# Defina COLECCION_PROPIA con el nombre de su colección exclusiva.
+: "${COLECCION_PROPIA:?Defina una colección propia antes de continuar}"
 mkdir -p data/mongo-runtime
 ./build/debug/catalogo_api --storage mongo \
   --endpoint https://paginas-web-cr.com/Api/apis/mongodb.php \
-  --collection biblioteca_yoel_final_v1 \
-  --mongo-state data/mongo-runtime/biblioteca_yoel_final_v1 --port 8080 --initialize
+  --collection "$COLECCION_PROPIA" \
+  --mongo-state "data/mongo-runtime/$COLECCION_PROPIA" \
+  --auth-store data/privado-mongo/cuentas.json --initialize \
+  --bootstrap-admin Admin --admin-name "Administrador"
+# Arranque normal posterior (sin bootstrap ni initialize):
+./build/debug/catalogo_api --storage mongo \
+  --endpoint https://paginas-web-cr.com/Api/apis/mongodb.php \
+  --collection "$COLECCION_PROPIA" \
+  --mongo-state "data/mongo-runtime/$COLECCION_PROPIA" \
+  --auth-store data/privado-mongo/cuentas.json --port 8080
 ~~~
 
-La inicialización explícita crea una biblioteca vacía únicamente si no existe.
-Para reiniciar, repetí el comando **sin `--initialize`**, conservando colección
-y ruta `--mongo-state`. No borrar su diario pendiente ni utilizar una colección
-con libros individuales de E2-B. La segunda terminal y URL del frontend son las
-mismas que en la sección siguiente.
+Para una biblioteca anterior de dominio v1, detener el escritor, respaldar y
+añadir **--migrate** al primer comando de actualización. La migración valida y
+confirma el agregado v2 antes de servirlo. No reutilizar una colección E2-B de
+libros individuales. Conservar el diario al reiniciar; nunca reenviar POST a
+ciegas. /healthz y /readyz son públicos mínimos; /api/almacenamiento y
+/api/recuperacion requieren sesión ADMIN. Ver el contrato en OpenAPI.
 
-~~~bash
-# Demo real: colección sintética nueva, cuatro reinicios y limpieza propia.
-python3 scripts/demo_mongodb.py --binary build/debug/catalogo_api \
-  --evidence "build/demo-mongodb-$(date +%Y%m%d-%H%M%S)"
-# Salud del proceso y disponibilidad de la biblioteca:
-curl -sS http://127.0.0.1:8080/healthz
-curl -sS http://127.0.0.1:8080/readyz
-# Solo relectura/reconstrucción; nunca reenvía la escritura incierta:
-curl -sS -X POST http://127.0.0.1:8080/api/recuperacion \
-  -H 'Content-Type: application/json' --data '{}'
-~~~
+La demo cloud anterior está adaptada para crear su admin efímero en almacén
+privado y autenticarse tras cada reinicio. No se ejecutó en esta fase:
+`python3 scripts/demo_mongodb.py --binary build/debug/catalogo_api --evidence build/nube-nueva`.
+CTest y CI usan únicamente fixtures. Las pruebas nuevas de pagos en Mongo
+son simulaciones de transporte, no evidencia de nube real.
 
 [Esquema, confirmaciones, recuperación y límites](docs/PERSISTENCIA_MONGODB.md).
 [Evidencias reales y fixtures separados](docs/evidencias/persistencia-mongodb/README.md).
 Solo un escritor y datos sintéticos. El futuro worker deberá coordinar sus cambios
 de avisos mediante el único escritor; no debe sobrescribir el agregado directamente.
-RabbitMQ, autenticación y despliegue siguen pendientes. CI no ejecuta la demo cloud.
+RabbitMQ y despliegue del backend siguen pendientes. CI no ejecuta la demo cloud.
 
 ## Arrancar el catálogo web en dos terminales WSL
 
-**Terminal 1 · API C++**. Requiere G++, CMake y Make. Desde la raíz se puede
-compilar únicamente el servidor de la demo, con el repositorio JSON.
+**Terminal 1 · API C++**. G++, CMake, Make y curl. La dependencia de
+autenticación se descarga desde el sitio oficial, verifica SHA-256 y ejecuta
+sus pruebas; el comando es reutilizable. Para la demo local no se requiere curl
+de desarrollo ni conexión con Mongo.
 
 ~~~bash
 cd /home/yoerojas/proyectos/Sistema-de-gestion-Academica
+bash scripts/preparar_sodium.sh
 cmake -S . -B build/catalogo-web -DCMAKE_BUILD_TYPE=Debug -DENABLE_MONGO=OFF -DBUILD_TESTING=OFF
 cmake --build build/catalogo-web --target catalogo_api -j2
-./build/catalogo-web/catalogo_api --storage local
+
+# Solo una vez: crea la entidad Admin y su cuenta privada.
+# Escribí una contraseña propia de 12–256 bytes; no se muestra en terminal.
+./build/catalogo-web/catalogo_api --storage local \
+  --working data/biblioteca-local.json --auth-store data/privado/cuentas.json \
+  --bootstrap-admin Admin --admin-name "Administrador"
+
+# Arranque habitual, también después de Ctrl+C:
+./build/catalogo-web/catalogo_api --storage local \
+  --working data/biblioteca-local.json --auth-store data/privado/cuentas.json \
+  --demo-charge 10000 --currency CRC --port 8080
 ~~~
 
-El servidor escucha en `127.0.0.1:8080`. Al primer arranque crea
-`data/catalogo_web.json` a partir de las 16 obras de `data/libros_iniciales.json`.
-En los siguientes arranques carga el archivo de trabajo, incluso si contiene
-una lista vacía. Si el archivo existente es inválido, el arranque informa el
-error. Para reanudar una demo después de Ctrl+C, repetí el último comando. Para
-usar otro archivo de trabajo, agregá `--working ruta/al/catalogo.json` al
-comando del servidor y conservá esa ruta al reiniciarlo.
+Abrir **http://127.0.0.1:5173/** después de iniciar la segunda terminal.
+Nunca hay contraseña predeterminada ni bypass. Bootstrap se rechaza si ya hay
+cuentas. Si falla entre crear el usuario y guardar la cuenta, repetir el mismo
+bootstrap reanuda el aprovisionamiento; no se habilita acceso sin cuenta.
 
-**Terminal 2 · React, TypeScript y Vite**. Usá Node.js de Linux 22.12 o posterior
+El archivo nuevo incluye las 16 obras y dominio persistente. Reiniciar conserva
+usuarios, ejemplares, préstamos, reservas, pagos, turnos y avisos, pero invalida
+sesiones. No modifica `data/libros_iniciales.json`. Para migrar un catálogo
+local anterior (array), respáldelo y arranque con su misma ruta y **--migrate**.
+El antiguo dominio en RAM no puede recuperarse si nunca se exportó.
+Para una exportación v1 conservada:
+`python3 scripts/migrar_exportacion.py dominio-v1.json dominio-v2.json`;
+el destino debe ser nuevo. Importar como ADMIN con PUT /api/dominio, sobre el
+catálogo correspondiente, valida todas las referencias antes de reemplazar.
+La consola conserva su formato JSON original y debe usar otro archivo.
+
+**Dos usuarios de prueba, sin credenciales publicadas:** ingresar como Admin,
+abrir Usuarios → Crear usuario y crear Ana y Bruno (nombres sintéticos).
+Luego Crear cuenta para cada uno, rol USUARIO y contraseñas propias diferentes
+de al menos 12 caracteres. Son dos operaciones explícitas: un usuario sin
+cuenta todavía no tiene acceso. No guardar contraseñas en Git, capturas ni
+variables VITE. [Sesiones, respaldo, permisos y recuperación](docs/ACCESO_PANELES.md).
+
+**Terminal 2 · React, TypeScript y Vite**. Usá Node.js de Linux 24.22.3 (versión fijada)
 con npm. El bloque usa el Node preparado en esta copia de WSL si está presente.
 En un clon nuevo podés usar tu instalación de Linux o el bloque de instalación
 local de Node que figura a continuación.
@@ -394,11 +427,9 @@ gestionar reservas. La edición de libros actualiza título en B+ y temas en el
 grafo. El [contrato OpenAPI](docs/openapi.json) y la [guía de dominio con diagramas](docs/DOMINIO_API.md)
 detallan los endpoints, estados, persistencia y límites.
 
-Los libros se guardan en el JSON de trabajo. Las entidades nuevas viven en
-memoria durante el proceso. Para recuperarlas tras reiniciar, exportá
-`GET /api/dominio` y restaurá ese documento mediante `PUT /api/dominio`
-sobre el catálogo correspondiente. Los avisos quedan pendientes para la futura
-publicación por eventos. La administración local funciona sin autenticación.
+Libros y dominio se guardan en un JSON agregado y se recuperan automáticamente.
+Las rutas privadas requieren sesión real y permisos. Los avisos quedan pendientes
+para la futura publicación por eventos; no se implementa RabbitMQ todavía.
 
 Para repetir Ana → Bruno → Carla desde la raíz en WSL, una vez compilado el backend:
 
@@ -411,9 +442,47 @@ exporta y reconstruye los turnos tras reiniciar y limpia sus archivos.
 
 ## Qué queda pendiente
 
-El informe E2-C se integró en `main`. Para el proyecto final quedan la persistencia MongoDB de las entidades nuevas, sus vistas, el broker, la autenticación y el despliegue. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
+El informe E2-C se integró en `main`. Para el proyecto final quedan el broker/worker, el despliegue HTTPS del backend y el informe/defensa final. El esquema nuevo de cargos está probado con fixtures Mongo; no se repitieron escrituras cloud. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
 
 Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
 `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;
 las decisiones se tomaron de la guía adjunta, sin afirmar haber leído ese PDF.
 
+## Demostración de acceso y paneles (5–7 minutos)
+
+Preparación: dos terminales anteriores, Admin/Ana/Bruno y sus cuentas privadas.
+No usar datos personales reales. Cargo demo: 10000 unidades menores CRC = ₡100,00.
+
+| Tiempo | Acción | Resultado que debe verse |
+|---|---|---|
+| 0:00–1:00 | Ingresar Admin, editar título/temas de una obra de trabajo y crear una copia. Buscar el título nuevo y abrir Estructuras. | B+ y grafo reflejan edición; copia disponible; snapshots reales. |
+| 1:00–2:00 | Cerrar sesión; entrar Ana, buscar obra y Solicitar préstamo. Abrir Mi biblioteca. | Solicitud apartada, sin préstamo activo todavía. |
+| 2:00–3:00 | Entrar Admin → Solicitudes → Registrar entrega, elegir vencimiento futuro. | Solicitud atendida y préstamo activo, copia prestada. |
+| 3:00–4:00 | Entrar Ana → Mis pagos simulados → Simular pago → confirmar. | Comprobante con ID, fecha, importe, propietario y SIMULADO. No cambia disponibilidad. |
+| 4:00–5:00 | Entrar Bruno → Mi biblioteca y pagos; después entrar Admin → Préstamos → Registrar devolución. | Bruno no ve recursos de Ana. Devolución queda en historial. |
+| 5:00–6:00 | Detener solo backend con Ctrl+C y repetir comando de arranque normal. Entrar Ana de nuevo. | Sesión anterior inválida; historial y comprobante siguen disponibles. |
+| 6:00–7:00 | Admin → Estructuras → Validar estructuras. Explicar FIFO, cancelación y anulación con confirmación física. | Cinco índices válidos; no se confunde reserva cancelada con devolución. |
+
+Demo automatizada aislada, incluye login, roles, FIFO, pagos, fallos y reinicios:
+
+~~~bash
+bash scripts/demo_acceso.sh build/debug/catalogo_api
+~~~
+
+Crea contraseñas aleatorias en memoria y archivos temporales privados; no las
+imprime. [Evidencias reales y límites](docs/evidencias/acceso-paneles/README.md).
+
+### Revisión del PR #11: respuesta perdida y Mi biblioteca
+
+Si una escritura queda incierta, el formulario informa que puede haberse
+guardado, relee el recurso y las listas, y ofrece **Consultar estado** sin
+repetir la operación. Si la API sigue bloqueada o inaccesible, conserva esa
+advertencia; la recuperación administrativa sigue siendo explícita.
+Cerrar permite revisar el estado leído antes de decidir una nueva acción.
+Cambiar de cuenta invalida la consulta anterior.
+
+Mi biblioteca muestra título y autor en préstamos, historial y solicitudes
+con una única respuesta autorizada del servidor. Los metadatos son actuales;
+se conservan IDs, estados, fechas y auditoría histórica.
+
+[Pruebas, capturas y límites de estas correcciones](docs/evidencias/acceso-paneles/correcciones-pr11/README.md).

@@ -1,0 +1,60 @@
+$ npm ci
+
+added 25 packages, and audited 26 packages in 5s
+
+8 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ npm test
+
+> biblioteca-academica-catalogo@0.1.0 test
+> node --test src/*.test.ts
+
+✔ desarrollo conserva el proxy incluso si existe una variable de producción (1.038946ms)
+✔ producción sin URL presenta el mensaje requerido, sin backend implícito (0.973555ms)
+✔ origen HTTPS con o sin barra produce exactamente un prefijo api (0.448422ms)
+✔ producción rechaza /api, rutas, credenciales, consulta, fragmento y URL no HTTPS (0.418251ms)
+✔ producción nunca configura loopback como backend (0.330869ms)
+✔ POST: escritura aplicada y respuesta perdida; solo GET para reconciliar (29.045567ms)
+✔ PUT: escritura aplicada y respuesta perdida; solo GET para reconciliar (1.135329ms)
+✔ DELETE: escritura aplicada y respuesta perdida; solo GET para reconciliar (1.73993ms)
+✔ conserva confirmado/rechazado/incierto del servidor y distingue rechazo de negocio (1.837847ms)
+✔ biblioteca bloqueada o inaccesible conserva incertidumbre; reconsultar no escribe (0.897543ms)
+✔ cambiar de cuenta durante reconsulta descarta A y nunca consulta con B (0.849451ms)
+✔ cambio de cuenta entre error y reconsulta impide comenzar lecturas con nueva identidad (0.319929ms)
+✔ JSON truncado o HTML tras escritura son inciertos, no rechazos sin cambios (0.463342ms)
+✔ tarjetas reales: título y autor en préstamo, historial y solicitud; IDs secundarios (326.896905ms)
+✔ credencial en Authorization y sin cookies; cierre limpia credencial (24.755887ms)
+✔ una respuesta tardía de A se descarta al cambiar a B, aunque fetch ignore abort (1.037006ms)
+✔ 401 invalida la sesión; 403 distingue permisos de desconexión (1.187381ms)
+✔ sin servidor configurado no realiza solicitudes ni inventa datos (0.199135ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 728.488403
+$ npm run build
+
+> biblioteca-academica-catalogo@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2090 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:  0.32 kB
+dist/assets/index-B_kDiapX.css   10.06 kB │ gzip:  3.22 kB
+dist/assets/index-DsBXHP4k.js   259.86 kB │ gzip: 80.17 kB
+
+✓ built in 195ms
+$ npm run verify:dist
+
+> biblioteca-academica-catalogo@0.1.0 verify:dist
+> node verify-dist.mjs
+
+Pages: recursos JS/CSS existentes bajo /Sistema-de-gestion-Academica/

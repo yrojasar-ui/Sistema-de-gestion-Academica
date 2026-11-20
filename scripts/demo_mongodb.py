@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import shutil
 import socket
+import secrets
 import subprocess
 import tempfile
 import time
@@ -28,6 +29,8 @@ root = Path(tempfile.mkdtemp(prefix="biblioteca-mongo-demo-"))
 log = (evidence / "nube.log").open("w", encoding="utf-8")
 server_log = (evidence / "backend.log").open("w", encoding="utf-8")
 process = None
+password = secrets.token_urlsafe(24)
+token = ""
 oid = None
 cleaned = False
 with socket.socket() as sock:
@@ -46,9 +49,9 @@ def record(message, value=None):
     log.flush()
 
 
-def request(url, method="GET", data=None, expected=200):
+def request(url, method="GET", data=None, expected=200, authorization=""):
     req = Request(url, data=None if data is None else json.dumps(data).encode(),
-                  method=method, headers={"Content-Type": "application/json"})
+                  method=method, headers={"Content-Type": "application/json", **({"Authorization":"Bearer "+authorization} if authorization else {})})
     try:
         response = urlopen(req, timeout=90)
     except HTTPError as error:
@@ -68,24 +71,29 @@ def remote():
 
 
 def call(path, method="GET", data=None, expected=200):
-    result = request(base + path, method, data, expected)
+    result = request(base + path, method, data, expected, token)
     record(f"{method} {path} HTTP {expected}", result)
     return result
 
 
 def start(initialize=False):
-    global process
+    global process, token
     command = [str(binary), "--storage", "mongo", "--endpoint", endpoint,
                "--collection", collection, "--mongo-state", str(root / "estado"),
-               "--port", str(port)]
+               "--port", str(port), "--auth-store", str(root / "privado" / "cuentas.json")]
     if initialize:
-        command.append("--initialize")
+        bootstrap=subprocess.run(command+["--initialize","--bootstrap-admin","DemoAdmin","--admin-name","Administrador sintético"],
+                                 input=password+"\n",text=True,capture_output=True)
+        assert bootstrap.returncode==0, "Falló bootstrap privado (no se registran credenciales)"
     process = subprocess.Popen(command, stdout=server_log, stderr=server_log)
     for _ in range(300):
         assert process.poll() is None, "Backend terminó durante el arranque"
         try:
             ready = call("/readyz")
-            assert ready["listo"] and ready["libros"] == ready["dominio"] == "mongo"
+            assert ready["listo"]
+            # No pasar login por record(): su respuesta contiene la sesión efímera.
+            token=request(base+"/api/sesion/login","POST",{"idUsuario":"DemoAdmin","password":password})["token"]
+            assert call("/api/almacenamiento")["almacenamiento"] == "mongo"
             return
         except URLError:
             time.sleep(.1)
@@ -102,7 +110,7 @@ def integrity(label):
     state = call("/api/dominio")
     snapshot = call("/api/estructuras")
     assert call("/api/estructuras/validacion")["valido"]
-    active = [p for p in state["prestamos"] if not p["devolucion"]]
+    active = [p for p in state["prestamos"] if p["estado"] == "activo"]
     assert sorted(n["clave"] for n in snapshot["prestamos"]["nodos"]) == sorted(
         [p["vencimiento"], p["idPrestamo"]] for p in active)
     assert sorted(u for b in snapshot["usuarios"]["cubetas"] for u in b["usuarios"]) == sorted(
@@ -182,7 +190,7 @@ try:
     assert second["ejemplares"][0]["estado"] == "apartado"
     assert second["reservas"][0]["estado"] == "apartada" and second["reservas"][1]["estado"] == "pendiente"
     assert any(a["idReserva"] == "P4-R-Bruno" and a["estado"] == "pendiente" for a in second["avisos"])
-    mutation("reservas/P4-R-Bruno/cancelacion", data={})
+    mutation("reservas/P4-R-Bruno/cancelacion", data={"motivo":"Cancelación sintética de demostración"})
     assert call("/api/reservas/P4-R-Carla")["estado"] == "apartada"
     mutation("prestamos", data={"idPrestamo": "P4-PC", "idEjemplar": "P4-E", "idUsuario": "Carla",
                                 "vencimiento": future(7)}, expected=201)

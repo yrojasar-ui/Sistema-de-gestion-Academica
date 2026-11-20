@@ -1,0 +1,27 @@
+UpdateCTestConfiguration  from :/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Parse Config file:/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/DartConfiguration.tcl
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: acceso_paneles_api
+
+2: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_acceso_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+2: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/asan
+2: Test timeout computed to be: 120
+2: Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.
+2: Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.
+2: Migración local explícita: rechazo conserva archivo; actualización conserva las 16 obras.
+2: OK: 188 solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.
+1/1 Test #2: acceso_paneles_api ...............   Passed    5.01 sec
+
+The following tests passed:
+	acceso_paneles_api
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   5.01 sec

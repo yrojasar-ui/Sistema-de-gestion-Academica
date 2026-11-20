@@ -19,7 +19,7 @@ evidence=$(realpath -- "$evidence")
 } > "$evidence/entorno.log" 2>&1
 printf 'paso\tcodigo\n' > "$evidence/resultados.tsv"
 # Identificar fuentes incluso si una compilación o prueba falla después.
-find backend data scripts third_party -type f -print0 | sort -z | xargs -0 sha256sum > "$evidence/fuentes.sha256"
+find backend data/libros_iniciales.json scripts third_party -type f -print0 | sort -z | xargs -0 sha256sum > "$evidence/fuentes.sha256"
 sha256sum CMakeLists.txt >> "$evidence/fuentes.sha256"
 run_step() {
   local name=$1

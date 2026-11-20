@@ -1,0 +1,3 @@
+119 respuestas reales de la API local validadas con docs/openapi.json.
+Incluye MiBiblioteca con PrestamoPersonal/ReservaPersonal. Login excluido para no registrar tokens.
+Sin datos de nube ni cambios al esquema persistido. Código de salida: 0.

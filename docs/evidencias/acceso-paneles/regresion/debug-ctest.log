@@ -1,0 +1,271 @@
+Comando: ctest --test-dir build/debug -V --output-on-failure
+UpdateCTestConfiguration  from :/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/DartConfiguration.tcl
+Parse Config file:/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/DartConfiguration.tcl
+Test project /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+      Start  1: dominio_repositorios
+
+1: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_dominio
+1: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+1: Test timeout computed to be: 1500
+1: Semilla=20261114
+1: Commit de dominio y catálogo, fallos de repositorio, reindexación, reconstrucción y calendario OK
+1: OK operaciones=39 comprobaciones=86
+ 1/14 Test  #1: dominio_repositorios .............   Passed    0.23 sec
+test 2
+      Start  2: acceso_paneles_api
+
+2: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_acceso_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+2: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+2: Test timeout computed to be: 120
+2: Reinicio 1: cuentas, préstamo activo, pago único, turnos y cinco índices conservados.
+2: Reinicio 2: devolución, cancelación FIFO, anulación auditada y comprobantes conservados.
+2: OK: 176 solicitudes HTTP; autenticación, aislamiento, FIFO, pagos, anulación, reinicios y fallos sin cambios parciales.
+ 2/14 Test  #2: acceso_paneles_api ...............   Passed    3.81 sec
+test 3
+      Start  3: biblioteca_api
+
+3: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_library_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+3: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+3: Test timeout computed to be: 120
+3: A. Ana recibe E1; un préstamo activo en el Rojo-Negro.
+3: B. Bruno reserva con turno 1 y Carla con turno 2.
+3: C. Segundo préstamo rechazado con 409; datos, archivo e índices intactos.
+3: D. Ana devuelve; historial conservado, RN vacío y E1 apartada para Bruno.
+3: E. Bruno cancela; E1 queda apartada para Carla.
+3: F. Carla recibe y devuelve; dos préstamos históricos y E1 disponible.
+3: G. Estados, referencias, hash, Rojo-Negro y FIFO comprobados tras cada operación.
+3: Adicionales OK: inactivos, duplicados, dos copias, desactivación, renovación, edición, referencias, importación inválida, errores y guardado fallido.
+3: OK solicitudes HTTP=453; datos temporales; avisos pendientes persistentes.
+ 3/14 Test  #3: biblioteca_api ...................   Passed    1.44 sec
+test 4
+      Start  4: catalogo_http_reinicio
+
+4: Test command: /usr/bin/python3 "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/backend/tests/test_catalog_api.py" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/catalogo_api" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json"
+4: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+4: Test timeout computed to be: 1500
+4: API de catálogo en http://127.0.0.1:51541 · local · /tmp/tmp8ehy6qw3/catalogo.json
+4: Error: El archivo de trabajo ya está en uso por otra API
+4: API de catálogo en http://127.0.0.1:51541 · local · /tmp/tmp8ehy6qw3/catalogo.json
+4: API de catálogo en http://127.0.0.1:51541 · local · /tmp/tmp8ehy6qw3/catalogo.json
+4: Error: [json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal
+4: API HTTP: CRUD, errores, recuperación, reinicio y catálogo vacío comprobados.
+ 4/14 Test  #4: catalogo_http_reinicio ...........   Passed    0.90 sec
+test 5
+      Start  5: mongo_biblioteca_recuperacion
+
+5: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_mongo_library
+5: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+5: Test timeout computed to be: 60
+5: Historia y reinicios: activos, renovación, B+, grafo, FIFO, avisos, historial y secuencia OK.
+5: Fixtures: timeout aplicado/tardío, HTML, rechazo, lectura fallida, diario y parcial OK.
+5: Migración explícita v1/v2 y rechazo sin permiso OK (fixture).
+5: HTTP local: health/ready, bloqueo y recuperación explícita OK.
+5: POST incierto y reinicio: un solo envío, recuperación por GET OK.
+ 5/14 Test  #5: mongo_biblioteca_recuperacion ....   Passed    0.43 sec
+test 6
+      Start  6: mongo_contrato_simulado
+
+6: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_mongo
+6: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+6: Test timeout computed to be: 1500
+6: Fixtures Mongo OK: CRUD, identidad, reconciliación, fallos y reconstrucción del B+
+ 6/14 Test  #6: mongo_contrato_simulado ..........   Passed    0.02 sec
+test 7
+      Start  7: rojo_negro
+
+7: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_rojo_negro
+7: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+7: Test timeout computed to be: 1500
+7: Semilla=20261114
+7: Ejemplo={"alturaNegra":3,"cantidad":3,"nodos":[{"clave":["2026-11-16","P2"],"color":"negro","der":["2026-11-16","P3"],"izq":["2026-11-16","P1"],"padre":null},{"clave":["2026-11-16","P1"],"color":"negro","der":null,"izq":null,"padre":["2026-11-16","P2"]},{"clave":["2026-11-16","P3"],"color":"negro","der":null,"izq":null,"padre":["2026-11-16","P2"]}],"raiz":["2026-11-16","P2"]}
+7: OK operaciones=3085 comprobaciones=9261
+ 7/14 Test  #7: rojo_negro .......................   Passed    0.35 sec
+test 8
+      Start  8: hash_extensible
+
+8: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_hash_extensible
+8: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+8: Test timeout computed to be: 1500
+8: Semilla=20261115
+8: Ejemplo={"capacidad":1,"cubetas":[{"id":0,"ocupacion":1,"profundidadLocal":1,"usuarios":["U2"]},{"id":1,"ocupacion":1,"profundidadLocal":2,"usuarios":["U3"]},{"id":2,"ocupacion":1,"profundidadLocal":2,"usuarios":["U1"]}],"directorio":[0,1,0,2],"profundidadGlobal":2,"profundidadMaxima":3}
+8: OK operaciones=659 comprobaciones=26795
+ 8/14 Test  #8: hash_extensible ..................   Passed    0.21 sec
+test 9
+      Start  9: grafo_temas
+
+9: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_grafo_temas
+9: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+9: Test timeout computed to be: 1500
+9: Semilla=20261116
+9: Ejemplo={"aristas":1,"vertices":[{"id":"A","temas":["arbol","web"],"vecinos":["C"]},{"id":"C","temas":["web"],"vecinos":["A"]},{"id":"D","temas":["red"],"vecinos":[]},{"id":"E","temas":[],"vecinos":[]}]}
+9: OK operaciones=518 comprobaciones=6310
+ 9/14 Test  #9: grafo_temas ......................   Passed    0.19 sec
+test 10
+      Start 10: fifo_reservas
+
+10: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_fifo_reservas
+10: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+10: Test timeout computed to be: 1500
+10: Semilla=20261117
+10: Ejemplo={"cantidad":3,"fin":"R3","idLibro":"L1","inicio":"R1","nodos":[{"id":"R1","llegada":1,"siguiente":"R2"},{"id":"R2","llegada":2,"siguiente":"R3"},{"id":"R3","llegada":2,"siguiente":null}]}
+10: OK operaciones=582 comprobaciones=5043
+10/14 Test #10: fifo_reservas ....................   Passed    0.08 sec
+test 11
+      Start 11: snapshot_bplus
+
+11: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_snapshot_bplus
+11: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+11: Test timeout computed to be: 1500
+11: Semilla=20261118
+11: OK operaciones=7 comprobaciones=17
+11/14 Test #11: snapshot_bplus ...................   Passed    0.02 sec
+test 12
+      Start 12: bplus_oraculo
+
+12: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_bplus
+12: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+12: Test timeout computed to be: 600
+12: Semilla=20261109; oráculo=std::map<BookKey,Libro>
+12: orden=3 ascendente/descendente/mezclada/aleatoria OK
+12: orden=4 ascendente/descendente/mezclada/aleatoria OK
+12: orden=5 ascendente/descendente/mezclada/aleatoria OK
+12: orden=6 ascendente/descendente/mezclada/aleatoria OK
+12: orden=7 ascendente/descendente/mezclada/aleatoria OK
+12: orden=8 ascendente/descendente/mezclada/aleatoria OK
+12: orden=16 ascendente/descendente/mezclada/aleatoria OK
+12: orden=32 ascendente/descendente/mezclada/aleatoria OK
+12: splits hoja/interno=1796/645 préstamo hoja izq/der=553/448 préstamo interno izq/der=161/117 fusiones hoja/interno=1796/645 contracciones=262
+12: OK operaciones=23416 comprobaciones=2036201
+12/14 Test #12: bplus_oraculo ....................   Passed   27.14 sec
+test 13
+      Start 13: catalogo_json_consola
+
+13: Test command: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/test_catalog
+13: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+13: Test timeout computed to be: 600
+13: OK catálogo/JSON/consola; casos JSON inválido=18; comprobaciones=121
+13/14 Test #13: catalogo_json_consola ............   Passed    0.07 sec
+test 14
+      Start 14: demo_reinicio
+
+14: Test command: /usr/bin/bash "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/scripts/demo_entregable2.sh" "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug/biblioteca"
+14: Working Directory: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/debug
+14: Test timeout computed to be: 600
+14: Biblioteca académica — E2-A (JSON local, guardado explícito)
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 16 | origen: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/data/libros_iniciales.json
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: DEMO-01 (sin guardar)
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Título exacto: Resultados: 1
+14: [DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: B+ orden=3 libros=17
+14: N0 interno [(logica cotidiana,L009) ] hijos: N1 N2
+14: N1 interno [(diseño de estructuras,L005) ] hijos: N3 N4
+14: N2 interno [(sistemas ordenados,L013) ] hijos: N5 N6
+14: N3 interno [(arbol de demostracion,DEMO-01) (bibliotecas y conocimiento,L003) ] hijos: N7 N8 N9
+14: N4 interno [(grafos del jardin,L007) ] hijos: N10 N11
+14: N5 interno [(programacion modular,L011) ] hijos: N12 N13
+14: N6 interno [(universo de datos,L015) ] hijos: N14 N15
+14: N7 hoja [(algebra para explorar,L001) (algoritmos del campus,L002) ]
+14: N8 hoja [(arbol de demostracion,DEMO-01) ]
+14: N9 hoja [(bibliotecas y conocimiento,L003) (calculo con ejemplos,L004) ]
+14: N10 hoja [(diseño de estructuras,L005) (etica academica,L006) ]
+14: N11 hoja [(grafos del jardin,L007) (introduccion a redes,L008) ]
+14: N12 hoja [(logica cotidiana,L009) (niñez y lectura,L010) ]
+14: N13 hoja [(programacion modular,L011) (programacion modular,L012) ]
+14: N14 hoja [(sistemas ordenados,L013) (teoria de arboles,L014) ]
+14: N15 hoja [(universo de datos,L015) (zonas de estudio,L016) ]
+14: Hojas: N7 -> N8 -> N9 -> N10 -> N11 -> N12 -> N13 -> N14 -> N15 -> fin
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Título de la selección: Resultados: 1
+14: [DEMO-01] Árbol de demostración | Autor Sintético Demo | temas: estructuras prueba
+14: ID exacto a borrar (vacío cancela): Confirmar borrado de DEMO-01 (SI): Borrado: DEMO-01 (sin guardar)
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Título exacto: Resultados: 0
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: ID: Título: Autor: Temas separados por ; (vacío permitido): Insertado: PERSIST-01 (sin guardar)
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Guardado: /tmp/biblioteca-demo-MqHagt/trabajo.json
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Biblioteca académica — E2-A (JSON local, guardado explícito)
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Origen: 1 inicial, 2 trabajo, o ruta JSON: Cargados: 17 | origen: /tmp/biblioteca-demo-MqHagt/trabajo.json
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Título exacto: Resultados: 1
+14: [PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Título exacto: Resultados: 0
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Resultados: 17
+14: [L001] Álgebra para explorar | Autora Sintética A | temas: matemática
+14: [L002] Algoritmos del campus | Autor Sintético B | temas: computación algoritmos
+14: [L003] Bibliotecas y conocimiento | Autora Sintética C | temas: bibliotecas
+14: [L004] Cálculo con ejemplos | Autor Sintético D | temas: matemática
+14: [L005] Diseño de estructuras | Autora Sintética E | temas: computación
+14: [L006] Ética académica | Autor Sintético F | temas: ética
+14: [L007] Grafos del jardín | Autora Sintética G | temas: grafos computación
+14: [L008] Introducción a redes | Autor Sintético H | temas: redes
+14: [L009] Lógica cotidiana | Autora Sintética I | temas: lógica
+14: [L010] Niñez y lectura | Autor Sintético J | temas: lectura
+14: [PERSIST-01] Persistencia de prueba | Autor Sintético Demo | temas: prueba
+14: [L011] Programación modular | Autora Sintética K | temas: computación
+14: [L012] Programación modular | Autor Sintético L | temas: computación diseño
+14: [L013] Sistemas ordenados | Autora Sintética M | temas: sistemas
+14: [L014] Teoría de árboles | Autor Sintético N | temas: árboles
+14: [L015] Universo de datos | Autora Sintética O | temas: datos
+14: [L016] Zonas de estudio | Autor Sintético P | temas: educación
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: Invariantes OK: OK: orden, ocupación, separadores, padres, profundidad y hojas enlazadas
+14: 
+14: 1 Cargar  2 Insertar  3 Buscar título  4 Borrar selección
+14: 5 Listar  6 Visualizar B+  7 Validar  8 Guardar  9 Prefijo  0 Salir
+14: Opción: 
+14: DEMO OK: carga -> inserción -> búsqueda -> borrado -> ausencia -> guardado -> reinicio; fixture intacto.
+14/14 Test #14: demo_reinicio ....................   Passed    0.07 sec
+
+100% tests passed, 0 tests failed out of 14
+
+Total Test time (real) =  34.97 sec
+
+Código de retorno: 0

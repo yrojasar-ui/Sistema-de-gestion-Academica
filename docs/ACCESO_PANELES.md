@@ -105,3 +105,46 @@ API docente. Restaurar con el servidor detenido, mismo propietario y permisos;
 arrancar normalmente, revisar /readyz y autenticarse de nuevo. No restaurar un
 diario sobre otro ámbito. La pérdida del almacén privado requiere recuperación
 del respaldo; no hay contraseña predeterminada ni endpoint público de reset.
+
+## Corrección del PR #11: escrituras inciertas y biblioteca reconocible
+
+El cliente conserva resultado=confirmado|rechazado|incierto cuando lo entrega
+la API, además del estado HTTP y el origen del error. Un rechazo de negocio
+permite corregir el formulario. Una interrupción de transporte, JSON truncado
+o respuesta no interpretable después de enviar una escritura se trata como
+incierta: nunca se afirma que no se guardó. Un 5xx sin resultado explícito
+también requiere revisión. Incluso un error HTTP con resultado confirmado
+conserva ese resultado y consulta el recurso antes de mostrar su estado.
+
+FormDialog usa un intento que admite una única escritura. Ante incertidumbre
+bloquea su envío, reconsulta automáticamente mediante GET y ofrece **Consultar
+estado**, también de solo lectura. No reenvía POST/PUT/DELETE ni llama a la
+recuperación administrativa automáticamente. El resultado original no se
+reescribe como “confirmado” solo porque un GET respondió: se muestra el estado
+observado, y una ausencia no prueba que la escritura nunca se aplicará.
+Si no puede leer o la biblioteca sigue bloqueada, conserva la advertencia.
+Cerrar permite revisar; las listas sin lectura válida no ofrecen sus acciones.
+
+Lecturas afectadas:
+
+- Catálogo: libro por ID (incluida ausencia 404), búsqueda vigente y disponibilidad;
+  una solicitud consulta también las reservas propias. El B+ abierto se refresca.
+- Mi biblioteca/pagos: un GET de mi-biblioteca actualiza préstamos, solicitudes,
+  cargos y comprobantes; el pago conserva su idempotencia por préstamo.
+- Administración: dominio, catálogo, cuentas y préstamos activos se vuelven a
+  consultar. Los agregados incluyen los recursos afectados y sus listas.
+
+Cada intento y reconsulta conserva la generación de la sesión de origen.
+Cambiar de cuenta aborta lecturas, descarta respuestas tardías incluso si el
+transporte ignora abort y prohíbe iniciar una reconsulta con la identidad nueva.
+
+GET /api/mi-biblioteca agrega libro={idLibro,titulo,autor} a cada préstamo
+activo/histórico y reserva propios. Resuelve ejemplar → libro en C++, tras
+filtrar al propietario; consulta el catálogo existente y mantiene el recorrido
+Rojo-Negro para activos. No expone endpoints administrativos ni genera una
+petición por tarjeta. Título y autor son los **actuales** del catálogo; IDs,
+estados, fechas y auditoría histórica no se modifican. No requiere migración
+del esquema de negocio v2: cambia únicamente el DTO de lectura de OpenAPI.
+
+La verificación y sus límites están en
+[evidencias de las correcciones](evidencias/acceso-paneles/correcciones-pr11/README.md).
