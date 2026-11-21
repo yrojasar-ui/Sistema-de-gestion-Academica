@@ -1,0 +1,15 @@
+# Multi-stage para interfaz React/TypeScript/Vite con Nginx sin privilegios
+FROM node:24.22.3-slim AS builder
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+# En despliegue Docker local el frontend usa /api sobre el mismo origen (proxy Nginx).
+RUN npx tsc --noEmit && npx vite build --base=/
+
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+COPY deploy/nginx-local.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 8081
+HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8081/healthz >/dev/null || exit 1

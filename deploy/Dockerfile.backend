@@ -1,0 +1,46 @@
+# Multi-stage para catalogo_api y biblioteca_worker (C++17, libsodium 1.0.22, rabbitmq-c 0.15.0)
+FROM ubuntu:24.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential ca-certificates cmake curl libcurl4-openssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY CMakeLists.txt ./
+COPY third_party ./third_party
+COPY scripts/preparar_sodium.sh scripts/preparar_rabbitmq_c.sh ./scripts/
+COPY backend ./backend
+COPY data/libros_iniciales.json ./data/libros_iniciales.json
+
+RUN sha256sum -c third_party/SHA256SUMS \
+    && bash scripts/preparar_sodium.sh \
+    && bash scripts/preparar_rabbitmq_c.sh \
+    && arch=$(dpkg-architecture -qDEB_HOST_MULTIARCH) \
+    && cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release \
+       -DBUILD_TESTING=OFF -DENABLE_MONGO=ON \
+       -DCURL_LIBRARY="/usr/lib/$arch/libcurl.so" \
+       -DCURL_INCLUDE_DIR="/usr/include/$arch" \
+    && cmake --build build/release --target catalogo_api biblioteca_worker -j2
+
+FROM ubuntu:24.04 AS runtime
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl libcurl4t64 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --create-home --shell /usr/sbin/nologin biblioteca \
+    && mkdir -p /app/data /var/lib/biblioteca/datos /var/lib/biblioteca/privado /var/lib/biblioteca/mongo-runtime \
+    && chown -R biblioteca:biblioteca /app /var/lib/biblioteca \
+    && chmod 0700 /var/lib/biblioteca/privado /var/lib/biblioteca/mongo-runtime \
+    && chmod 0750 /var/lib/biblioteca/datos
+
+WORKDIR /app
+COPY --from=builder /src/build/release/catalogo_api /usr/local/bin/catalogo_api
+COPY --from=builder /src/build/release/biblioteca_worker /usr/local/bin/biblioteca_worker
+COPY --from=builder /src/data/libros_iniciales.json /app/data/libros_iniciales.json
+RUN chown -R biblioteca:biblioteca /app
+
+USER biblioteca
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:8080/healthz >/dev/null || exit 1
+ENTRYPOINT ["/usr/local/bin/catalogo_api"]

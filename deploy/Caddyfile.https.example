@@ -1,0 +1,37 @@
+# Plantilla de proxy inverso HTTPS (Caddy) para exponer únicamente la API pública.
+# Reemplazar api.biblioteca.example.org por su dominio real con DNS apuntando al servidor.
+# Arrancar catalogo_api en loopback (127.0.0.1:8080) con:
+#   --origin https://yrojasar-ui.github.io --trusted-proxy 127.0.0.1
+# NUNCA exponer RabbitMQ (5672/15672) ni /api/interno/* a Internet.
+
+api.biblioteca.example.org {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+
+    request_body {
+        max_size 1MB
+    }
+
+    @interno path /api/interno/*
+    respond @interno `{"error":"Ruta interna no expuesta"}` 403 {
+        close
+    }
+
+    reverse_proxy 127.0.0.1:8080 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        transport http {
+            dial_timeout 5s
+            read_timeout 15s
+            write_timeout 10s
+        }
+    }
+}

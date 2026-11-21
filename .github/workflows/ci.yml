@@ -25,18 +25,20 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Verificar dependencias C++
+      - name: Verificar dependencias C++ y RabbitMQ local de pruebas
         run: |
           sha256sum -c third_party/SHA256SUMS
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev
-      - name: Preparar libsodium fijado y probar la biblioteca
-        run: bash scripts/preparar_sodium.sh
+          sudo apt-get install -y libcurl4-openssl-dev rabbitmq-server
+      - name: Preparar libsodium y rabbitmq-c fijados y probar ambas bibliotecas
+        run: |
+          bash scripts/preparar_sodium.sh
+          bash scripts/preparar_rabbitmq_c.sh
       - name: Configurar CMake
         run: |
           arch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
           cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_TESTING=ON -DENABLE_MONGO=ON \
+            -DBUILD_TESTING=ON -DENABLE_MONGO=ON -DENABLE_RABBITMQ_TESTS=ON \
             -DENABLE_SANITIZERS=${{ matrix.sanitizers }} \
             -DCURL_LIBRARY="/usr/lib/$arch/libcurl.so" \
             -DCURL_INCLUDE_DIR="/usr/include/$arch"
