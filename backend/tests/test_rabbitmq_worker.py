@@ -222,6 +222,21 @@ class LocalRabbitBroker:
                 return int(parts[1])
         return 0
 
+    def queue_exists(self, queue_name: str) -> bool:
+        res = subprocess.run(
+            [self.ctl, "-n", self.nodename, "list_queues", "name", "--silent"],
+            env=self.env, capture_output=True, text=True, timeout=15
+        )
+        assert res.returncode == 0, f"list_queues falló (rc={res.returncode}): {res.stderr}\n{res.stdout}"
+        return queue_name in {line.strip() for line in res.stdout.splitlines() if line.strip()}
+
+    def delete_queue(self, queue_name: str) -> None:
+        res = subprocess.run(
+            [self.ctl, "-n", self.nodename, "delete_queue", queue_name],
+            env=self.env, capture_output=True, text=True, timeout=15
+        )
+        assert res.returncode == 0, f"delete_queue {queue_name} falló (rc={res.returncode}): {res.stderr}\n{res.stdout}"
+
 
 def wait_until(predicate, timeout=15.0, interval=0.15, msg="condición"):
     deadline = time.monotonic() + timeout
@@ -497,6 +512,36 @@ def main():
                        timeout=12, msg="reintento administrativo procesado")
             assert any(n["idAviso"] == av_p2["idAviso"] for n in call("/api/mis-avisos", token=bruno)["items"])
             print("9. Escritor 503 -> DLQ + reconciliación durable tras reinicio -> fallido automático y recuperación ADMIN OK.")
+
+            # === 9b. CIERRE DE CANAL AMQP (404) DEVUELTO POR RABBITMQ NO TUMBA AL WORKER Y PERMITE RECONEXIÓN ===
+            worker_pid_before = worker_proc.pid
+            # Forzar AMQP_CHANNEL_CLOSE_METHOD (404 NOT_FOUND) en pollPendingFailureReport()
+            broker.delete_queue("biblioteca.avisos.fallo_pendiente")
+            def saw_channel_close_and_reconnected():
+                assert worker_proc.poll() is None, f"El worker murió tras channel.close (rc={worker_proc.returncode})"
+                worker_log.flush()
+                txt = (root / "worker.log").read_text(errors="replace")
+                return ("cierre de canal AMQP (404)" in txt) and broker.queue_exists("biblioteca.avisos.fallo_pendiente")
+            wait_until(saw_channel_close_and_reconnected, timeout=15,
+                       msg="detección segura de cierre de canal AMQP (404) y reconexión del worker")
+            # Forzar también cancelación/cierre del consumidor en consumeNext() eliminando la cola principal
+            broker.delete_queue("biblioteca.avisos")
+            wait_until(lambda: worker_proc.poll() is None and broker.queue_exists("biblioteca.avisos"),
+                       timeout=15, msg="reconexión del worker tras eliminación de biblioteca.avisos")
+            assert worker_proc.poll() is None and worker_proc.pid == worker_pid_before
+            # Confirmar que el mismo proceso worker reconectado procesa un nuevo aviso de extremo a extremo
+            avisos_prev_count = len(call("/api/avisos", token=admin)["items"])
+            call("/api/prestamos/P2/renovacion", "POST", {"vencimiento": "2099-12-15"}, admin, 200)
+            wait_until(lambda: len(call("/api/avisos", token=admin)["items"]) > avisos_prev_count,
+                       timeout=10, msg="nuevo aviso tras reconexión")
+            av_ren = call("/api/avisos", token=admin)["items"][-1]
+            wait_until(
+                lambda: next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_ren["idAviso"])["estado"] == "procesado",
+                timeout=15, msg="procesamiento de aviso por el mismo worker tras reconexión"
+            )
+            assert worker_proc.poll() is None and worker_proc.pid == worker_pid_before
+            assert any(n["idAviso"] == av_ren["idAviso"] for n in call("/api/mis-avisos", token=bruno)["items"])
+            print("9b. Cierre de canal AMQP (404) y cancelación no tumban al worker; reconexión y procesamiento OK.")
 
             # === 10. REINICIO DE API CONSERVA NOTIFICACIONES, AVISOS E ÍNDICES ===
             before_dom = call("/api/dominio", token=admin)

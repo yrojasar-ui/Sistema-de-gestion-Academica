@@ -16,23 +16,35 @@
 namespace biblioteca {
 namespace {
 
+std::string amqpBytesToString(amqp_bytes_t b) {
+    if (!b.bytes || b.len == 0) return {};
+    return std::string(static_cast<const char*>(b.bytes), b.len);
+}
+
+std::string methodCloseError(const amqp_method_t& method, const std::string& context) {
+    if (method.id == AMQP_CONNECTION_CLOSE_METHOD && method.decoded != nullptr) {
+        auto* m = static_cast<amqp_connection_close_t*>(method.decoded);
+        return context + ": cierre de conexión AMQP (" + std::to_string(m->reply_code) + ") " +
+               amqpBytesToString(m->reply_text);
+    }
+    if (method.id == AMQP_CHANNEL_CLOSE_METHOD && method.decoded != nullptr) {
+        auto* m = static_cast<amqp_channel_close_t*>(method.decoded);
+        return context + ": cierre de canal AMQP (" + std::to_string(m->reply_code) + ") " +
+               amqpBytesToString(m->reply_text);
+    }
+    if (method.id == AMQP_BASIC_CANCEL_METHOD) {
+        return context + ": consumidor cancelado por el broker (basic.cancel)";
+    }
+    return context + ": error de protocolo AMQP";
+}
+
 std::string replyError(const amqp_rpc_reply_t& r, const std::string& context) {
     if (r.reply_type == AMQP_RESPONSE_NORMAL) return "";
     if (r.reply_type == AMQP_RESPONSE_NONE) return context + ": sin respuesta RPC del broker";
     if (r.reply_type == AMQP_RESPONSE_LIBRARY_EXCEPTION)
         return context + ": " + amqp_error_string2(r.library_error);
-    if (r.reply_type == AMQP_RESPONSE_SERVER_EXCEPTION) {
-        if (r.reply.id == AMQP_CONNECTION_CLOSE_METHOD) {
-            auto* m = static_cast<amqp_connection_close_t*>(r.reply.decoded);
-            std::string txt(static_cast<const char*>(m->reply_text.bytes), m->reply_text.len);
-            return context + ": cierre de conexión AMQP (" + std::to_string(m->reply_code) + ") " + txt;
-        }
-        if (r.reply.id == AMQP_CHANNEL_CLOSE_METHOD) {
-            auto* m = static_cast<amqp_channel_close_t*>(r.reply.decoded);
-            std::string txt(static_cast<const char*>(m->reply_text.bytes), m->reply_text.len);
-            return context + ": cierre de canal AMQP (" + std::to_string(m->reply_code) + ") " + txt;
-        }
-    }
+    if (r.reply_type == AMQP_RESPONSE_SERVER_EXCEPTION)
+        return methodCloseError(r.reply, context);
     return context + ": error de protocolo AMQP";
 }
 
@@ -136,10 +148,13 @@ void publishWithConfirm(amqp_connection_state_t conn, amqp_channel_t ch, const A
         if (st != AMQP_STATUS_OK)
             throw std::runtime_error(std::string("Error leyendo confirmación del broker: ") + amqp_error_string2(st));
 
+        if (frame.frame_type == AMQP_FRAME_METHOD && frame.payload.method.id == AMQP_CONNECTION_CLOSE_METHOD) {
+            throw std::runtime_error(methodCloseError(frame.payload.method, "basic.publish"));
+        }
         if (frame.frame_type == AMQP_FRAME_METHOD && frame.channel == ch) {
             if (frame.payload.method.id == AMQP_BASIC_RETURN_METHOD) {
                 auto* ret = static_cast<amqp_basic_return_t*>(frame.payload.method.decoded);
-                returnText.assign(static_cast<const char*>(ret->reply_text.bytes), ret->reply_text.len);
+                returnText = ret ? amqpBytesToString(ret->reply_text) : std::string{};
                 returned = true;
                 // Drenar cabecera y cuerpo del mensaje devuelto (basic.return).
                 amqp_frame_t hdr{};
@@ -169,9 +184,8 @@ void publishWithConfirm(amqp_connection_state_t conn, amqp_channel_t ch, const A
                 amqp_maybe_release_buffers_on_channel(conn, ch);
                 throw std::runtime_error("Broker rechazó la publicación (basic.nack)");
             }
-            if (frame.payload.method.id == AMQP_CHANNEL_CLOSE_METHOD ||
-                frame.payload.method.id == AMQP_CONNECTION_CLOSE_METHOD) {
-                throw std::runtime_error("Broker cerró canal o conexión durante publicación");
+            if (frame.payload.method.id == AMQP_CHANNEL_CLOSE_METHOD) {
+                throw std::runtime_error(methodCloseError(frame.payload.method, "basic.publish"));
             }
         }
     }
@@ -189,8 +203,21 @@ amqp_connection_state_t openAmqpConnection(const AmqpConfig& cfg) {
         const int st = amqp_socket_open_noblock(socket, cfg.host.c_str(), cfg.port, &tv);
         if (st != AMQP_STATUS_OK)
             throw std::runtime_error(std::string("No se pudo conectar a RabbitMQ: ") + amqp_error_string2(st));
-        const auto loginReply = amqp_login(conn, cfg.vhost.c_str(), 0, 131072, cfg.heartbeatSec,
-                                           AMQP_SASL_METHOD_PLAIN, cfg.user.c_str(), cfg.password.c_str());
+        amqp_table_entry_t capEntry{};
+        capEntry.key = amqp_cstring_bytes("consumer_cancel_notify");
+        capEntry.value.kind = AMQP_FIELD_KIND_BOOLEAN;
+        capEntry.value.value.boolean = 1;
+        amqp_table_t capabilities{1, &capEntry};
+
+        amqp_table_entry_t propEntry{};
+        propEntry.key = amqp_cstring_bytes("capabilities");
+        propEntry.value.kind = AMQP_FIELD_KIND_TABLE;
+        propEntry.value.value.table = capabilities;
+        amqp_table_t clientProps{1, &propEntry};
+
+        const auto loginReply = amqp_login_with_properties(
+            conn, cfg.vhost.c_str(), 0, 131072, cfg.heartbeatSec, &clientProps,
+            AMQP_SASL_METHOD_PLAIN, cfg.user.c_str(), cfg.password.c_str());
         requireReply(loginReply, "amqp_login");
         return conn;
     } catch (...) {
@@ -211,8 +238,7 @@ std::uint32_t extractAttemptsHeader(const amqp_basic_properties_t& props) {
     if (!(props._flags & AMQP_BASIC_HEADERS_FLAG)) return 0;
     for (int i = 0; i < props.headers.num_entries; ++i) {
         const auto& e = props.headers.entries[i];
-        std::string key(static_cast<const char*>(e.key.bytes), e.key.len);
-        if (key == "x-intentos") {
+        if (amqpBytesToString(e.key) == "x-intentos") {
             switch (e.value.kind) {
             case AMQP_FIELD_KIND_U32: return e.value.value.u32;
             case AMQP_FIELD_KIND_I32: return e.value.value.i32 > 0 ? static_cast<std::uint32_t>(e.value.value.i32) : 0U;
@@ -483,33 +509,41 @@ std::optional<AmqpMessage> RabbitEventConsumer::consumeNext(int timeoutMs) {
             timeval tv2 = makeTimeval(200);
             const int st = amqp_simple_wait_frame_noblock(impl_->conn, &frame, &tv2);
             if (st == AMQP_STATUS_TIMEOUT) return std::nullopt;
-            if (st != AMQP_STATUS_OK ||
-                (frame.frame_type == AMQP_FRAME_METHOD &&
-                 (frame.payload.method.id == AMQP_CONNECTION_CLOSE_METHOD ||
-                  frame.payload.method.id == AMQP_CHANNEL_CLOSE_METHOD))) {
+            if (st != AMQP_STATUS_OK) {
+                const auto err = std::string("Conexión AMQP interrumpida: ") + amqp_error_string2(st);
                 close();
-                throw std::runtime_error("Conexión AMQP interrumpida");
+                throw std::runtime_error(err);
+            }
+            if (frame.frame_type == AMQP_FRAME_METHOD &&
+                (frame.payload.method.id == AMQP_CONNECTION_CLOSE_METHOD ||
+                 frame.payload.method.id == AMQP_CHANNEL_CLOSE_METHOD ||
+                 frame.payload.method.id == AMQP_BASIC_CANCEL_METHOD)) {
+                // Construir el mensaje ANTES de close(), ya que close() destruye el pool del frame decodificado.
+                const auto err = methodCloseError(frame.payload.method, "basic.consume");
+                close();
+                throw std::runtime_error(err);
             }
             return std::nullopt;
         }
+        const auto err = std::string("Error consumiendo mensaje AMQP: ") + amqp_error_string2(res.library_error);
         close();
-        throw std::runtime_error(std::string("Error consumiendo mensaje AMQP: ") + amqp_error_string2(res.library_error));
+        throw std::runtime_error(err);
     }
     if (res.reply_type != AMQP_RESPONSE_NORMAL) {
+        // Construir el texto de replyError ANTES de close() para no leer memoria liberada.
+        const auto err = replyError(res, "basic.consume");
         close();
-        throw std::runtime_error(replyError(res, "basic.consume"));
+        throw std::runtime_error(err);
     }
     AmqpMessage msg;
     msg.deliveryTag = envelope.delivery_tag;
     msg.redelivered = envelope.redelivered != 0;
     msg.intentosHeader = extractAttemptsHeader(envelope.message.properties);
     if (envelope.message.properties._flags & AMQP_BASIC_MESSAGE_ID_FLAG)
-        msg.messageId.assign(static_cast<const char*>(envelope.message.properties.message_id.bytes),
-                             envelope.message.properties.message_id.len);
+        msg.messageId = amqpBytesToString(envelope.message.properties.message_id);
     if (envelope.message.properties._flags & AMQP_BASIC_CORRELATION_ID_FLAG)
-        msg.correlationId.assign(static_cast<const char*>(envelope.message.properties.correlation_id.bytes),
-                                 envelope.message.properties.correlation_id.len);
-    msg.body.assign(static_cast<const char*>(envelope.message.body.bytes), envelope.message.body.len);
+        msg.correlationId = amqpBytesToString(envelope.message.properties.correlation_id);
+    msg.body = amqpBytesToString(envelope.message.body);
     amqp_destroy_envelope(&envelope);
     return msg;
 }
@@ -561,11 +595,13 @@ std::optional<AmqpMessage> RabbitEventConsumer::pollPendingFailureReport() {
     const auto r = amqp_basic_get(impl_->reconcileConn, Impl::reconcileChannel,
                                   amqp_cstring_bytes(cfg_.failedReportQueue.c_str()), /*no_ack=*/0);
     if (r.reply_type != AMQP_RESPONSE_NORMAL) {
+        // Construir replyError ANTES de close() para no leer la respuesta decodificada tras liberar la conexión.
+        const auto err = replyError(r, "basic.get fallo_pendiente");
         close();
-        throw std::runtime_error(replyError(r, "basic.get fallo_pendiente"));
+        throw std::runtime_error(err);
     }
     if (r.reply.id == AMQP_BASIC_GET_EMPTY_METHOD) return std::nullopt;
-    if (r.reply.id != AMQP_BASIC_GET_OK_METHOD) {
+    if (r.reply.id != AMQP_BASIC_GET_OK_METHOD || r.reply.decoded == nullptr) {
         close();
         throw std::runtime_error("Respuesta inesperada en basic.get fallo_pendiente");
     }
@@ -576,19 +612,18 @@ std::optional<AmqpMessage> RabbitEventConsumer::pollPendingFailureReport() {
     amqp_message_t message{};
     const auto readReply = amqp_read_message(impl_->reconcileConn, Impl::reconcileChannel, &message, 0);
     if (readReply.reply_type != AMQP_RESPONSE_NORMAL) {
+        const auto err = replyError(readReply, "read_message fallo_pendiente");
         close();
-        throw std::runtime_error(replyError(readReply, "read_message fallo_pendiente"));
+        throw std::runtime_error(err);
     }
     AmqpMessage msg;
     msg.deliveryTag = deliveryTag;
     msg.redelivered = redelivered;
     if (message.properties._flags & AMQP_BASIC_MESSAGE_ID_FLAG)
-        msg.messageId.assign(static_cast<const char*>(message.properties.message_id.bytes),
-                             message.properties.message_id.len);
+        msg.messageId = amqpBytesToString(message.properties.message_id);
     if (message.properties._flags & AMQP_BASIC_CORRELATION_ID_FLAG)
-        msg.correlationId.assign(static_cast<const char*>(message.properties.correlation_id.bytes),
-                                 message.properties.correlation_id.len);
-    msg.body.assign(static_cast<const char*>(message.body.bytes), message.body.len);
+        msg.correlationId = amqpBytesToString(message.properties.correlation_id);
+    msg.body = amqpBytesToString(message.body);
     amqp_destroy_message(&message);
     amqp_maybe_release_buffers_on_channel(impl_->reconcileConn, Impl::reconcileChannel);
     return msg;
