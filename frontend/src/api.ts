@@ -27,9 +27,27 @@ export interface Comprobante {
   idComprobante: string; fecha: string; idUsuario: string; idPrestamo: string
   importe: number; moneda: string; etiqueta: 'SIMULADO'
 }
+export interface Aviso {
+  idAviso: string; idEvento: string; tipo: string; idUsuario: string; idReserva: string; idPrestamo: string
+  creado: string; estado: 'pendiente' | 'publicado' | 'procesado' | 'fallido'
+  publicadoEn: string; procesadoEn: string; intentos: number; ultimoError: string
+}
+export interface Notificacion {
+  idNotificacion: string; idAviso: string; idEvento: string; idUsuario: string; tipo: string
+  titulo: string; mensaje: string; idReserva: string; idPrestamo: string; procesadaEn: string
+}
+export interface MisAvisosResponse {
+  items: Notificacion[]; pendientes: number; publicados: number; fallidos: number
+}
+export interface AvisosAdminResponse {
+  items: Aviso[]; total: number; limite: number; desplazamiento: number
+  resumen: { pendiente: number; publicado: number; procesado: number; fallido: number }
+  broker: { configurado: boolean; conectado: boolean; ultimoError: string }
+}
 export interface BibliotecaPersonal {
   usuario: Usuario; activos: PrestamoPersonal[]; prestamos: PrestamoPersonal[]; reservas: ReservaPersonal[]
-  cargos: Cargo[]; comprobantes: Comprobante[]
+  cargos: Cargo[]; comprobantes: Comprobante[]; notificaciones?: Notificacion[]
+  avisosEnCurso?: { pendientes: number; publicados: number; fallidos: number }
 }
 
 export type PrestamoPersonal = Prestamo & { libro: Pick<Libro,'idLibro'|'titulo'|'autor'> }

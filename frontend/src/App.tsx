@@ -2,9 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { BookOpen, LogOut } from 'lucide-react'
 import { api, send, sessionClient, apiConfigurationError, type Identity } from './api'
 import { CatalogView } from './CatalogView'
-import { AdminPanel, PersonalPanel, StructuresPanel } from './Panels'
+import { AdminNoticesPanel, AdminPanel, PersonalNoticesPanel, PersonalPanel, StructuresPanel } from './Panels'
 
-type Section='catalogo'|'ejemplares'|'usuarios'|'prestamos'|'reservas'|'pagos'|'estructuras'|'personal'
+type Section='catalogo'|'ejemplares'|'usuarios'|'prestamos'|'reservas'|'pagos'|'avisos'|'estructuras'|'personal'
 export function App() {
   const [session,setSession]=useState<Identity|null>(null)
   const [generation,setGeneration]=useState(0)
@@ -35,8 +35,8 @@ export function App() {
   const admin=session?.rol==='ADMIN'
   const navigation: [Section,string][]=admin?[
     ['catalogo','Libros'],['ejemplares','Ejemplares'],['usuarios','Usuarios'],['prestamos','Préstamos'],
-    ['reservas','Solicitudes'],['pagos','Pagos simulados'],['estructuras','Estructuras']
-  ]:[['catalogo','Catálogo'],['personal','Mi biblioteca'],['pagos','Mis pagos simulados']]
+    ['reservas','Solicitudes'],['pagos','Pagos simulados'],['avisos','Avisos'],['estructuras','Estructuras']
+  ]:[['catalogo','Catálogo'],['personal','Mi biblioteca'],['avisos','Mis avisos'],['pagos','Mis pagos simulados']]
   return <><header className="topbar"><div className="shell top-inner">
     <a className="brand" href="./"><span className="brand-icon"><BookOpen size={23}/></span>Biblioteca Académica</a>
     {session&&<div className="session"><span>{session.idUsuario} · {admin?'Administrador':'Usuario'}</span>
@@ -58,6 +58,7 @@ export function App() {
       {error&&<p className="problem" role="alert">{error}</p>}
       <div key={generation+':'+section}>
         {section==='catalogo'?<CatalogView admin={admin}/>:section==='personal'?<PersonalPanel/>:
+          section==='avisos'&&!admin?<PersonalNoticesPanel/>:section==='avisos'&&admin?<AdminNoticesPanel/>:
           section==='pagos'&&!admin?<PersonalPanel payments/>:section==='estructuras'&&admin?<StructuresPanel/>:
           admin&&['ejemplares','usuarios','prestamos','reservas','pagos'].includes(section)?<AdminPanel section={section as 'ejemplares'|'usuarios'|'prestamos'|'reservas'|'pagos'}/>:null}
       </div>

@@ -27,6 +27,8 @@ void LibraryService::validar(const Runtime& e) const {
     idsUnicos(d.prestamos, [](const auto& x) { return x.idPrestamo; });
     idsUnicos(d.reservas, [](const auto& x) { return x.idReserva; });
     idsUnicos(d.avisos, [](const auto& x) { return x.idAviso; });
+    idsUnicos(d.notificaciones, [](const auto& x) { return x.idNotificacion; });
+    idsUnicos(d.notificaciones, [](const auto& x) { return x.idAviso; });
     idsUnicos(d.cargos, [](const auto& x) { return x.idPrestamo; });
     idsUnicos(d.comprobantes, [](const auto& x) { return x.idComprobante; });
     auto auditoria = [&](const Auditoria& a, bool cancelada, const std::string& inicio) {
@@ -124,22 +126,75 @@ void LibraryService::validar(const Runtime& e) const {
     for (const auto& [libro, orden] : pendientes)
         comprobar(orden.empty() || e.colas.count(libro) != 0, "FIFO ausente");
     std::size_t numero = 0;
+    std::set<std::string> avisosProcesados;
     for (const auto& a : d.avisos) {
         comprobar(a.idAviso == "AV-" + std::to_string(++numero), "secuencia de avisos");
+        comprobar(a.idEvento == "EV-" + a.idAviso, "idEvento estable de aviso");
         usuario(e, a.idUsuario);
         validarInstante(a.creado);
-        comprobar(a.estado == "pendiente", "la publicación de avisos requiere un publicador");
+        comprobar(a.estado == "pendiente" || a.estado == "publicado" || a.estado == "procesado" || a.estado == "fallido",
+                  "estado de aviso inválido");
+        comprobar(a.ultimoError.size() <= 512, "error de aviso demasiado largo");
+        if (!a.publicadoEn.empty()) {
+            validarInstante(a.publicadoEn);
+            comprobar(a.publicadoEn >= a.creado, "publicación anterior a creación de aviso");
+        }
+        if (!a.procesadoEn.empty()) {
+            validarInstante(a.procesadoEn);
+            comprobar(a.procesadoEn >= a.creado, "procesamiento anterior a creación de aviso");
+        }
+        if (a.estado == "pendiente") {
+            comprobar(a.publicadoEn.empty() && a.procesadoEn.empty(), "aviso pendiente con marcas finales");
+        } else if (a.estado == "publicado") {
+            comprobar(!a.publicadoEn.empty() && a.procesadoEn.empty(), "aviso publicado sin fecha de publicación");
+        } else if (a.estado == "procesado") {
+            comprobar(!a.procesadoEn.empty() && a.ultimoError.empty() && a.intentos > 0, "aviso procesado incompleto");
+            avisosProcesados.insert(a.idAviso);
+        } else if (a.estado == "fallido") {
+            comprobar(a.procesadoEn.empty() && !normalizeTitle(a.ultimoError).empty() && a.intentos > 0,
+                      "aviso fallido requiere motivo e intentos");
+        }
         if (a.tipo == "reserva_apartada") {
             comprobar(a.idPrestamo.empty() && std::any_of(d.reservas.begin(), d.reservas.end(), [&](const auto& r) {
                 return r.idReserva == a.idReserva && r.idUsuario == a.idUsuario && !r.idEjemplar.empty();
             }), "referencia del aviso de reserva");
+        } else if (a.tipo == "reserva_cancelada") {
+            comprobar(a.idPrestamo.empty() && std::any_of(d.reservas.begin(), d.reservas.end(), [&](const auto& r) {
+                return r.idReserva == a.idReserva && r.idUsuario == a.idUsuario && r.estado == "cancelada";
+            }), "referencia del aviso de reserva cancelada");
+        } else if (a.tipo == "devolucion") {
+            comprobar(a.idReserva.empty() && std::any_of(d.prestamos.begin(), d.prestamos.end(), [&](const auto& p) {
+                return p.idPrestamo == a.idPrestamo && p.idUsuario == a.idUsuario && !p.devolucion.empty();
+            }), "referencia del aviso de devolución");
+        } else if (a.tipo == "prestamo_registrado" || a.tipo == "prestamo_renovado") {
+            comprobar(a.idReserva.empty() && std::any_of(d.prestamos.begin(), d.prestamos.end(), [&](const auto& p) {
+                return p.idPrestamo == a.idPrestamo && p.idUsuario == a.idUsuario;
+            }), "referencia del aviso de préstamo");
+        } else if (a.tipo == "prestamo_anulado") {
+            comprobar(a.idReserva.empty() && std::any_of(d.prestamos.begin(), d.prestamos.end(), [&](const auto& p) {
+                return p.idPrestamo == a.idPrestamo && p.idUsuario == a.idUsuario && !p.cancelacion.fecha.empty();
+            }), "referencia del aviso de anulación");
+        } else if (a.tipo == "pago_simulado") {
+            comprobar(a.idReserva.empty() && std::any_of(d.comprobantes.begin(), d.comprobantes.end(), [&](const auto& c) {
+                return c.idPrestamo == a.idPrestamo && c.idUsuario == a.idUsuario;
+            }), "referencia del aviso de pago simulado");
         } else {
-            comprobar(a.tipo == "devolucion" && a.idReserva.empty() &&
-                std::any_of(d.prestamos.begin(), d.prestamos.end(), [&](const auto& p) {
-                    return p.idPrestamo == a.idPrestamo && p.idUsuario == a.idUsuario && !p.devolucion.empty();
-                }), "referencia del aviso de devolución");
+            comprobar(false, "tipo de aviso desconocido");
         }
     }
+    std::set<std::string> notificacionesPorAviso;
+    for (const auto& n : d.notificaciones) {
+        comprobar(n.idNotificacion == "NT-" + n.idAviso, "identificador de notificación");
+        validarInstante(n.procesadaEn);
+        comprobar(!normalizeTitle(n.titulo).empty() && n.titulo.size() <= 128 &&
+                  !normalizeTitle(n.mensaje).empty() && n.mensaje.size() <= 512, "contenido de notificación");
+        auto it = std::find_if(d.avisos.begin(), d.avisos.end(), [&](const auto& a) { return a.idAviso == n.idAviso; });
+        comprobar(it != d.avisos.end() && it->estado == "procesado" && it->idEvento == n.idEvento &&
+                  it->idUsuario == n.idUsuario && it->tipo == n.tipo && it->idReserva == n.idReserva &&
+                  it->idPrestamo == n.idPrestamo && n.procesadaEn >= it->creado, "notificación/aviso incompatible");
+        notificacionesPorAviso.insert(n.idAviso);
+    }
+    comprobar(avisosProcesados == notificacionesPorAviso, "correspondencia 1:1 entre avisos procesados y notificaciones");
     std::set<std::string> pagados;
     for (const auto& cargo : d.cargos) {
         auto p = std::find_if(d.prestamos.begin(), d.prestamos.end(), [&](const auto& x) { return x.idPrestamo == cargo.idPrestamo; });

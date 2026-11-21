@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { personalSummary } from './reconciliation-summary'
-import { api, send, type BibliotecaPersonal, type Cargo, type Comprobante, type Cuenta, type Ejemplar, type Libro, type Prestamo, type Reserva, type Usuario } from './api'
+import { api, send, type Aviso, type AvisosAdminResponse, type BibliotecaPersonal, type Cargo, type Comprobante, type Cuenta, type Ejemplar, type Libro, type MisAvisosResponse, type Notificacion, type Prestamo, type Reserva, type Usuario } from './api'
 import { Audit, Empty, FormDialog, LoadState, money, useData, type Field } from './ui'
 
 interface Domain {usuarios:Usuario[];ejemplares:Ejemplar[];prestamos:Prestamo[];reservas:Reserva[];cargos:Cargo[];comprobantes:Comprobante[]}
@@ -181,5 +181,98 @@ export function StructuresPanel() {
       <button className={selected===id?'primary':'secondary'} key={id} onClick={()=>setSelected(id)}>{title}</button>)}</div>
     {message&&<p role="status" className="success">{message}</p>}<LoadState error={state.error} retry={state.retry} loading={!state.data&&!state.error}/>
     {state.data&&<section className="tree-detail"><pre tabIndex={0} aria-label="Snapshot real de la estructura">{JSON.stringify(state.data[selected],null,2)}</pre></section>}
+  </>
+}
+
+export const AVISO_ESTADO_LABEL: Record<Aviso['estado'], string> = {
+  pendiente: 'Pendiente de publicación',
+  publicado: 'Publicado',
+  procesado: 'Procesado',
+  fallido: 'Fallido',
+}
+
+export function NoticeCard({notice}:{notice:Notificacion}) {
+  return <article className="record">
+    <h3>{notice.titulo}</h3>
+    <p>{notice.mensaje}</p>
+    <p className="badge badge-procesado">Procesado · {notice.tipo}</p>
+    <p className="stock">Notificación: {notice.idNotificacion} · Aviso: {notice.idAviso} · Evento: {notice.idEvento}</p>
+    <p className="stock">Procesado UTC: {notice.procesadaEn}{notice.idReserva?' · Reserva: '+notice.idReserva:''}{notice.idPrestamo?' · Préstamo: '+notice.idPrestamo:''}</p>
+  </article>
+}
+
+export function AdminNoticeCard({aviso,onRetry}:{aviso:Aviso;onRetry?:()=>void}) {
+  return <article className="record">
+    <h3>{aviso.idAviso} · {aviso.tipo}</h3>
+    <p className={'badge badge-'+aviso.estado}>{AVISO_ESTADO_LABEL[aviso.estado]}</p>
+    <p>Evento: <code>{aviso.idEvento}</code> · Usuario: <code>{aviso.idUsuario}</code></p>
+    <p className="stock">{aviso.idReserva?'Reserva: '+aviso.idReserva:''}{aviso.idPrestamo?'Préstamo: '+aviso.idPrestamo:''}</p>
+    <p className="stock">Creado: {aviso.creado}{aviso.publicadoEn?' · Publicado: '+aviso.publicadoEn:''}{aviso.procesadoEn?' · Procesado: '+aviso.procesadoEn:''}</p>
+    <p className="stock">Intentos del worker: {aviso.intentos}</p>
+    {aviso.ultimoError&&<p className="audit">Último error: {aviso.ultimoError}</p>}
+    {aviso.estado==='fallido'&&onRetry&&<div className="actions">
+      <button className="primary" aria-label={'Reencolar '+aviso.idAviso} onClick={onRetry}>Reencolar para reintento</button>
+    </div>}
+  </article>
+}
+
+export function PersonalNoticesPanel() {
+  const [revision,setRevision]=useState(0)
+  const state=useData<MisAvisosResponse>('mis-avisos',revision)
+  const data=state.data
+  const items=[...(data?.items??[])].reverse()
+  return <><div className="title-row"><div><h1>Mis avisos</h1><p>Bandeja interna con notificaciones procesadas por el worker de mensajería. Solo vos ves tus avisos.</p></div>
+    <button className="secondary" onClick={()=>setRevision(n=>n+1)}>Actualizar</button></div>
+    <LoadState error={state.error} retry={state.retry} loading={!data&&!state.error}/>
+    {data&&<>
+      {(data.pendientes>0||data.publicados>0||data.fallidos>0)&&<p className="simulation" role="status">
+        Avisos propios en trámite asincrónico: {data.pendientes} pendiente(s) de publicación · {data.publicados} publicado(s) en cola · {data.fallidos} fallido(s). Aparecerán en tu bandeja únicamente cuando el worker confirme su procesamiento.
+      </p>}
+      {!items.length?<Empty>Todavía no tenés avisos procesados en tu bandeja.</Empty>:<Records>{items.map(n=><NoticeCard key={n.idNotificacion} notice={n}/>)}</Records>}
+    </>}
+  </>
+}
+
+export function AdminNoticesPanel() {
+  const [revision,setRevision]=useState(0)
+  const [filter,setFilter]=useState<'todos'|Aviso['estado']>('todos')
+  const [retrying,setRetrying]=useState<Aviso|null>(null)
+  const state=useData<AvisosAdminResponse>('avisos?limite=10000',revision)
+  const data=state.data
+  const rows=[...(data?.items??[])].reverse().filter(a=>filter==='todos'||a.estado===filter)
+  return <><div className="title-row"><div><h1>Avisos y mensajería RabbitMQ</h1><p>Seguimiento del outbox, confirmación del broker y procesamiento del worker. Sin borrado silencioso de eventos.</p></div>
+    <button className="secondary" onClick={()=>setRevision(n=>n+1)}>Actualizar</button></div>
+    <LoadState error={state.error} retry={state.retry} loading={!data&&!state.error}/>
+    {data&&<>
+      <section className="card notice-summary">
+        <p><strong>Broker RabbitMQ:</strong> {!data.broker.configurado?'No configurado en este arranque (los avisos quedan pendientes hasta iniciar con broker)':
+          data.broker.conectado?'Conectado y confirmando publicaciones':'Sin conexión temporal (catálogo y préstamos siguen operativos; pendientes se publicarán al reconectar)'}</p>
+        {data.broker.ultimoError&&<p className="audit">Diagnóstico reciente: {data.broker.ultimoError}</p>}
+        <div className="summary-pills">
+          <span className="badge badge-pendiente">Pendiente de publicación: {data.resumen.pendiente}</span>
+          <span className="badge badge-publicado">Publicado: {data.resumen.publicado}</span>
+          <span className="badge badge-procesado">Procesado: {data.resumen.procesado}</span>
+          <span className="badge badge-fallido">Fallido: {data.resumen.fallido}</span>
+        </div>
+      </section>
+      <label className="filter">Filtrar por estado <select value={filter} onChange={e=>setFilter(e.target.value as 'todos'|Aviso['estado'])}>
+        <option value="todos">Todos los estados</option>
+        <option value="pendiente">Pendiente de publicación</option>
+        <option value="publicado">Publicado</option>
+        <option value="procesado">Procesado</option>
+        <option value="fallido">Fallido</option>
+      </select></label>
+      {!rows.length?<Empty>No hay avisos para el filtro seleccionado.</Empty>:<Records>{rows.map(a=>
+        <AdminNoticeCard key={a.idAviso} aviso={a} onRetry={a.estado==='fallido'?()=>setRetrying(a):undefined}/>)}</Records>}
+    </>}
+    {retrying&&<FormDialog title={'Reencolar aviso '+retrying.idAviso} submitLabel="Confirmar reintento" close={()=>setRetrying(null)}
+      reconcile={async()=>{
+        const current=await state.reload()
+        const found=current.items.find(x=>x.idAviso===retrying.idAviso)
+        return found ? `${found.idAviso} · ${AVISO_ESTADO_LABEL[found.estado]} · intentos ${found.intentos}` : 'Aviso no encontrado en la consulta actual.'
+      }}
+      submit={async()=>{await send('avisos/'+retrying.idAviso+'/reintento',{});setRevision(n=>n+1)}}>
+      <p>El aviso <strong>{retrying.idAviso}</strong> ({retrying.idEvento}) volverá a estado <strong>Pendiente de publicación</strong> para que el outbox lo publique nuevamente en RabbitMQ. El evento no se elimina.</p>
+    </FormDialog>}
   </>
 }

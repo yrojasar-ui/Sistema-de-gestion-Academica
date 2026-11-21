@@ -34,3 +34,14 @@ CMake enlaza ese archivo estático. No sustituye ninguna estructura académica.
 Origen: https://download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz
 API oficial: https://doc.libsodium.org/password_hashing/default_phf
 y https://doc.libsodium.org/generating_random_data.
+
+## Cliente AMQP 0-9-1 (RabbitMQ)
+
+`rabbitmq-c` **0.15.0**, licencia MIT incluida en el archivo fuente oficial.
+`scripts/preparar_rabbitmq_c.sh` descarga el paquete oficial, verifica SHA-256
+`7b652df52c0de4d19ca36c798ed81378cba7a03a0f0c5d498881ae2d79b241c2`,
+compila la biblioteca estática `librabbitmq.a` y ejecuta su suite CTest antes de
+instalar en `build/deps/rabbitmq-c-0.15.0/install`. Se utiliza únicamente para
+transporte AMQP con RabbitMQ (colas durables, publisher confirms, detección de
+`basic.return` y ACK manual). No sustituye la cola FIFO académica por libro.
+Origen: https://github.com/alanxz/rabbitmq-c/archive/refs/tags/v0.15.0.tar.gz

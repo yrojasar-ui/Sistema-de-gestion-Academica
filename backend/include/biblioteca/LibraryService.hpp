@@ -28,6 +28,13 @@ public:
     void anular(const std::string& id, const std::string& motivo, const std::string& responsable, bool copiaRecuperada);
     Comprobante pagar(const std::string& id);
     void configurarCargo(std::int64_t importe, const std::string& moneda);
+    void marcarAvisoPublicado(const std::string& idAviso);
+    ResultadoProcesoAviso procesarAviso(const std::string& idAviso, const std::string& idEvento,
+                                        const std::string& titulo, const std::string& mensaje, std::uint32_t intentos);
+    void fallarAviso(const std::string& idAviso, const std::string& idEvento,
+                     std::uint32_t intentos, const std::string& error, bool definitivo);
+    void reintentarAviso(const std::string& idAviso);
+    void setOnAvisoCreado(std::function<void()> callback) { onAvisoCreado_ = std::move(callback); }
     void crearLibro(const Libro& libro);
     void editarLibro(const Libro& libro);
     void borrarLibro(const std::string& id);
@@ -49,6 +56,7 @@ private:
     CatalogService& catalogo_;
     IDomainRepository& repositorio_;
     std::unique_ptr<Runtime> actual_;
+    std::function<void()> onAvisoCreado_;
     std::unique_ptr<Runtime> construir(const EstadoBiblioteca& estado) const;
     void cambiar(const std::function<void(Runtime&)>& operacion);
     void validar(const Runtime& estado) const;

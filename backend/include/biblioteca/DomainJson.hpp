@@ -79,25 +79,66 @@ inline void from_json(const Json& j, Reserva& v) {
     j.at("llegada").get_to(v.llegada); j.at("estado").get_to(v.estado); j.at("idEjemplar").get_to(v.idEjemplar); j.at("creada").get_to(v.creada); j.at("cancelacion").get_to(v.cancelacion);
 }
 inline void to_json(Json& j, const Aviso& v) {
-    j = {{"idAviso",v.idAviso},{"tipo",v.tipo},{"idUsuario",v.idUsuario},{"idReserva",v.idReserva},
-         {"idPrestamo",v.idPrestamo},{"creado",v.creado},{"estado",v.estado}};
+    j = {{"idAviso",v.idAviso},{"idEvento",v.idEvento},{"tipo",v.tipo},{"idUsuario",v.idUsuario},
+         {"idReserva",v.idReserva},{"idPrestamo",v.idPrestamo},{"creado",v.creado},{"estado",v.estado},
+         {"publicadoEn",v.publicadoEn},{"procesadoEn",v.procesadoEn},{"intentos",v.intentos},{"ultimoError",v.ultimoError}};
 }
 inline void from_json(const Json& j, Aviso& v) {
-    campos(j, {"idAviso","tipo","idUsuario","idReserva","idPrestamo","creado","estado"});
-    j.at("idAviso").get_to(v.idAviso); j.at("tipo").get_to(v.tipo); j.at("idUsuario").get_to(v.idUsuario);
-    j.at("idReserva").get_to(v.idReserva); j.at("idPrestamo").get_to(v.idPrestamo); j.at("creado").get_to(v.creado); j.at("estado").get_to(v.estado);
+    if (j.is_object() && j.size() == 7) {
+        campos(j, {"idAviso","tipo","idUsuario","idReserva","idPrestamo","creado","estado"});
+        j.at("idAviso").get_to(v.idAviso); v.idEvento = "EV-" + v.idAviso;
+        j.at("tipo").get_to(v.tipo); j.at("idUsuario").get_to(v.idUsuario);
+        j.at("idReserva").get_to(v.idReserva); j.at("idPrestamo").get_to(v.idPrestamo);
+        j.at("creado").get_to(v.creado); j.at("estado").get_to(v.estado);
+        if (v.estado != "pendiente") throw std::invalid_argument("Aviso incompleto para estado no pendiente");
+        v.publicadoEn.clear(); v.procesadoEn.clear(); v.intentos = 0; v.ultimoError.clear();
+        return;
+    }
+    campos(j, {"idAviso","idEvento","tipo","idUsuario","idReserva","idPrestamo","creado","estado",
+               "publicadoEn","procesadoEn","intentos","ultimoError"});
+    if (!j.at("intentos").is_number_unsigned()) throw std::invalid_argument("Intentos debe ser entero sin signo");
+    j.at("idAviso").get_to(v.idAviso); j.at("idEvento").get_to(v.idEvento);
+    j.at("tipo").get_to(v.tipo); j.at("idUsuario").get_to(v.idUsuario);
+    j.at("idReserva").get_to(v.idReserva); j.at("idPrestamo").get_to(v.idPrestamo);
+    j.at("creado").get_to(v.creado); j.at("estado").get_to(v.estado);
+    j.at("publicadoEn").get_to(v.publicadoEn); j.at("procesadoEn").get_to(v.procesadoEn);
+    j.at("intentos").get_to(v.intentos); j.at("ultimoError").get_to(v.ultimoError);
+}
+inline void to_json(Json& j, const Notificacion& v) {
+    j = {{"idNotificacion",v.idNotificacion},{"idAviso",v.idAviso},{"idEvento",v.idEvento},
+         {"idUsuario",v.idUsuario},{"tipo",v.tipo},{"titulo",v.titulo},{"mensaje",v.mensaje},
+         {"idReserva",v.idReserva},{"idPrestamo",v.idPrestamo},{"procesadaEn",v.procesadaEn}};
+}
+inline void from_json(const Json& j, Notificacion& v) {
+    campos(j, {"idNotificacion","idAviso","idEvento","idUsuario","tipo","titulo","mensaje","idReserva","idPrestamo","procesadaEn"});
+    j.at("idNotificacion").get_to(v.idNotificacion); j.at("idAviso").get_to(v.idAviso);
+    j.at("idEvento").get_to(v.idEvento); j.at("idUsuario").get_to(v.idUsuario);
+    j.at("tipo").get_to(v.tipo); j.at("titulo").get_to(v.titulo); j.at("mensaje").get_to(v.mensaje);
+    j.at("idReserva").get_to(v.idReserva); j.at("idPrestamo").get_to(v.idPrestamo);
+    j.at("procesadaEn").get_to(v.procesadaEn);
 }
 inline void to_json(Json& j, const EstadoBiblioteca& v) {
     j = {{"version",2},{"usuarios",v.usuarios},{"ejemplares",v.ejemplares},{"prestamos",v.prestamos},
-         {"reservas",v.reservas},{"avisos",v.avisos},{"siguienteLlegada",v.siguienteLlegada},{"cargos",v.cargos},{"comprobantes",v.comprobantes}};
+         {"reservas",v.reservas},{"avisos",v.avisos},{"notificaciones",v.notificaciones},
+         {"siguienteLlegada",v.siguienteLlegada},{"cargos",v.cargos},{"comprobantes",v.comprobantes}};
 }
 inline void from_json(const Json& j, EstadoBiblioteca& v) {
-    campos(j, {"version","usuarios","ejemplares","prestamos","reservas","avisos","siguienteLlegada","cargos","comprobantes"});
+    const bool conNotificaciones = j.is_object() && j.contains("notificaciones");
+    if (conNotificaciones) {
+        campos(j, {"version","usuarios","ejemplares","prestamos","reservas","avisos","notificaciones","siguienteLlegada","cargos","comprobantes"});
+    } else {
+        campos(j, {"version","usuarios","ejemplares","prestamos","reservas","avisos","siguienteLlegada","cargos","comprobantes"});
+    }
     if (j.at("version") != 2 || !j.at("siguienteLlegada").is_number_unsigned()) throw std::invalid_argument("Versión o secuencia inválida");
     for (const auto* coleccion : {"usuarios","ejemplares","prestamos","reservas","avisos","cargos","comprobantes"})
         if (!j.at(coleccion).is_array() || j.at(coleccion).size() > 10000) throw std::invalid_argument("Colección inválida o excesiva");
+    if (conNotificaciones && (!j.at("notificaciones").is_array() || j.at("notificaciones").size() > 10000))
+        throw std::invalid_argument("Colección notificaciones inválida o excesiva");
     j.at("usuarios").get_to(v.usuarios); j.at("ejemplares").get_to(v.ejemplares); j.at("prestamos").get_to(v.prestamos);
-    j.at("reservas").get_to(v.reservas); j.at("avisos").get_to(v.avisos); j.at("siguienteLlegada").get_to(v.siguienteLlegada);
+    j.at("reservas").get_to(v.reservas); j.at("avisos").get_to(v.avisos);
+    if (conNotificaciones) j.at("notificaciones").get_to(v.notificaciones);
+    else v.notificaciones.clear();
+    j.at("siguienteLlegada").get_to(v.siguienteLlegada);
     j.at("cargos").get_to(v.cargos); j.at("comprobantes").get_to(v.comprobantes);
 }
 } // namespace biblioteca

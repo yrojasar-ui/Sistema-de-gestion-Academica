@@ -197,9 +197,19 @@ int main() {
         Fixture legacy;
         legacy.document = f.document;
         auto& old = legacy.document["estado"]["dominio"];
-        old["version"] = 1; old.erase("cargos"); old.erase("comprobantes");
+        old["version"] = 1; old.erase("cargos"); old.erase("comprobantes"); old.erase("notificaciones");
         for (auto& p : old["prestamos"]) { p.erase("estado"); p.erase("cancelacion"); }
         for (auto& r : old["reservas"]) r.erase("cancelacion");
+        Json v1Avisos = Json::array();
+        std::size_t avIdx = 0;
+        for (auto a : old["avisos"]) {
+            if (a.at("tipo") == "pago_simulado") continue;
+            a["idAviso"] = "AV-" + std::to_string(++avIdx);
+            a.erase("idEvento"); a.erase("publicadoEn"); a.erase("procesadoEn");
+            a.erase("intentos"); a.erase("ultimoError");
+            v1Avisos.push_back(std::move(a));
+        }
+        old["avisos"] = std::move(v1Avisos);
         Harness migration(legacy,root/"migracion.pending.json");
         fails([&] { migration.recover(); });
         check(legacy.writes == 0 && !migration.repo.ready(), "V1 no migra silenciosamente");
