@@ -67,6 +67,15 @@ void declareTopology(amqp_connection_state_t conn, amqp_channel_t ch, const Amqp
                     amqp_cstring_bytes(cfg.dlqRoutingKey.c_str()), amqp_empty_table);
     requireReply(amqp_get_rpc_reply(conn), "queue.bind DLQ");
 
+    amqp_queue_declare(conn, ch, amqp_cstring_bytes(cfg.failedReportQueue.c_str()),
+                       0, /*durable=*/1, 0, 0, amqp_empty_table);
+    requireReply(amqp_get_rpc_reply(conn), "queue.declare fallo_pendiente");
+
+    amqp_queue_bind(conn, ch, amqp_cstring_bytes(cfg.failedReportQueue.c_str()),
+                    amqp_cstring_bytes(cfg.dlxExchange.c_str()),
+                    amqp_cstring_bytes(cfg.failedReportRoutingKey.c_str()), amqp_empty_table);
+    requireReply(amqp_get_rpc_reply(conn), "queue.bind fallo_pendiente");
+
     amqp_table_entry_t argsEntries[2];
     argsEntries[0].key = amqp_cstring_bytes("x-dead-letter-exchange");
     argsEntries[0].value.kind = AMQP_FIELD_KIND_UTF8;
@@ -87,9 +96,9 @@ void declareTopology(amqp_connection_state_t conn, amqp_channel_t ch, const Amqp
 }
 
 void publishWithConfirm(amqp_connection_state_t conn, amqp_channel_t ch, const AmqpConfig& cfg,
-                        const std::string& routingKey, const std::string& payload,
-                        const std::string& messageId, const std::string& correlationId,
-                        std::uint32_t intentos) {
+                        const std::string& exchange, const std::string& routingKey,
+                        const std::string& payload, const std::string& messageId,
+                        const std::string& correlationId, std::uint32_t intentos) {
     amqp_basic_properties_t props{};
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG |
                    AMQP_BASIC_MESSAGE_ID_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG |
@@ -105,7 +114,7 @@ void publishWithConfirm(amqp_connection_state_t conn, amqp_channel_t ch, const A
     hdrEntries[0].value.value.u32 = intentos;
     props.headers = amqp_table_t{1, hdrEntries};
 
-    const int rc = amqp_basic_publish(conn, ch, amqp_cstring_bytes(cfg.exchange.c_str()),
+    const int rc = amqp_basic_publish(conn, ch, amqp_cstring_bytes(exchange.c_str()),
                                       amqp_cstring_bytes(routingKey.c_str()),
                                       /*mandatory=*/1, /*immediate=*/0, &props,
                                       amqp_bytes_t{payload.size(), const_cast<char*>(payload.data())});
@@ -294,7 +303,7 @@ void RabbitEventPublisher::publishRaw(const std::string& routingKey, const std::
                                       std::uint32_t intentos) {
     try {
         ensureConnected();
-        publishWithConfirm(impl_->conn, Impl::channel, cfg_, routingKey, payload, messageId, correlationId, intentos);
+        publishWithConfirm(impl_->conn, Impl::channel, cfg_, cfg_.exchange, routingKey, payload, messageId, correlationId, intentos);
     } catch (...) {
         close();
         throw;
@@ -407,8 +416,10 @@ void AvisoOutboxRelay::loop() {
 
 struct RabbitEventConsumer::Impl {
     amqp_connection_state_t conn = nullptr;
+    amqp_connection_state_t reconcileConn = nullptr;
     static constexpr amqp_channel_t consumeChannel = 1;
     static constexpr amqp_channel_t retryChannel = 2;
+    static constexpr amqp_channel_t reconcileChannel = 1;
 };
 
 RabbitEventConsumer::RabbitEventConsumer(AmqpConfig cfg)
@@ -416,15 +427,19 @@ RabbitEventConsumer::RabbitEventConsumer(AmqpConfig cfg)
 
 RabbitEventConsumer::~RabbitEventConsumer() { close(); }
 
-bool RabbitEventConsumer::connected() const { return impl_ && impl_->conn != nullptr; }
+bool RabbitEventConsumer::connected() const { return impl_ && impl_->conn != nullptr && impl_->reconcileConn != nullptr; }
 
 void RabbitEventConsumer::close() noexcept {
-    if (impl_) closeAmqpConnection(impl_->conn, {Impl::consumeChannel, Impl::retryChannel});
+    if (impl_) {
+        closeAmqpConnection(impl_->conn, {Impl::consumeChannel, Impl::retryChannel});
+        closeAmqpConnection(impl_->reconcileConn, {Impl::reconcileChannel});
+    }
 }
 
 void RabbitEventConsumer::connect() {
     close();
     amqp_connection_state_t conn = openAmqpConnection(cfg_);
+    amqp_connection_state_t rconn = nullptr;
     try {
         amqp_channel_open(conn, Impl::consumeChannel);
         requireReply(amqp_get_rpc_reply(conn), "channel.open consumidor");
@@ -439,8 +454,17 @@ void RabbitEventConsumer::connect() {
         requireReply(amqp_get_rpc_reply(conn), "channel.open reintentos");
         amqp_confirm_select(conn, Impl::retryChannel);
         requireReply(amqp_get_rpc_reply(conn), "confirm.select reintentos");
+
+        rconn = openAmqpConnection(cfg_);
+        amqp_channel_open(rconn, Impl::reconcileChannel);
+        requireReply(amqp_get_rpc_reply(rconn), "channel.open reconciliación");
+        amqp_confirm_select(rconn, Impl::reconcileChannel);
+        requireReply(amqp_get_rpc_reply(rconn), "confirm.select reconciliación");
+
         impl_->conn = conn;
+        impl_->reconcileConn = rconn;
     } catch (...) {
+        closeAmqpConnection(rconn, {Impl::reconcileChannel});
         closeAmqpConnection(conn, {Impl::consumeChannel, Impl::retryChannel});
         throw;
     }
@@ -511,11 +535,80 @@ void RabbitEventConsumer::rejectToDlq(std::uint64_t deliveryTag) {
 void RabbitEventConsumer::republishForRetry(const AmqpMessage& msg, std::uint32_t nextAttempt) {
     if (!impl_->conn) throw std::runtime_error("Consumidor sin conexión para republicar reintento");
     try {
-        publishWithConfirm(impl_->conn, Impl::retryChannel, cfg_, cfg_.routingKey, msg.body,
+        publishWithConfirm(impl_->conn, Impl::retryChannel, cfg_, cfg_.exchange, cfg_.routingKey, msg.body,
                            msg.messageId, msg.correlationId, nextAttempt);
     } catch (...) {
         close();
         throw;
+    }
+}
+
+void RabbitEventConsumer::publishPendingFailureReport(const std::string& payload, const std::string& messageId,
+                                                      const std::string& correlationId) {
+    if (!impl_->reconcileConn) throw std::runtime_error("Sin conexión AMQP para publicar fallo pendiente");
+    try {
+        publishWithConfirm(impl_->reconcileConn, Impl::reconcileChannel, cfg_, cfg_.dlxExchange,
+                           cfg_.failedReportRoutingKey, payload, messageId, correlationId, 0U);
+    } catch (...) {
+        close();
+        throw;
+    }
+}
+
+std::optional<AmqpMessage> RabbitEventConsumer::pollPendingFailureReport() {
+    if (!impl_->reconcileConn) throw std::runtime_error("Sin conexión AMQP para consultar fallos pendientes");
+    amqp_maybe_release_buffers(impl_->reconcileConn);
+    const auto r = amqp_basic_get(impl_->reconcileConn, Impl::reconcileChannel,
+                                  amqp_cstring_bytes(cfg_.failedReportQueue.c_str()), /*no_ack=*/0);
+    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
+        close();
+        throw std::runtime_error(replyError(r, "basic.get fallo_pendiente"));
+    }
+    if (r.reply.id == AMQP_BASIC_GET_EMPTY_METHOD) return std::nullopt;
+    if (r.reply.id != AMQP_BASIC_GET_OK_METHOD) {
+        close();
+        throw std::runtime_error("Respuesta inesperada en basic.get fallo_pendiente");
+    }
+    auto* ok = static_cast<amqp_basic_get_ok_t*>(r.reply.decoded);
+    const std::uint64_t deliveryTag = ok->delivery_tag;
+    const bool redelivered = ok->redelivered != 0;
+
+    amqp_message_t message{};
+    const auto readReply = amqp_read_message(impl_->reconcileConn, Impl::reconcileChannel, &message, 0);
+    if (readReply.reply_type != AMQP_RESPONSE_NORMAL) {
+        close();
+        throw std::runtime_error(replyError(readReply, "read_message fallo_pendiente"));
+    }
+    AmqpMessage msg;
+    msg.deliveryTag = deliveryTag;
+    msg.redelivered = redelivered;
+    if (message.properties._flags & AMQP_BASIC_MESSAGE_ID_FLAG)
+        msg.messageId.assign(static_cast<const char*>(message.properties.message_id.bytes),
+                             message.properties.message_id.len);
+    if (message.properties._flags & AMQP_BASIC_CORRELATION_ID_FLAG)
+        msg.correlationId.assign(static_cast<const char*>(message.properties.correlation_id.bytes),
+                                 message.properties.correlation_id.len);
+    msg.body.assign(static_cast<const char*>(message.body.bytes), message.body.len);
+    amqp_destroy_message(&message);
+    amqp_maybe_release_buffers_on_channel(impl_->reconcileConn, Impl::reconcileChannel);
+    return msg;
+}
+
+void RabbitEventConsumer::ackPendingFailureReport(std::uint64_t deliveryTag) {
+    if (!impl_->reconcileConn) throw std::runtime_error("Sin conexión AMQP para ACK de fallo pendiente");
+    const int rc = amqp_basic_ack(impl_->reconcileConn, Impl::reconcileChannel, deliveryTag, 0);
+    if (rc != AMQP_STATUS_OK) {
+        close();
+        throw std::runtime_error(std::string("basic.ack fallo_pendiente falló: ") + amqp_error_string2(rc));
+    }
+}
+
+void RabbitEventConsumer::requeuePendingFailureReport(std::uint64_t deliveryTag) {
+    if (!impl_->reconcileConn) throw std::runtime_error("Sin conexión AMQP para requeue de fallo pendiente");
+    const int rc = amqp_basic_nack(impl_->reconcileConn, Impl::reconcileChannel, deliveryTag, /*multiple=*/0, /*requeue=*/1);
+    if (rc != AMQP_STATUS_OK) {
+        close();
+        throw std::runtime_error(std::string("basic.nack fallo_pendiente falló: ") + amqp_error_string2(rc));
     }
 }
 

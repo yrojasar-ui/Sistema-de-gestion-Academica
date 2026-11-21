@@ -125,6 +125,77 @@ ApiCallResult postInternal(const std::string& apiUrl, const std::string& token,
     return {res->status, res->body, ""};
 }
 
+// Registra el fallo definitivo en el escritor único; si el escritor devuelve error transitorio
+// (p. ej. 503 o caída), persiste la reconciliación en la cola durable de fallos pendientes
+// (con publisher confirm) antes de rechazar el mensaje original hacia la DLQ.
+bool reportarFalloDefinitivoDurable(const WorkerConfig& cfg, const std::string& serviceToken,
+                                    RabbitEventConsumer& consumer, const std::string& idAviso,
+                                    const std::string& idEvento, std::uint32_t intentos,
+                                    const std::string& errorText) {
+    const Json payload = {
+        {"idEvento", idEvento},
+        {"intentos", intentos},
+        {"error", sanitizeErrorText(errorText)},
+        {"definitivo", true}
+    };
+    const auto res = postInternal(cfg.apiUrl, serviceToken, "/api/interno/avisos/" + idAviso + "/fallo", payload);
+    if (res.status == 200 || res.status == 400 || res.status == 404) return true;
+    Json rec = payload;
+    rec["idAviso"] = idAviso;
+    consumer.publishPendingFailureReport(rec.dump(), idEvento, idAviso);
+    std::cerr << "[worker] Escritor no pudo registrar fallo final de " << idAviso
+              << " (HTTP " << res.status << "); encolada reconciliación durable en "
+              << cfg.amqp.failedReportQueue << std::endl;
+    return false;
+}
+
+void reconciliarFallosPendientes(const WorkerConfig& cfg, const std::string& serviceToken,
+                                 RabbitEventConsumer& consumer,
+                                 std::chrono::steady_clock::time_point& nextReconcileAt,
+                                 int& reconcileBackoffMs) {
+    const auto now = std::chrono::steady_clock::now();
+    if (now < nextReconcileAt) return;
+    for (int drained = 0; drained < 16 && !g_stop; ++drained) {
+        auto maybeRec = consumer.pollPendingFailureReport();
+        if (!maybeRec) {
+            reconcileBackoffMs = cfg.backoffMs;
+            nextReconcileAt = std::chrono::steady_clock::now() + std::chrono::milliseconds(cfg.backoffMs);
+            return;
+        }
+        const auto& recMsg = *maybeRec;
+        try {
+            const auto rec = Json::parse(recMsg.body);
+            const auto idAviso = rec.at("idAviso").get<std::string>();
+            const auto idEvento = rec.at("idEvento").get<std::string>();
+            const auto intentos = rec.at("intentos").get<std::uint32_t>();
+            const auto errorText = rec.at("error").get<std::string>();
+            const Json payload = {
+                {"idEvento", idEvento},
+                {"intentos", intentos},
+                {"error", sanitizeErrorText(errorText)},
+                {"definitivo", true}
+            };
+            const auto res = postInternal(cfg.apiUrl, serviceToken, "/api/interno/avisos/" + idAviso + "/fallo", payload);
+            if (res.status == 200 || res.status == 400 || res.status == 404) {
+                consumer.ackPendingFailureReport(recMsg.deliveryTag);
+                std::cout << "[worker] Fallo definitivo reconciliado en el escritor para " << idAviso
+                          << " (HTTP " << res.status << ")" << std::endl;
+                reconcileBackoffMs = cfg.backoffMs;
+            } else {
+                consumer.requeuePendingFailureReport(recMsg.deliveryTag);
+                nextReconcileAt = std::chrono::steady_clock::now() + std::chrono::milliseconds(reconcileBackoffMs);
+                reconcileBackoffMs = std::min(reconcileBackoffMs * 2, 5000);
+                return;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[worker] Registro corrupto en " << cfg.amqp.failedReportQueue
+                      << " descartado: " << sanitizeErrorText(e.what()) << std::endl;
+            consumer.ackPendingFailureReport(recMsg.deliveryTag);
+        }
+    }
+    nextReconcileAt = std::chrono::steady_clock::now();
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -140,13 +211,18 @@ int main(int argc, char** argv) {
                   << " · cola " << cfg.amqp.queue << " · reintentos máximos " << cfg.maxRetries << std::endl;
 
         int reconnectDelayMs = cfg.backoffMs;
+        int reconcileBackoffMs = cfg.backoffMs;
+        auto nextReconcileAt = std::chrono::steady_clock::now();
         while (!g_stop) {
             try {
                 if (!consumer.connected()) {
                     consumer.connect();
                     reconnectDelayMs = cfg.backoffMs;
+                    reconcileBackoffMs = cfg.backoffMs;
+                    nextReconcileAt = std::chrono::steady_clock::now();
                     std::cout << "[worker] Conectado a RabbitMQ y consumiendo con ACK manual." << std::endl;
                 }
+                reconciliarFallosPendientes(cfg, serviceToken, consumer, nextReconcileAt, reconcileBackoffMs);
                 auto maybeMsg = consumer.consumeNext(500);
                 if (!maybeMsg) continue;
                 const auto& msg = *maybeMsg;
@@ -171,10 +247,12 @@ int main(int argc, char** argv) {
                     std::cerr << "[worker] Mensaje inválido enviado a DLQ: " << parseError << std::endl;
                     if (ev.is_object() && ev.contains("idAviso") && ev.at("idAviso").is_string() &&
                         ev.contains("idEvento") && ev.at("idEvento").is_string()) {
-                        (void)postInternal(cfg.apiUrl, serviceToken,
-                                           "/api/interno/avisos/" + ev.at("idAviso").get<std::string>() + "/fallo",
-                                           {{"idEvento", ev.at("idEvento")}, {"intentos", intentoActual},
-                                            {"error", "Mensaje inválido: " + parseError}, {"definitivo", true}});
+                        if (!reportarFalloDefinitivoDurable(cfg, serviceToken, consumer,
+                                                            ev.at("idAviso").get<std::string>(),
+                                                            ev.at("idEvento").get<std::string>(),
+                                                            intentoActual, "Mensaje inválido: " + parseError)) {
+                            nextReconcileAt = std::chrono::steady_clock::now() + std::chrono::milliseconds(reconcileBackoffMs);
+                        }
                     }
                     consumer.rejectToDlq(msg.deliveryTag);
                     continue;
@@ -206,10 +284,9 @@ int main(int argc, char** argv) {
                 if (res.status == 400 || res.status == 404) {
                     const auto detalle = sanitizeErrorText("Rechazo definitivo HTTP " + std::to_string(res.status));
                     std::cerr << "[worker] " << idAviso << " rechazado definitivamente -> DLQ: " << detalle << std::endl;
-                    (void)postInternal(cfg.apiUrl, serviceToken,
-                                       "/api/interno/avisos/" + idAviso + "/fallo",
-                                       {{"idEvento", idEvento}, {"intentos", intentoActual},
-                                        {"error", detalle}, {"definitivo", true}});
+                    if (!reportarFalloDefinitivoDurable(cfg, serviceToken, consumer, idAviso, idEvento, intentoActual, detalle)) {
+                        nextReconcileAt = std::chrono::steady_clock::now() + std::chrono::milliseconds(reconcileBackoffMs);
+                    }
                     consumer.rejectToDlq(msg.deliveryTag);
                     continue;
                 }
@@ -228,10 +305,10 @@ int main(int argc, char** argv) {
                     consumer.ack(msg.deliveryTag);
                 } else {
                     std::cerr << "[worker] Reintentos agotados para " << idAviso << " -> DLQ." << std::endl;
-                    (void)postInternal(cfg.apiUrl, serviceToken,
-                                       "/api/interno/avisos/" + idAviso + "/fallo",
-                                       {{"idEvento", idEvento}, {"intentos", intentoActual},
-                                        {"error", "Reintentos agotados: " + detalle}, {"definitivo", true}});
+                    if (!reportarFalloDefinitivoDurable(cfg, serviceToken, consumer, idAviso, idEvento,
+                                                        intentoActual, "Reintentos agotados: " + detalle)) {
+                        nextReconcileAt = std::chrono::steady_clock::now() + std::chrono::milliseconds(reconcileBackoffMs);
+                    }
                     consumer.rejectToDlq(msg.deliveryTag);
                 }
             } catch (const std::exception& e) {

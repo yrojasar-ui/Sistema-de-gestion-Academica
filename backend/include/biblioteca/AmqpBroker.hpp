@@ -23,8 +23,10 @@ struct AmqpConfig {
     std::string queue = "biblioteca.avisos";
     std::string dlxExchange = "biblioteca.dlx";
     std::string dlqQueue = "biblioteca.avisos.fallidos";
+    std::string failedReportQueue = "biblioteca.avisos.fallo_pendiente";
     std::string routingKey = "aviso.creado";
     std::string dlqRoutingKey = "aviso.fallido";
+    std::string failedReportRoutingKey = "aviso.fallo_pendiente";
     int heartbeatSec = 15;
     int timeoutMs = 3000;
     bool declareQueues = true;
@@ -118,6 +120,11 @@ public:
     void ack(std::uint64_t deliveryTag);
     void rejectToDlq(std::uint64_t deliveryTag);
     void republishForRetry(const AmqpMessage& msg, std::uint32_t nextAttempt);
+    void publishPendingFailureReport(const std::string& payload, const std::string& messageId,
+                                     const std::string& correlationId);
+    std::optional<AmqpMessage> pollPendingFailureReport();
+    void ackPendingFailureReport(std::uint64_t deliveryTag);
+    void requeuePendingFailureReport(std::uint64_t deliveryTag);
 private:
     struct Impl;
     AmqpConfig cfg_;
