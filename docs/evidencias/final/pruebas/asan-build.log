@@ -1,0 +1,54 @@
+[  1%] Building CXX object CMakeFiles/service_identity.dir/backend/src/ServiceIdentity.cpp.o
+[  4%] Built target libro
+[  7%] Built target bplus
+[ 15%] Built target estructuras
+[ 19%] Built target json_repository
+[ 22%] Built target catalog_service
+[ 28%] Built target mongo_repository
+[ 30%] Building CXX object CMakeFiles/library_service.dir/backend/src/Dominio.cpp.o
+[ 31%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryService.cpp.o
+[ 33%] Linking CXX static library libservice_identity.a
+[ 33%] Built target service_identity
+[ 36%] Built target test_mongo
+[ 39%] Built target test_rojo_negro
+[ 42%] Built target test_hash_extensible
+[ 46%] Built target test_grafo_temas
+[ 49%] Built target test_fifo_reservas
+[ 52%] Built target test_snapshot_bplus
+[ 55%] Built target test_bplus
+[ 58%] Built target console_ui
+[ 60%] Building CXX object CMakeFiles/library_service.dir/backend/src/LibraryValidation.cpp.o
+[ 63%] Built target biblioteca
+[ 66%] Built target test_catalog
+[ 68%] Linking CXX static library liblibrary_service.a
+[ 68%] Built target library_service
+[ 69%] Building CXX object CMakeFiles/amqp_broker.dir/backend/src/AmqpBroker.cpp.o
+[ 71%] Building CXX object CMakeFiles/local_library_repository.dir/backend/src/LocalLibraryRepository.cpp.o
+[ 73%] Linking CXX static library libamqp_broker.a
+[ 73%] Built target amqp_broker
+[ 74%] Building CXX object CMakeFiles/auth_service.dir/backend/src/AuthService.cpp.o
+[ 76%] Linking CXX static library liblocal_library_repository.a
+[ 76%] Built target local_library_repository
+[ 77%] Building CXX object CMakeFiles/mongo_library_repository.dir/backend/src/MongoLibraryRepository.cpp.o
+[ 79%] Linking CXX static library libauth_service.a
+[ 79%] Built target auth_service
+[ 80%] Building CXX object CMakeFiles/biblioteca_worker.dir/backend/apps/biblioteca_worker.cpp.o
+[ 82%] Linking CXX static library libmongo_library_repository.a
+[ 82%] Built target mongo_library_repository
+[ 84%] Building CXX object CMakeFiles/test_dominio.dir/backend/tests/test_dominio.cpp.o
+[ 85%] Linking CXX executable test_dominio
+[ 85%] Built target test_dominio
+[ 87%] Building CXX object CMakeFiles/test_outbox_unidad.dir/backend/tests/test_outbox_unidad.cpp.o
+[ 88%] Linking CXX executable biblioteca_worker
+[ 88%] Built target biblioteca_worker
+[ 90%] Building CXX object CMakeFiles/http_controller.dir/backend/src/HttpController.cpp.o
+[ 92%] Linking CXX executable test_outbox_unidad
+[ 92%] Built target test_outbox_unidad
+[ 93%] Linking CXX static library libhttp_controller.a
+[ 93%] Built target http_controller
+[ 96%] Building CXX object CMakeFiles/test_mongo_library.dir/backend/tests/test_mongo_library.cpp.o
+[ 96%] Building CXX object CMakeFiles/catalogo_api.dir/backend/apps/catalogo_api.cpp.o
+[ 98%] Linking CXX executable catalogo_api
+[ 98%] Built target catalogo_api
+[100%] Linking CXX executable test_mongo_library
+[100%] Built target test_mongo_library

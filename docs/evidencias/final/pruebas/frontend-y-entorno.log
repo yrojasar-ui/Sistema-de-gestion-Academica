@@ -1,0 +1,68 @@
+=== FECHA ===
+2026-11-20T19:05:47-06:00
+=== ENTORNO ===
+Linux KernelOS-PC 6.18.54.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Tue Oct  6 19:13:07 UTC 2026 x86_64 GNU/Linux
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+cmake version 4.2.3
+Python 3.14.4
+v24.22.3
+11.19.1
+=== THIRD PARTY SHA256 ===
+third_party/nlohmann/json.hpp: OK
+third_party/nlohmann/LICENSE.MIT: OK
+third_party/cpp-httplib/httplib.h: OK
+third_party/cpp-httplib/LICENSE: OK
+=== LIBROS INICIALES SHA256 ===
+7852aadb1c01f71840aa34e8cf828495caf3ca195c88d656019d6ff702cffce5  data/libros_iniciales.json
+=== FRONTEND TEST + BUILD + VERIFY:DIST ===
+
+> biblioteca-academica-catalogo@0.1.0 test
+> node --test src/*.test.ts
+
+✔ desarrollo conserva el proxy incluso si existe una variable de producción (0.976756ms)
+✔ producción sin URL presenta el mensaje requerido, sin backend implícito (0.73076ms)
+✔ origen HTTPS con o sin barra produce exactamente un prefijo api (0.321578ms)
+✔ producción rechaza /api, rutas, credenciales, consulta, fragmento y URL no HTTPS (0.278977ms)
+✔ producción nunca configura loopback como backend (0.388271ms)
+✔ POST: escritura aplicada y respuesta perdida; solo GET para reconciliar (23.568807ms)
+✔ PUT: escritura aplicada y respuesta perdida; solo GET para reconciliar (0.78403ms)
+✔ DELETE: escritura aplicada y respuesta perdida; solo GET para reconciliar (1.568872ms)
+✔ conserva confirmado/rechazado/incierto del servidor y distingue rechazo de negocio (1.792368ms)
+✔ biblioteca bloqueada o inaccesible conserva incertidumbre; reconsultar no escribe (0.960326ms)
+✔ cambiar de cuenta durante reconsulta descarta A y nunca consulta con B (0.892373ms)
+✔ cambio de cuenta entre error y reconsulta impide comenzar lecturas con nueva identidad (0.318848ms)
+✔ JSON truncado o HTML tras escritura son inciertos, no rechazos sin cambios (0.438331ms)
+✔ avisos: diferencia los cuatro estados, muestra reintento solo en fallido y nunca borra silenciosamente (349.429278ms)
+WebSocket server error: Port 24678 is already in use
+✔ tarjetas reales: título y autor en préstamo, historial y solicitud; IDs secundarios (307.030749ms)
+✔ credencial en Authorization y sin cookies; cierre limpia credencial (25.811811ms)
+✔ una respuesta tardía de A se descarta al cambiar a B, aunque fetch ignore abort (1.054597ms)
+✔ 401 invalida la sesión; 403 distingue permisos de desconexión (0.912013ms)
+✔ sin servidor configurado no realiza solicitudes ni inventa datos (0.200516ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 740.711709
+
+> biblioteca-academica-catalogo@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2090 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:  0.32 kB
+dist/assets/index-wjCBlzP2.css   10.38 kB │ gzip:  3.32 kB
+dist/assets/index-CrQ5eCyT.js   265.79 kB │ gzip: 81.61 kB
+
+✓ built in 225ms
+
+> biblioteca-academica-catalogo@0.1.0 verify:dist
+> node verify-dist.mjs
+
+Pages: recursos JS/CSS existentes bajo /Sistema-de-gestion-Academica/
