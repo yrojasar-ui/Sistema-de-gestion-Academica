@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -26,6 +27,13 @@ def free_port():
         return s.getsockname()[1]
 
 
+def _is_debian_wrapper(path: Path) -> bool:
+    try:
+        return path.resolve().name == "rabbitmq-script-wrapper"
+    except OSError:
+        return False
+
+
 def find_rabbitmq_binaries():
     local_rt = repo_root / "build" / "deps" / "rabbitmq-runtime"
     local_sbin = local_rt / "usr" / "lib" / "rabbitmq" / "lib"
@@ -35,6 +43,18 @@ def find_rabbitmq_binaries():
             sbin = matches[-1].parent
             erl_bin = local_rt / "usr" / "lib" / "erlang" / "bin"
             return str(sbin / "rabbitmq-server"), str(sbin / "rabbitmqctl"), f"{erl_bin}:{sbin}:{local_rt / 'usr' / 'bin'}"
+    # Preferir siempre los binarios directos de /usr/lib/rabbitmq/ en vez del wrapper /usr/sbin/*
+    # (en Debian/Ubuntu /usr/sbin/rabbitmqctl rechaza usuarios no-root y descarta sus argumentos).
+    direct_candidates = [
+        (Path("/usr/lib/rabbitmq/bin/rabbitmq-server"), Path("/usr/lib/rabbitmq/bin/rabbitmqctl")),
+    ]
+    sys_lib = Path("/usr/lib/rabbitmq/lib")
+    if sys_lib.exists():
+        for srv_match in sorted(sys_lib.glob("rabbitmq_server-*/sbin/rabbitmq-server"), reverse=True):
+            direct_candidates.append((srv_match, srv_match.parent / "rabbitmqctl"))
+    for srv_p, ctl_p in direct_candidates:
+        if srv_p.exists() and ctl_p.exists() and not _is_debian_wrapper(srv_p) and not _is_debian_wrapper(ctl_p):
+            return str(srv_p), str(ctl_p), f"{srv_p.parent}"
     sys_srv = shutil.which("rabbitmq-server") or ("/usr/sbin/rabbitmq-server" if Path("/usr/sbin/rabbitmq-server").exists() else None)
     sys_ctl = shutil.which("rabbitmqctl") or ("/usr/sbin/rabbitmqctl" if Path("/usr/sbin/rabbitmqctl").exists() else None)
     if sys_srv and sys_ctl:
@@ -48,11 +68,13 @@ class LocalRabbitBroker:
         self.port = port
         self.epmd_port = free_port()
         self.dist_port = free_port()
+        self.nodename = f"bib_test_{port}@localhost"
         self.srv, self.ctl, self.extra_path = find_rabbitmq_binaries()
         if not self.srv:
             raise RuntimeError("RabbitMQ no disponible en el entorno de pruebas")
         self.proc = None
         self.log_path = base_dir / "rabbitmq.log"
+        self.last_await_info = "await_startup no ejecutado"
         self.env = os.environ.copy()
         if self.extra_path:
             self.env["PATH"] = self.extra_path + ":" + self.env.get("PATH", "")
@@ -60,21 +82,28 @@ class LocalRabbitBroker:
         for sub in ("home", "mnesia", "log", "etc", "plugins", "schema", "generated"):
             (base_dir / sub).mkdir(parents=True, exist_ok=True)
         home.chmod(0o700)
+        cookie_file = home / ".erlang.cookie"
+        if not cookie_file.exists():
+            cookie_file.write_text(secrets.token_hex(16))
+            cookie_file.chmod(0o400)
         cfg_file = base_dir / "etc" / "rabbitmq.conf"
         cfg_file.write_text(f"listeners.tcp.1 = 127.0.0.1:{port}\nloopback_users = none\n")
+        env_file = base_dir / "etc" / "rabbitmq-env.conf"
+        env_file.write_text("")
         plugins_file = base_dir / "etc" / "enabled_plugins"
         plugins_file.write_text("[].\n")
         self.env.update({
             "HOME": str(home),
             "ERL_EPMD_ADDRESS": "127.0.0.1",
             "ERL_EPMD_PORT": str(self.epmd_port),
-            "RABBITMQ_NODENAME": f"bib_test_{port}@localhost",
+            "RABBITMQ_NODENAME": self.nodename,
             "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(port),
             "RABBITMQ_DIST_PORT": str(self.dist_port),
             "RABBITMQ_MNESIA_BASE": str(base_dir / "mnesia"),
             "RABBITMQ_LOG_BASE": str(base_dir / "log"),
             "RABBITMQ_CONFIG_FILE": str(cfg_file),
+            "RABBITMQ_CONF_ENV_FILE": str(env_file),
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins_file),
             "RABBITMQ_PLUGINS_EXPAND_DIR": str(base_dir / "plugins"),
             "RABBITMQ_PID_FILE": str(base_dir / "rabbitmq.pid"),
@@ -83,38 +112,110 @@ class LocalRabbitBroker:
             "RABBITMQ_FEATURE_FLAGS_FILE": str(base_dir / "feature_flags"),
         })
 
+    def _collect_logs(self, tail_chars: int = 3000) -> str:
+        parts = [
+            f"srv={self.srv} ctl={self.ctl} nodename={self.nodename} port={self.port} epmd={self.epmd_port}",
+            f"último await_startup: {self.last_await_info}",
+        ]
+        if self.log_path.exists():
+            txt = self.log_path.read_text(errors="replace")
+            parts.append(f"--- {self.log_path.name} (últimos {tail_chars} chars) ---\n{txt[-tail_chars:]}")
+        log_dir = self.base_dir / "log"
+        if log_dir.exists():
+            for p in sorted(log_dir.glob("*.log")):
+                txt = p.read_text(errors="replace")
+                if txt.strip():
+                    parts.append(f"--- log/{p.name} (últimos {tail_chars} chars) ---\n{txt[-tail_chars:]}")
+        return "\n".join(parts)
+
+    def dump_logs_to_artifact_dir(self, extra_files=None):
+        dest_raw = os.environ.get("RABBITMQ_TEST_LOG_DIR", "").strip()
+        if not dest_raw:
+            return
+        dest = Path(dest_raw)
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "broker-diagnostic.txt").write_text(self._collect_logs(tail_chars=16000))
+        if self.log_path.exists():
+            shutil.copy2(self.log_path, dest / "rabbitmq-stdout.log")
+        log_dir = self.base_dir / "log"
+        if log_dir.exists():
+            for p in sorted(log_dir.glob("*.log")):
+                shutil.copy2(p, dest / f"rabbitmq-{p.name}")
+        for name, path in (extra_files or {}).items():
+            if path.exists():
+                shutil.copy2(path, dest / name)
+
     def start(self):
         logf = open(self.log_path, "ab")
-        self.proc = subprocess.Popen([self.srv], env=self.env, stdout=logf, stderr=logf)
+        self.proc = subprocess.Popen(
+            [self.srv], env=self.env, stdout=logf, stderr=logf, start_new_session=True
+        )
         logf.close()
-        for _ in range(120):
+        deadline = time.monotonic() + 45.0
+        port_open = False
+        while time.monotonic() < deadline:
             if self.proc.poll() is not None:
-                raise RuntimeError("RabbitMQ terminó inesperadamente:\n" + self.log_path.read_text(errors="replace")[-1500:])
+                self.last_await_info = f"proceso terminó con código {self.proc.returncode}"
+                self.dump_logs_to_artifact_dir()
+                raise RuntimeError("RabbitMQ terminó inesperadamente:\n" + self._collect_logs())
             try:
                 with socket.create_connection(("127.0.0.1", self.port), 0.5):
-                    # Confirmar también que la aplicación AMQP esté lista
-                    chk = subprocess.run([self.ctl, "await_startup"], env=self.env, capture_output=True, text=True, timeout=15)
+                    port_open = True
+            except OSError:
+                port_open = False
+            if port_open:
+                try:
+                    chk = subprocess.run(
+                        [self.ctl, "-n", self.nodename, "await_startup"],
+                        env=self.env, capture_output=True, text=True, timeout=15
+                    )
+                    self.last_await_info = (
+                        f"rc={chk.returncode} stdout={chk.stdout.strip()!r} stderr={chk.stderr.strip()!r}"
+                    )
                     if chk.returncode == 0:
                         return
-            except OSError:
-                pass
+                except subprocess.TimeoutExpired as exc:
+                    self.last_await_info = f"timeout await_startup: stdout={exc.stdout!r} stderr={exc.stderr!r}"
             time.sleep(0.25)
-        raise RuntimeError("Timeout esperando arranque de RabbitMQ")
+        self.dump_logs_to_artifact_dir()
+        raise RuntimeError(
+            f"Timeout esperando arranque de RabbitMQ (puerto abierto={port_open}):\n" + self._collect_logs()
+        )
 
     def stop(self):
         if self.proc and self.proc.poll() is None:
-            subprocess.run([self.ctl, "stop"], env=self.env, capture_output=True, timeout=20)
+            try:
+                subprocess.run(
+                    [self.ctl, "-n", self.nodename, "stop"],
+                    env=self.env, capture_output=True, timeout=20
+                )
+            except Exception:
+                pass
             try:
                 self.proc.wait(timeout=15)
             except subprocess.TimeoutExpired:
-                self.proc.kill()
-                self.proc.wait(timeout=5)
+                try:
+                    os.killpg(self.proc.pid, signal.SIGTERM)
+                    self.proc.wait(timeout=5)
+                except Exception:
+                    try:
+                        os.killpg(self.proc.pid, signal.SIGKILL)
+                    except OSError:
+                        self.proc.kill()
+                    self.proc.wait(timeout=5)
+        if self.proc is not None:
+            try:
+                os.killpg(self.proc.pid, signal.SIGTERM)
+            except OSError:
+                pass
         self.proc = None
 
     def queue_messages(self, queue_name: str) -> int:
-        res = subprocess.run([self.ctl, "list_queues", "name", "messages", "--silent"],
-                             env=self.env, capture_output=True, text=True, timeout=15)
-        assert res.returncode == 0, res.stderr
+        res = subprocess.run(
+            [self.ctl, "-n", self.nodename, "list_queues", "name", "messages", "--silent"],
+            env=self.env, capture_output=True, text=True, timeout=15
+        )
+        assert res.returncode == 0, f"list_queues falló (rc={res.returncode}): {res.stderr}\n{res.stdout}"
         for line in res.stdout.splitlines():
             parts = line.split()
             if len(parts) == 2 and parts[0] == queue_name:
@@ -357,34 +458,45 @@ def main():
                        timeout=10, msg="mensaje inválido en DLQ")
             print("8. Mensaje malformado enrutado a DLQ biblioteca.avisos.fallidos OK.")
 
-            # === 9. FALLO DEL ESCRITOR -> REINTENTOS AGOTADOS -> FALLIDO/DLQ -> REINTENTO ADMIN ===
+            # === 9. FALLO 503 DEL ESCRITOR -> REINTENTOS AGOTADOS -> RECONCILIACIÓN DURABLE -> REINTENTO ADMIN ===
             stop_worker()
             call("/api/prestamos", "POST", {"idPrestamo": "P2", "idEjemplar": "E1", "idUsuario": "Bruno", "vencimiento": "2099-12-01"}, admin, 201)
             wait_until(lambda: call("/api/avisos", token=admin)["resumen"]["pendiente"] == 0, timeout=10, msg="AV P2 publicado")
             av_p2 = next(a for a in call("/api/avisos", token=admin)["items"] if a["idPrestamo"] == "P2")
-            # Forzar fallo de escritura (directorio solo lectura -> escritor devuelve 503) mientras worker intenta
+            # Forzar fallo de escritura (directorio solo lectura -> escritor devuelve 503 tanto al procesar como al reportar fallo final)
             root.chmod(0o500)
             dlq_before2 = broker.queue_messages("biblioteca.avisos.fallidos")
             start_worker()
             try:
-                wait_until(lambda: broker.queue_messages("biblioteca.avisos.fallidos") >= dlq_before2 + 1,
-                           timeout=15, msg="reintentos agotados -> DLQ")
+                wait_until(
+                    lambda: broker.queue_messages("biblioteca.avisos.fallidos") >= dlq_before2 + 1
+                    and broker.queue_messages("biblioteca.avisos.fallo_pendiente") >= 1,
+                    timeout=15, msg="reintentos agotados -> DLQ + reconciliación durable pendiente"
+                )
+                # Mientras el escritor sigue en 503, el aviso aún aparece publicado y la reconciliación
+                # sobrevive a un reinicio del worker porque reside en la cola durable del broker.
+                av_p2_mid = next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_p2["idAviso"])
+                assert av_p2_mid["estado"] == "publicado"
+                stop_worker()
+                assert broker.queue_messages("biblioteca.avisos.fallo_pendiente") >= 1
             finally:
                 root.chmod(0o700)
-            # Simular reporte de fallo definitivo (o si root volvió a escritura, marcar fallo y probar reintento admin)
-            av_p2_now = next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_p2["idAviso"])
-            if av_p2_now["estado"] != "fallido":
-                # El escritor estaba en 503 cuando el worker intentó reportar fallo final; verificar endpoint fallo y reintento
-                call(f"/api/interno/avisos/{av_p2['idAviso']}/fallo", "POST",
-                     {"idEvento": av_p2["idEvento"], "intentos": 2, "error": "Reintentos agotados: escritor 503", "definitivo": True},
-                     svc_token, 200)
+            # Restablecido el escritor, al volver el worker debe reconciliar automáticamente el fallo
+            # SIN ninguna llamada manual al endpoint interno: el aviso deja de estar atrapado en publicado.
+            start_worker()
+            wait_until(
+                lambda: next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_p2["idAviso"])["estado"] == "fallido"
+                and broker.queue_messages("biblioteca.avisos.fallo_pendiente") == 0,
+                timeout=15, msg="reconciliación automática del fallo tras restablecer el escritor"
+            )
             av_p2_failed = next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_p2["idAviso"])
             assert av_p2_failed["estado"] == "fallido" and av_p2_failed["ultimoError"]
             # Procedimiento administrativo de revisión y reintento (sin borrado silencioso)
             call(f"/api/avisos/{av_p2['idAviso']}/reintento", "POST", {}, admin, 200)
             wait_until(lambda: next(a for a in call("/api/avisos", token=admin)["items"] if a["idAviso"] == av_p2["idAviso"])["estado"] == "procesado",
                        timeout=12, msg="reintento administrativo procesado")
-            print("9. Reintentos agotados -> DLQ/fallido y recuperación administrativa explícita OK.")
+            assert any(n["idAviso"] == av_p2["idAviso"] for n in call("/api/mis-avisos", token=bruno)["items"])
+            print("9. Escritor 503 -> DLQ + reconciliación durable tras reinicio -> fallido automático y recuperación ADMIN OK.")
 
             # === 10. REINICIO DE API CONSERVA NOTIFICACIONES, AVISOS E ÍNDICES ===
             before_dom = call("/api/dominio", token=admin)
@@ -421,6 +533,11 @@ def main():
                 for pw in passwords.values():
                     assert pw not in txt, "Contraseña filtrada en log"
             print("OK rabbitmq_worker_real: todas las garantías asincrónicas y de seguridad verificadas.")
+        except Exception:
+            api_log.flush()
+            worker_log.flush()
+            broker.dump_logs_to_artifact_dir({"api.log": root / "api.log", "worker.log": root / "worker.log"})
+            raise
         finally:
             root.chmod(0o700)
             stop_worker()
