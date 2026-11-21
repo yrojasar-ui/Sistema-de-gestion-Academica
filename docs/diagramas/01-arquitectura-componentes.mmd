@@ -1,0 +1,38 @@
+flowchart LR
+    subgraph Cliente["Frontend (React 19 + TS + Vite)"]
+        UI["Catálogo · Mi biblioteca · Mis avisos · Pagos · Paneles Admin"]
+    end
+    subgraph Borde["Proxy Inverso HTTPS (Caddy/Nginx)"]
+        PX["TLS · CORS exacto · Bloqueo /api/interno/* · X-Forwarded-For"]
+    end
+    subgraph API["catalogo_api (C++17 · Escritor Único)"]
+        HTTP["HttpController (ThreadPool 1 + stateMutex)"]
+        AUTH["AuthService (libsodium Argon2id · Bearer RAM)"]
+        SVC["ServiceIdentity (token 0600 mínimo)"]
+        LIB["LibraryService + CatalogService"]
+        EST["5 Estructuras Propias: B+ · Rojo-Negro · Hash · Grafo · FIFO"]
+        OUT["AvisoOutboxRelay (hilo desacoplado)"]
+    end
+    subgraph Broker["RabbitMQ 4.0.5 (Red Interna)"]
+        EX["biblioteca.eventos (direct durable)"]
+        Q["biblioteca.avisos (durable)"]
+        DLQ["biblioteca.avisos.fallidos (DLQ durable)"]
+    end
+    subgraph Worker["biblioteca_worker (C++17 Independiente)"]
+        WK["Consumidor prefetch=1 · ACK manual · Reintentos/Backoff"]
+    end
+    subgraph Datos["Persistencia Explícita"]
+        PRIV["cuentas.json + service.token (0600, fuera de Mongo)"]
+        LOC["LocalLibraryRepository (JSON agregado v2)"]
+        MON["MongoLibraryRepository + Diario .pending.json"]
+    end
+    UI --> PX --> HTTP
+    HTTP --> AUTH --> PRIV
+    HTTP --> SVC --> PRIV
+    HTTP --> LIB --> EST
+    LIB --> LOC
+    LIB --> MON
+    LIB -. despertar .-> OUT
+    OUT -- "confirm.select + mandatory=1" --> EX --> Q --> WK
+    WK -- "reject(requeue=false)" --> DLQ
+    WK -- "POST /api/interno/avisos/{id}/procesar (Bearer servicio)" --> HTTP

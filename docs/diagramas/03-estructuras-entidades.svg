@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" role="img" aria-label="Relación entre las cinco estructuras de datos C++17 y las entidades de negocio">
+  <defs>
+    <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 1 L10 5 L0 9 z" fill="#20526c"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #152b38; }
+      .t { font-size: 12px; font-weight: bold; fill: #132f45; }
+      .s { font-size: 10.5px; fill: #3c5463; }
+      .b1 { fill: #ecf4f8; stroke: #1f5373; stroke-width: 1.5; rx: 7; }
+      .b2 { fill: #ffffff; stroke: #4b7489; stroke-width: 1.3; rx: 7; }
+      .b3 { fill: #eef6f0; stroke: #2c6e49; stroke-width: 1.3; rx: 7; }
+      .ln { fill: none; stroke: #20526c; stroke-width: 1.7; marker-end: url(#ar3); }
+    </style>
+  </defs>
+
+  <!-- Headers -->
+  <text class="t" x="20" y="24">ESTRUCTURA PROPIA C++17</text>
+  <text class="t" x="370" y="24">CLAVE / INVARIANTES INTERNAS</text>
+  <text class="t" x="705" y="24">ENTIDAD Y OPERACIÓN SERVIDA</text>
+
+  <!-- Fila 1: B+ -->
+  <rect class="b1" x="16" y="36" width="318" height="62"/>
+  <text class="t" x="28" y="56">1. Árbol B+ (BPlusTree.cpp)</text>
+  <text class="s" x="28" y="73">Orden m (3–128) · Split, préstamo, fusión y contracción</text>
+  <text class="s" x="28" y="88">Hojas doblemente enlazadas · snapshot JSON</text>
+
+  <rect class="b2" x="366" y="36" width="306" height="62"/>
+  <text class="t" x="378" y="56">(tituloNormalizado, idLibro)</text>
+  <text class="s" x="378" y="73">Misma profundidad en hojas · separador = mín(hijo i+1)</text>
+  <text class="s" x="378" y="88">Búsqueda O(h log m) · Listado O(n) · Mutación O(m·h²)</text>
+
+  <rect class="b3" x="704" y="36" width="240" height="62"/>
+  <text class="t" x="716" y="56">Libro (Catálogo)</text>
+  <text class="s" x="716" y="73">Listado ordenado, título exacto,</text>
+  <text class="s" x="716" y="88">búsqueda por prefijo y rango</text>
+  <path class="ln" d="M334 67 L366 67"/><path class="ln" d="M672 67 L704 67"/>
+
+  <!-- Fila 2: Rojo-Negro -->
+  <rect class="b1" x="16" y="108" width="318" height="62"/>
+  <text class="t" x="28" y="128">2. Árbol Rojo-Negro (PrestamosActivos.cpp)</text>
+  <text class="s" x="28" y="145">LLRB propio · Rotaciones izq/der y cambios de color</text>
+  <text class="s" x="28" y="160">Retiro al devolver/anular · Reindexado al renovar</text>
+
+  <rect class="b2" x="366" y="108" width="306" height="62"/>
+  <text class="t" x="378" y="128">(fechaVencimiento, idPrestamo)</text>
+  <text class="s" x="378" y="145">Raíz negra · sin enlaces rojos seguidos · altura negra uniforme</text>
+  <text class="s" x="378" y="160">Insertar/Eliminar/Renovar O(log n) · Ordenado O(n)</text>
+
+  <rect class="b3" x="704" y="108" width="240" height="62"/>
+  <text class="t" x="716" y="128">Prestamo (solo activos)</text>
+  <text class="s" x="716" y="145">Vencimientos hasta fecha límite;</text>
+  <text class="s" x="716" y="160">historial permanece en vector</text>
+  <path class="ln" d="M334 139 L366 139"/><path class="ln" d="M672 139 L704 139"/>
+
+  <!-- Fila 3: Hash Extensible -->
+  <rect class="b1" x="16" y="180" width="318" height="62"/>
+  <text class="t" x="28" y="200">3. Hash Extensible (IndiceUsuarios.cpp)</text>
+  <text class="s" x="28" y="217">Directorio dinámico + profundidades global/local</text>
+  <text class="s" x="28" y="232">Cubetas compartidas · División al desbordar</text>
+
+  <rect class="b2" x="366" y="180" width="306" height="62"/>
+  <text class="t" x="378" y="200">FNV-1a 64-bit(idUsuario)</text>
+  <text class="s" x="378" y="217">Capacidad cubeta = 4 · Profundidad máx = 12 (2¹² entradas)</text>
+  <text class="s" x="378" y="232">Búsqueda O(1) esperado · O(k) en colisión al tope</text>
+
+  <rect class="b3" x="704" y="180" width="240" height="62"/>
+  <text class="t" x="716" y="200">Usuario</text>
+  <text class="s" x="716" y="217">Consulta, alta, edición y borrado</text>
+  <text class="s" x="716" y="232">directo por idUsuario</text>
+  <path class="ln" d="M334 211 L366 211"/><path class="ln" d="M672 211 L704 211"/>
+
+  <!-- Fila 4: Grafo -->
+  <rect class="b1" x="16" y="252" width="318" height="62"/>
+  <text class="t" x="28" y="272">4. Grafo de Temas (GrafoTemas.cpp)</text>
+  <text class="s" x="28" y="289">No dirigido · Listas de adyacencia ordenadas</text>
+  <text class="s" x="28" y="304">Sin bucles ni aristas duplicadas · BFS y DFS</text>
+
+  <rect class="b2" x="366" y="252" width="306" height="62"/>
+  <text class="t" x="378" y="272">Intersección de temas normalizados</text>
+  <text class="s" x="378" y="289">Simetría u∈adj(v) ⇔ v∈adj(u) · Recalcula al editar libro</text>
+  <text class="s" x="378" y="304">Vecinos O(1) ref · BFS/DFS O(V+E) · Alta O(V·T)</text>
+
+  <rect class="b3" x="704" y="252" width="240" height="62"/>
+  <text class="t" x="716" y="272">Relación Libro ↔ Libro</text>
+  <text class="s" x="716" y="289">Consulta /libros/{id}/relacionados</text>
+  <text class="s" x="716" y="304">sin IA ni índices externos</text>
+  <path class="ln" d="M334 283 L366 283"/><path class="ln" d="M672 283 L704 283"/>
+
+  <!-- Fila 5: FIFO -->
+  <rect class="b1" x="16" y="324" width="318" height="62"/>
+  <text class="t" x="28" y="344">5. Cola FIFO por Libro (ColaReservas.cpp)</text>
+  <text class="s" x="28" y="361">Lista enlazada propia por obra · Frente y final</text>
+  <text class="s" x="28" y="376">Cancelación lógica al atender primer turno válido</text>
+
+  <rect class="b2" x="366" y="324" width="306" height="62"/>
+  <text class="t" x="378" y="344">(llegada: uint64, idReserva)</text>
+  <text class="s" x="378" y="361">Orden estricto por llegada con desempate por ID</text>
+  <text class="s" x="378" y="376">Encolar O(1) en orden · Atender O(1 + c canceladas)</text>
+
+  <rect class="b3" x="704" y="324" width="240" height="62"/>
+  <text class="t" x="716" y="344">Reserva pendiente (por Libro)</text>
+  <text class="s" x="716" y="361">Asigna copia libre al siguiente</text>
+  <text class="s" x="716" y="376">lector válido (NO sustituye RabbitMQ)</text>
+  <path class="ln" d="M334 355 L366 355"/><path class="ln" d="M672 355 L704 355"/>
+</svg>

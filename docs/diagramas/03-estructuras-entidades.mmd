@@ -1,0 +1,6 @@
+flowchart LR
+    BP["BPlusTree (orden m=4..128)\nClave: (tituloNormalizado, idLibro)\nHojas doblemente enlazadas"] --> ENT1["Libro (Catálogo)\nListado ordenado · Búsqueda exacta/prefijo/rango"]
+    RN["PrestamosActivos (Rojo-Negro LLRB)\nClave: (fechaVencimiento, idPrestamo)"] --> ENT2["Prestamo (solo activos)\nConsulta por vencimiento · Retiro al devolver · Reindex al renovar"]
+    HE["IndiceUsuarios (Hash Extensible)\nFNV-1a 64-bit · Directorio + cubetas (cap=4, prof<=12)"] --> ENT3["Usuario\nBúsqueda directa por idUsuario · División dinámica de cubetas"]
+    GT["GrafoTemas (No dirigido)\nListas de adyacencia ordenadas · BFS/DFS"] --> ENT4["Libro ↔ Libro (Temas compartidos)\nRecomendaciones estructurales sin bucles ni duplicados"]
+    FF["ColaReservas (FIFO propia por libro)\nLista enlazada · (llegada, idReserva) · Cancelación lógica"] --> ENT5["Reserva pendiente\nAsignación justa al devolver, cancelar o añadir ejemplar"]

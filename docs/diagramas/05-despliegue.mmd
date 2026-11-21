@@ -1,0 +1,11 @@
+flowchart TB
+    USR["Navegador (Escritorio / Móvil)"] --> PAGES["GitHub Pages (Estático)\nhttps://yrojasar-ui.github.io/Sistema-de-gestion-Academica/\nSolo HTML/JS/CSS · VITE_API_URL"]
+    USR -- "HTTPS (Bearer RAM · CORS exacto)" --> PROXY["Proxy Inverso HTTPS (Caddy / Nginx)\nTLS · Rate-limit · Bloqueo /api/interno/*\nEnvía X-Forwarded-For confiable"]
+    subgraph Priv["Red Privada / Docker Interna (biblioteca_interna)"]
+        PROXY --> API["catalogo_api (replicas: 1)\n--trusted-proxy · Único escritor"]
+        API <--> RMQ["RabbitMQ 4.0 (5672 interno)\nVolumen rabbitmq_data"]
+        RMQ <--> WK["biblioteca_worker\nToken :ro · ACK manual"]
+        WK -- "/api/interno/avisos/*" --> API
+        API --> VOL["Volúmenes Persistentes\nbiblioteca_privado (0700/0600)\nbiblioteca_datos / diario Mongo"]
+    end
+    API -- "HTTPS (solo modo --storage mongo)" --> MONGO["API MongoDB Docente\nAgregado versionado · Sin credenciales"]

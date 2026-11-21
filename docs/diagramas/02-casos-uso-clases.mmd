@@ -1,0 +1,21 @@
+classDiagram
+    Libro "1" --> "0..*" Ejemplar : posee copias físicas
+    Usuario "1" --> "0..*" Prestamo : solicita/recibe
+    Ejemplar "1" --> "0..*" Prestamo : historial
+    Usuario "1" --> "0..*" Reserva : solicita turno
+    Libro "1" --> "0..*" Reserva : cola FIFO por obra
+    Reserva "0..*" --> "0..1" Ejemplar : apartado
+    Prestamo "1" --> "0..1" Cargo : cargo demo entero
+    Cargo "1" --> "0..1" Comprobante : recibo SIMULADO único
+    Usuario "1" --> "0..*" Aviso : outbox de eventos
+    Aviso "1" --> "0..1" Notificacion : bandeja procesada 1:1
+    Usuario "1" --> "0..1" CuentaPrivada : almacén 0600 separado
+    class Libro { +idLibro +titulo +autor +temas[] }
+    class Ejemplar { +idEjemplar +idLibro +estado }
+    class Usuario { +idUsuario +nombre +activo }
+    class Prestamo { +idPrestamo +idEjemplar +idUsuario +inicio +vencimiento +devolucion +cancelacion }
+    class Reserva { +idReserva +idLibro +idUsuario +llegada +estado +idEjemplar +cancelacion }
+    class Aviso { +idAviso +idEvento +tipo +estado +publicadoEn +procesadoEn +intentos +ultimoError }
+    class Notificacion { +idNotificacion +idAviso +idEvento +idUsuario +titulo +mensaje +procesadaEn }
+    class Cargo { +idPrestamo +importe +moneda +estado }
+    class Comprobante { +idComprobante +idPrestamo +importe +moneda +etiqueta }

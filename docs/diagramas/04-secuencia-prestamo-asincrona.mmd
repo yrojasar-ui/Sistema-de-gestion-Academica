@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Admin as Admin / Cliente
+    participant API as catalogo_api (Escritor Único)
+    participant Repo as JSON Local o MongoDB
+    participant Outbox as AvisoOutboxRelay
+    participant RMQ as RabbitMQ 4.0.5 (Durable)
+    participant Worker as biblioteca_worker (C++17)
+    participant Lector as Lector (Mis avisos)
+
+    Admin->>API: POST /api/prestamos/P1/devolucion
+    API->>API: Retirar P1 del Rojo-Negro · Atender FIFO (Bruno) · Crear AV-n (pendiente)
+    API->>Repo: Persistir agregado validado (+ GET confirmación en Mongo)
+    Repo-->>API: Confirmado
+    API->>API: Swap estado visible en memoria + despertar Outbox
+    API-->>Admin: HTTP 200 OK
+    Note over Outbox,RMQ: Fuera de stateMutex (no bloquea peticiones HTTP)
+    Outbox->>RMQ: basic.publish(delivery_mode=2, mandatory=1, idEvento=EV-AV-n)
+    RMQ-->>Outbox: basic.ack (Publisher Confirm, sin basic.return)
+    Outbox->>API: marcarAvisoPublicado(AV-n) → persiste estado=publicado
+    Note over RMQ,Worker: Publisher Confirm NO implica notificación recibida
+    RMQ->>Worker: basic.deliver (prefetch=1, no_ack=false)
+    Worker->>API: POST /api/interno/avisos/AV-n/procesar (Bearer service.token)
+    API->>API: Deduplicación 1:1 por idAviso · Crea Notificacion NT-AV-n
+    API->>Repo: Persistir estado=procesado + Notificacion
+    Repo-->>API: Confirmado
+    API-->>Worker: HTTP 200 (procesado / duplicado=false|true)
+    Worker->>RMQ: basic.ack (SOLO tras confirmar efecto durable)
+    Lector->>API: GET /api/mis-avisos (Bearer usuario)
+    API-->>Lector: Notificaciones procesadas propias (aisladas por dueño)
