@@ -65,11 +65,23 @@ void LibraryService::reconstruir(const EstadoBiblioteca& estado) {
 }
 void LibraryService::cambiar(const std::function<void(Runtime&)>& operacion) {
     // Copia de nodos y enlaces: mantiene la topología real y usa sus algoritmos al mutar.
+    const auto avisosPrevios = actual_->datos.avisos.size();
+    bool hayPendienteNuevo = false;
     auto nuevo = std::make_unique<Runtime>(*actual_);
     operacion(*nuevo);
     validar(*nuevo);
+    if (nuevo->datos.avisos.size() > avisosPrevios) hayPendienteNuevo = true;
+    else {
+        for (std::size_t i = 0; i < nuevo->datos.avisos.size(); ++i) {
+            if (nuevo->datos.avisos[i].estado == "pendiente" && actual_->datos.avisos[i].estado != "pendiente") {
+                hayPendienteNuevo = true;
+                break;
+            }
+        }
+    }
     repositorio_.replace(nuevo->datos);
     actual_.swap(nuevo);
+    if (hayPendienteNuevo && onAvisoCreado_) onAvisoCreado_();
 }
 Usuario LibraryService::usuario(const Runtime& estado, const std::string& id) {
     auto u = estado.usuarios.buscar(id);
@@ -166,6 +178,7 @@ void LibraryService::prestar(const std::string& id, const std::string& ejemplar,
         e.datos.prestamos.push_back({id, ejemplar, lector, ahoraUTC(), vence, "", {}});
         exigir(e.activos.insertar({vence, id}), "Clave de préstamo duplicada");
         e.datos.cargos.push_back({id, lector, importeDemo_, monedaDemo_, "pendiente"});
+        aviso(e, "prestamo_registrado", lector, "", id);
     });
 }
 void LibraryService::devolver(const std::string& id) {
@@ -188,6 +201,7 @@ void LibraryService::renovar(const std::string& id, const std::string& vence) {
         exigir(vence > p.vencimiento, "Renovación debe ampliar el vencimiento", 400);
         exigir(e.activos.cambiarVencimiento({p.vencimiento, id}, vence), "Índice activo inconsistente");
         p.vencimiento = vence;
+        aviso(e, "prestamo_renovado", p.idUsuario, "", id);
     });
 }
 void LibraryService::reservar(const std::string& id, const std::string& libro, const std::string& lector) {
@@ -208,6 +222,7 @@ void LibraryService::liberar(Runtime& e, Reserva& r) {
     if (r.estado == "apartada") copia(e.datos, r.idEjemplar).estado = "disponible";
     r.cancelacion = {ahoraUTC(), "Desactivación del usuario", "servicio"};
     r.estado = "cancelada"; // Su ID puede permanecer en FIFO hasta descartarse al atender.
+    aviso(e, "reserva_cancelada", r.idUsuario, r.idReserva, "");
 }
 void LibraryService::cancelar(const std::string& id, const std::string& motivo, const std::string& responsable) {
     validarId(responsable);
@@ -238,6 +253,7 @@ void LibraryService::anular(const std::string& id, const std::string& motivo, co
         auto& c = copia(e.datos, p.idEjemplar);
         c.estado = "disponible";
         for (auto& cargo : e.datos.cargos) if (cargo.idPrestamo == id) cargo.estado = "anulado";
+        aviso(e, "prestamo_anulado", p.idUsuario, "", id);
         asignar(e, c.idLibro);
     });
 }
@@ -252,13 +268,97 @@ Comprobante LibraryService::pagar(const std::string& id) {
                      id, cargo.importe, cargo.moneda, "SIMULADO"};
         e.datos.comprobantes.push_back(resultado);
         cargo.estado = "pagado";
+        aviso(e, "pago_simulado", cargo.idUsuario, "", id);
     });
     return resultado;
+}
+void LibraryService::marcarAvisoPublicado(const std::string& idAviso) {
+    validarId(idAviso);
+    // Si el worker ya procesó el aviso antes de que el outbox marcara publicado, no retroceder.
+    auto actual = std::find_if(actual_->datos.avisos.begin(), actual_->datos.avisos.end(),
+                               [&](const auto& a) { return a.idAviso == idAviso; });
+    if (actual == actual_->datos.avisos.end()) throw ErrorDominio(404, "Aviso ausente: " + idAviso);
+    if (actual->estado == "procesado" || actual->estado == "publicado") return;
+    if (actual->estado != "pendiente") return;
+    cambiar([&](Runtime& e) {
+        auto& a = obtener(e.datos.avisos, idAviso, [](const auto& x) { return x.idAviso; });
+        if (a.estado == "pendiente") {
+            a.estado = "publicado";
+            a.publicadoEn = ahoraUTC();
+        }
+    });
+}
+ResultadoProcesoAviso LibraryService::procesarAviso(const std::string& idAviso, const std::string& idEvento,
+                                                    const std::string& titulo, const std::string& mensaje,
+                                                    std::uint32_t intentos) {
+    validarId(idAviso);
+    validarId(idEvento);
+    exigir(!normalizeTitle(titulo).empty() && titulo.size() <= 128, "Título de notificación requerido (máximo 128 bytes)", 400);
+    exigir(!normalizeTitle(mensaje).empty() && mensaje.size() <= 512, "Mensaje de notificación requerido (máximo 512 bytes)", 400);
+    // Deduplicación persistente e idempotente: si ya fue procesado, devolver la notificación existente sin duplicar.
+    auto existente = std::find_if(actual_->datos.avisos.begin(), actual_->datos.avisos.end(),
+                                  [&](const auto& a) { return a.idAviso == idAviso; });
+    if (existente == actual_->datos.avisos.end()) throw ErrorDominio(404, "Aviso ausente: " + idAviso);
+    exigir(existente->idEvento == idEvento, "ID de evento no coincide con el aviso", 400);
+    if (existente->estado == "procesado") {
+        auto notif = std::find_if(actual_->datos.notificaciones.begin(), actual_->datos.notificaciones.end(),
+                                  [&](const auto& n) { return n.idAviso == idAviso; });
+        if (notif == actual_->datos.notificaciones.end()) throw ErrorDominio(500, "Notificación procesada ausente");
+        return {*notif, true};
+    }
+    ResultadoProcesoAviso resultado;
+    cambiar([&](Runtime& e) {
+        auto& a = obtener(e.datos.avisos, idAviso, [](const auto& x) { return x.idAviso; });
+        exigir(a.idEvento == idEvento, "ID de evento no coincide con el aviso", 400);
+        if (a.estado == "procesado") {
+            resultado.notificacion = obtener(e.datos.notificaciones, idAviso, [](const auto& n) { return n.idAviso; });
+            resultado.duplicado = true;
+            return;
+        }
+        const auto instante = ahoraUTC();
+        a.estado = "procesado";
+        a.procesadoEn = instante;
+        a.intentos = std::max(a.intentos, std::max<std::uint32_t>(1U, intentos));
+        a.ultimoError.clear();
+        Notificacion n{"NT-" + a.idAviso, a.idAviso, a.idEvento, a.idUsuario, a.tipo,
+                       titulo, mensaje, a.idReserva, a.idPrestamo, instante};
+        e.datos.notificaciones.push_back(n);
+        resultado = {n, false};
+    });
+    return resultado;
+}
+void LibraryService::fallarAviso(const std::string& idAviso, const std::string& idEvento,
+                                 std::uint32_t intentos, const std::string& error, bool definitivo) {
+    validarId(idAviso);
+    validarId(idEvento);
+    exigir(!normalizeTitle(error).empty() && error.size() <= 512, "Detalle de error requerido (máximo 512 bytes)", 400);
+    auto existente = std::find_if(actual_->datos.avisos.begin(), actual_->datos.avisos.end(),
+                                  [&](const auto& a) { return a.idAviso == idAviso; });
+    if (existente == actual_->datos.avisos.end()) throw ErrorDominio(404, "Aviso ausente: " + idAviso);
+    exigir(existente->idEvento == idEvento, "ID de evento no coincide con el aviso", 400);
+    if (existente->estado == "procesado") return;
+    cambiar([&](Runtime& e) {
+        auto& a = obtener(e.datos.avisos, idAviso, [](const auto& x) { return x.idAviso; });
+        if (a.estado == "procesado") return;
+        a.intentos = std::max(a.intentos, std::max<std::uint32_t>(1U, intentos));
+        a.ultimoError = error;
+        if (definitivo) a.estado = "fallido";
+    });
+}
+void LibraryService::reintentarAviso(const std::string& idAviso) {
+    validarId(idAviso);
+    cambiar([&](Runtime& e) {
+        auto& a = obtener(e.datos.avisos, idAviso, [](const auto& x) { return x.idAviso; });
+        exigir(a.estado == "fallido", "Solo se pueden reencolar avisos en estado fallido");
+        a.estado = "pendiente";
+        a.publicadoEn.clear();
+        a.ultimoError.clear();
+    });
 }
 void LibraryService::aviso(Runtime& e, const std::string& tipo, const std::string& lector,
                            const std::string& reservaId, const std::string& prestamoId) {
     const auto id = "AV-" + std::to_string(e.datos.avisos.size() + 1);
-    e.datos.avisos.push_back({id, tipo, lector, reservaId, prestamoId, ahoraUTC(), "pendiente"});
+    e.datos.avisos.push_back({id, "EV-" + id, tipo, lector, reservaId, prestamoId, ahoraUTC(), "pendiente", "", "", 0U, ""});
 }
 void LibraryService::asignar(Runtime& e, const std::string& libro) {
     auto it = e.colas.find(libro);

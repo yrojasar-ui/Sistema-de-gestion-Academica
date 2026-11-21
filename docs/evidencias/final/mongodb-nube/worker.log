@@ -1,0 +1,16 @@
+Worker de avisos iniciado · broker 127.0.0.1:46315 · cola biblioteca.avisos · reintentos máximos 3
+[worker] Conectado a RabbitMQ y consumiendo con ACK manual.
+[worker] AV-1 (EV-AV-1) confirmado y ACK enviado
+[worker] AV-2 (EV-AV-2) confirmado y ACK enviado
+[worker] AV-3 (EV-AV-3) confirmado y ACK enviado
+[worker] AV-4 (EV-AV-4) confirmado y ACK enviado
+[worker] AV-5 (EV-AV-5) confirmado y ACK enviado
+[worker] AV-6 (EV-AV-6) confirmado y ACK enviado
+[worker] AV-7 (EV-AV-7) confirmado y ACK enviado
+[worker] AV-8 (EV-AV-8) confirmado y ACK enviado
+[worker] AV-9 (EV-AV-9) confirmado y ACK enviado
+[worker] AV-10 (EV-AV-10) confirmado y ACK enviado
+[worker] Cierre ordenado completado.
+Worker de avisos iniciado · broker 127.0.0.1:46315 · cola biblioteca.avisos · reintentos máximos 3
+[worker] Conectado a RabbitMQ y consumiendo con ACK manual.
+[worker] Cierre ordenado completado.

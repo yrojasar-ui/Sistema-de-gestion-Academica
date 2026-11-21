@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-label="Casos de uso por rol y modelo de clases de dominio v2">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 1 L10 5 L0 9 z" fill="#285870"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #152b38; }
+      .h { font-size: 13px; font-weight: bold; fill: #132f45; }
+      .t { font-size: 11px; font-weight: bold; fill: #183a4f; }
+      .s { font-size: 10.2px; fill: #3b5260; }
+      .grp { fill: #f6f9fb; stroke: #b8c9d4; stroke-width: 1.3; rx: 8; }
+      .cls { fill: #ffffff; stroke: #285870; stroke-width: 1.3; rx: 5; }
+      .hdr { fill: #e6f0f5; }
+      .uc { fill: #ffffff; stroke: #2d6a65; stroke-width: 1.3; rx: 14; }
+      .ln { fill: none; stroke: #285870; stroke-width: 1.5; marker-end: url(#a); }
+    </style>
+  </defs>
+
+  <!-- Izquierda: Casos de uso por rol -->
+  <rect class="grp" x="10" y="10" width="320" height="450"/>
+  <text class="h" x="24" y="32">Casos de uso por identidad verificada</text>
+
+  <rect class="cls" x="24" y="48" width="292" height="122"/>
+  <rect class="hdr" x="25" y="49" width="290" height="24" rx="4"/>
+  <text class="t" x="32" y="65">Rol USUARIO (Lector autenticado)</text>
+  <text class="s" x="32" y="87" style="font-size:9.6px">• Consultar catálogo (B+), stock y relacionados (Grafo)</text>
+  <text class="s" x="32" y="103" style="font-size:9.6px">• Solicitar préstamo (turno FIFO) y cancelar solicitud</text>
+  <text class="s" x="32" y="119" style="font-size:9.6px">• Ver Mi biblioteca (activos, historial y solicitudes)</text>
+  <text class="s" x="32" y="135" style="font-size:9.6px">• Ver Mis avisos (notificaciones procesadas propias)</text>
+  <text class="s" x="32" y="151" style="font-size:9.6px">• Simular pago propio (comprobante único SIMULADO)</text>
+
+  <rect class="cls" x="24" y="184" width="292" height="156"/>
+  <rect class="hdr" x="25" y="185" width="290" height="24" rx="4"/>
+  <text class="t" x="32" y="201">Rol ADMIN (Bibliotecario / Operador)</text>
+  <text class="s" x="32" y="223" style="font-size:9.6px">• CRUD libros (B+ y Grafo) y copias físicas (Ejemplar)</text>
+  <text class="s" x="32" y="239" style="font-size:9.6px">• Gestionar usuarios (Hash) y cuentas privadas 0600</text>
+  <text class="s" x="32" y="255" style="font-size:9.6px">• Entregar, renovar (Rojo-Negro), devolver y anular</text>
+  <text class="s" x="32" y="271" style="font-size:9.6px">• Auditar solicitudes FIFO, pagos y estados de avisos</text>
+  <text class="s" x="32" y="287" style="font-size:9.6px">• Reencolar avisos fallidos (sin borrado silencioso)</text>
+  <text class="s" x="32" y="303" style="font-size:9.6px">• Ver snapshots y validar las 5 estructuras C++17</text>
+  <text class="s" x="32" y="319" style="font-size:9.6px">• Consultar /api/almacenamiento y /api/recuperacion</text>
+
+  <rect class="cls" x="24" y="354" width="292" height="92" style="stroke:#8b5a1e"/>
+  <rect x="25" y="355" width="290" height="24" rx="4" fill="#fff3df"/>
+  <text class="t" x="32" y="371" style="fill:#754b14">Identidad SERVICIO (biblioteca_worker)</text>
+  <text class="s" x="32" y="393" style="font-size:9.6px">• Token 0600 independiente (sin permisos ADMIN)</text>
+  <text class="s" x="32" y="409" style="font-size:9.6px">• POST /api/interno/avisos/{id}/procesar</text>
+  <text class="s" x="32" y="425" style="font-size:9.6px">• POST /api/interno/avisos/{id}/fallo (error / DLQ)</text>
+
+  <!-- Derecha: Diagrama de Clases de Dominio v2 -->
+  <rect class="grp" x="346" y="10" width="604" height="450"/>
+  <text class="h" x="360" y="32">Modelo de Clases — Dominio v2 y Seguridad Separada</text>
+
+  <!-- Fila 1 -->
+  <rect class="cls" x="364" y="48" width="166" height="90"/>
+  <rect class="hdr" x="365" y="49" width="164" height="22" rx="4"/>
+  <text class="t" x="374" y="64">Libro (Obra)</text>
+  <text class="s" x="374" y="83">idLibro: string (PK)</text>
+  <text class="s" x="374" y="97">titulo, autor: string</text>
+  <text class="s" x="374" y="111">temas: vector&lt;string&gt;</text>
+  <text class="s" x="374" y="126">Índices: B+ y Grafo</text>
+
+  <rect class="cls" x="564" y="48" width="166" height="90"/>
+  <rect class="hdr" x="565" y="49" width="164" height="22" rx="4"/>
+  <text class="t" x="574" y="64">Ejemplar (Copia)</text>
+  <text class="s" x="574" y="83">idEjemplar: string (PK)</text>
+  <text class="s" x="574" y="97">idLibro: FK → Libro</text>
+  <text class="s" x="574" y="111">estado: disponible |</text>
+  <text class="s" x="574" y="125">prestado | apartado | retirado</text>
+
+  <rect class="cls" x="764" y="48" width="170" height="90"/>
+  <rect class="hdr" x="765" y="49" width="168" height="22" rx="4"/>
+  <text class="t" x="774" y="64">Usuario + CuentaPrivada</text>
+  <text class="s" x="774" y="83">idUsuario: string (PK)</text>
+  <text class="s" x="774" y="97">nombre: string · activo: bool</text>
+  <text class="s" x="774" y="111">Índice: Hash Extensible</text>
+  <text class="s" x="774" y="126">Cuenta: rol, Argon2id (0600)</text>
+
+  <!-- Fila 2 -->
+  <rect class="cls" x="364" y="178" width="260" height="106"/>
+  <rect class="hdr" x="365" y="179" width="258" height="22" rx="4"/>
+  <text class="t" x="374" y="194">Reserva (Solicitud FIFO por libro)</text>
+  <text class="s" x="374" y="213">idReserva (PK) · idLibro · idUsuario</text>
+  <text class="s" x="374" y="228">llegada: uint64 (secuencia global)</text>
+  <text class="s" x="374" y="243">estado: pendiente | apartada | atendida | cancelada</text>
+  <text class="s" x="374" y="258">idEjemplar (si apartada/atendida) · creada UTC</text>
+  <text class="s" x="374" y="273">cancelacion: Auditoria(fecha, motivo, responsable)</text>
+
+  <rect class="cls" x="654" y="178" width="280" height="106"/>
+  <rect class="hdr" x="655" y="179" width="278" height="22" rx="4"/>
+  <text class="t" x="664" y="194">Prestamo (Rojo-Negro si activo)</text>
+  <text class="s" x="664" y="213">idPrestamo (PK) · idEjemplar · idUsuario</text>
+  <text class="s" x="664" y="228">inicio UTC · vencimiento (AAAA-MM-DD)</text>
+  <text class="s" x="664" y="243">devolucion UTC · estado: activo | devuelto | cancelado</text>
+  <text class="s" x="664" y="258">cancelacion: Auditoria (confirmación física)</text>
+  <text class="s" x="664" y="273">Historial conservado tras devolver o anular</text>
+
+  <!-- Fila 3 -->
+  <rect class="cls" x="364" y="324" width="260" height="118"/>
+  <rect class="hdr" x="365" y="325" width="258" height="22" rx="4"/>
+  <text class="t" x="374" y="340">Aviso (Outbox) → Notificacion (1:1)</text>
+  <text class="s" x="374" y="359">Aviso: idAviso, idEvento, tipo, idUsuario</text>
+  <text class="s" x="374" y="374">estado: pendiente | publicado | procesado | fallido</text>
+  <text class="s" x="374" y="389">publicadoEn, procesadoEn, intentos, ultimoError</text>
+  <text class="s" x="374" y="405">Notificacion: idNotificacion (NT-AV-n), titulo,</text>
+  <text class="s" x="374" y="420">mensaje, procesadaEn (deduplicada por idAviso)</text>
+
+  <rect class="cls" x="654" y="324" width="280" height="118"/>
+  <rect class="hdr" x="655" y="325" width="278" height="22" rx="4"/>
+  <text class="t" x="664" y="340">Cargo → Comprobante (SIMULADO)</text>
+  <text class="s" x="664" y="359">Cargo: idPrestamo (PK), idUsuario, importe (int64)</text>
+  <text class="s" x="664" y="374">moneda (CRC), estado: pendiente | pagado | anulado</text>
+  <text class="s" x="664" y="390">Comprobante: idComprobante (PG-n), fecha UTC,</text>
+  <text class="s" x="664" y="405">importe, moneda, etiqueta="SIMULADO"</text>
+  <text class="s" x="664" y="420">Idempotente 1:1 por préstamo · sin dinero real</text>
+
+  <!-- Relaciones -->
+  <path class="ln" d="M530 93 L564 93"/>
+  <text class="s" x="534" y="87">1..*</text>
+  <path class="ln" d="M447 138 L447 178"/>
+  <path class="ln" d="M647 138 L647 158 L740 158 L740 178"/>
+  <path class="ln" d="M849 138 L849 178"/>
+  <path class="ln" d="M794 284 L794 324"/>
+  <path class="ln" d="M494 284 L494 324"/>
+  <path class="ln" d="M654 248 L636 248 L636 360 L624 360"/>
+</svg>

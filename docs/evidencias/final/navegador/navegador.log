@@ -1,0 +1,16 @@
+2026-11-21T01:05:23.773Z Bootstrap Admin y service.token 0600 completado
+2026-11-21T01:05:29.092Z RabbitMQ real iniciado en 127.0.0.1:37579
+2026-11-21T01:05:29.326Z API C++ iniciada en http://127.0.0.1:38373
+2026-11-21T01:05:30.328Z Worker independiente C++ conectado a RabbitMQ
+2026-11-21T01:05:30.833Z Flujo real completado: 4 avisos procesados por RabbitMQ + worker C++
+2026-11-21T01:05:31.052Z Frontend Vite listo en http://127.0.0.1:33545/
+2026-11-21T01:05:31.821Z Chrome real conectado: Chrome/157.0.8103.80
+2026-11-21T01:05:34.244Z Captura 01 (Admin catálogo + B+ validado, 1280x800) OK
+2026-11-21T01:05:34.942Z Captura 04 (Admin Avisos RabbitMQ, 1280x800) OK
+2026-11-21T01:05:35.456Z Captura 07 (Admin Avisos móvil, 390x844) OK
+2026-11-21T01:05:36.522Z Captura 05 (Admin 5 estructuras validadas, 1280x800) OK
+2026-11-21T01:05:37.960Z Captura 02 (Ana Mis avisos procesados por worker, 1280x800) OK
+2026-11-21T01:05:38.458Z Captura 06 (Ana Mis avisos móvil, 390x844) OK
+2026-11-21T01:05:39.154Z Captura 03 (Ana comprobante SIMULADO PG-1, 1280x800) OK
+2026-11-21T01:05:40.249Z Aislamiento verificado: Bruno no ve avisos ni comprobantes de Ana
+2026-11-21T01:05:41.954Z Captura 08 (GitHub Pages real, mensaje pendiente de configuración) OK

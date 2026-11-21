@@ -20,8 +20,19 @@ struct Reserva {
     Auditoria cancelacion;
 };
 struct Aviso {
-    std::string idAviso, tipo, idUsuario, idReserva, idPrestamo, creado;
+    std::string idAviso, idEvento, tipo, idUsuario, idReserva, idPrestamo, creado;
     std::string estado = "pendiente";
+    std::string publicadoEn, procesadoEn;
+    std::uint32_t intentos = 0;
+    std::string ultimoError;
+};
+struct Notificacion {
+    std::string idNotificacion, idAviso, idEvento, idUsuario, tipo;
+    std::string titulo, mensaje, idReserva, idPrestamo, procesadaEn;
+};
+struct ResultadoProcesoAviso {
+    Notificacion notificacion;
+    bool duplicado = false;
 };
 struct Cargo {
     std::string idPrestamo, idUsuario;
@@ -43,6 +54,7 @@ struct EstadoBiblioteca {
     std::vector<Prestamo> prestamos;
     std::vector<Reserva> reservas;
     std::vector<Aviso> avisos;
+    std::vector<Notificacion> notificaciones;
     std::vector<Cargo> cargos;
     std::vector<Comprobante> comprobantes;
     std::uint64_t siguienteLlegada = 1;

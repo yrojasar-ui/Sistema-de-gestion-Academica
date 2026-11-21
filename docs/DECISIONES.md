@@ -229,3 +229,17 @@ tarjeta. Se muestran metadatos actuales; no se altera el historial ni el esquema
 persistido. No se introduce un índice sustituto de las estructuras C++.
 
 Pruebas: [correcciones del PR #11](evidencias/acceso-paneles/correcciones-pr11/README.md).
+
+## D19 — Mensajería real RabbitMQ, patrón Outbox, Worker C++17 e Identidad de Servicio
+
+Para la entrega final se adopta `rabbitmq-c 0.15.0` (MIT), compilado estáticamente y verificado por SHA-256 mediante `scripts/preparar_rabbitmq_c.sh`, como cliente AMQP 0-9-1 contra RabbitMQ 4.0.5 real. La arquitectura preserva un **único escritor** del agregado de biblioteca (`catalogo_api`): el worker independiente (`biblioteca_worker`) jamás escribe directamente en JSON local ni en MongoDB.
+
+- **Separación de fases:** el aviso se persiste en `EstadoBiblioteca::avisos` (`estado="pendiente"`, `idEvento="EV-AV-n"`) en la misma operación confirmada que el cambio de negocio. `AvisoOutboxRelay` corre en un hilo desacoplado sincronizado con `stateMutex`, haciendo todo el I/O de red AMQP **fuera** del cerrojo para no bloquear HTTP.
+- **Confiabilidad sin prometer «exactamente una vez»:** exchanges y colas durables (`biblioteca.eventos`, `biblioteca.avisos`, `biblioteca.dlx`, `biblioteca.avisos.fallidos`), mensajes persistentes (`delivery_mode=2`), `confirm.select` + `mandatory=1` detectando `basic.return`, `prefetch=1` y ACK manual solo después de confirmar `HTTP 200` durable en `/api/interno/avisos/{id}/procesar`. La deduplicación persistente 1:1 en `Notificacion` (`NT-AV-n`) garantiza que un redelivery tras caída pre-ACK no duplique notificaciones visibles.
+- **Identidad mínima (`ServiceIdentity`):** secreto aleatorio de 256 bits (`0600`) independiente de `cuentas.json`, verificado por hash BLAKE2b en tiempo constante (`sodium_memcmp`), restringido únicamente a `/api/interno/avisos/*` y rechazado (`403`) en cualquier ruta humana o administrativa.
+
+## D20 — Bandeja Mis avisos, Proxy de confianza y Empaquetado Docker/HTTPS
+
+- **Bandeja interna como destino real:** `GET /api/mis-avisos` entrega únicamente notificaciones procesadas de la sesión autenticada (aislamiento estricto A/B) y un resumen honesto de avisos propios pendientes/publicados sin simular éxito cuando el broker está caído. `GET /api/avisos` (ADMIN) diferencia `pendiente`, `publicado`, `procesado` y `fallido`, muestra errores sanitizados y habilita reintento explícito (`POST /api/avisos/{id}/reintento`) sin borrado silencioso.
+- **Rate-limit detrás de proxy (`--trusted-proxy`):** `HttpController` ignora `X-Forwarded-For`/`X-Real-IP` por defecto y solo extrae la IP cliente real cuando la conexión TCP proviene de una IP explícitamente confiable (Nginx/Caddy), evitando que todos los usuarios compartan el mismo bloqueo por IP y evitando suplantación desde clientes directos.
+- **Empaquetado y despliegue honesto:** `deploy/Dockerfile.backend`, `deploy/Dockerfile.frontend`, `docker-compose.yml` y las plantillas HTTPS (`Caddyfile.https.example`, `nginx-https.conf.example`) cierran `/api/interno/*` en el borde y mantienen RabbitMQ en red interna. GitHub Pages está verificado en producción (`HTTP/2 200`) como frontend estático; el alojamiento HTTPS remoto del backend se mantiene explícitamente como pendiente de selección de proveedor.

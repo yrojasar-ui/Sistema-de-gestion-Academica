@@ -15,6 +15,10 @@
 # Credenciales privadas y biblioteca local de demostración.
 /data/privado*/
 /data/biblioteca-local.json*
+/data/rabbitmq-wsl/
+/deploy/.env
+*.token
+*.creds
 
 __pycache__/
 

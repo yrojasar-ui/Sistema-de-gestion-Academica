@@ -1,0 +1,17 @@
+{
+  "coleccion": "biblioteca_yoel_final_3be394f489e7431c",
+  "revision": 40,
+  "resumenAvisos": {
+    "fallido": 0,
+    "pendiente": 0,
+    "procesado": 10,
+    "publicado": 0
+  },
+  "libros": 2,
+  "prestamos": 2,
+  "reservas": 3,
+  "comprobantes": 1,
+  "notificaciones": 10,
+  "siguienteLlegada": 4,
+  "estructurasValidas": true
+}

@@ -15,7 +15,15 @@ inline Json migrarDominioV1(Json j) {
         r["cancelacion"] = r.at("estado") == "cancelada" ?
             Auditoria{r.at("creada"), "Migración v1: fecha y responsable originales no registrados", "migracion"} : Auditoria{};
     }
-    j["version"] = 2; j["cargos"] = Json::array(); j["comprobantes"] = Json::array();
+    for (auto& a : j.at("avisos")) {
+        campos(a, {"idAviso","tipo","idUsuario","idReserva","idPrestamo","creado","estado"});
+        a["idEvento"] = "EV-" + a.at("idAviso").get<std::string>();
+        a["publicadoEn"] = "";
+        a["procesadoEn"] = "";
+        a["intentos"] = std::uint32_t{0};
+        a["ultimoError"] = "";
+    }
+    j["version"] = 2; j["notificaciones"] = Json::array(); j["cargos"] = Json::array(); j["comprobantes"] = Json::array();
     (void)j.get<EstadoBiblioteca>();
     return j;
 }

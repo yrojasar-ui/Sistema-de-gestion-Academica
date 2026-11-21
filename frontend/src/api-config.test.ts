@@ -34,3 +34,11 @@ test('producción nunca configura loopback como backend', () => {
     assert.equal(resolveApiConfiguration(raw, true).base, null, raw)
   }
 })
+test('modo explícito docker same-origin usa /api/ solo si no hay VITE_API_URL contradictorio', () => {
+  for (const raw of [undefined, '', '  ']) {
+    assert.deepEqual(resolveApiConfiguration(raw, true, true), { base: '/api/' })
+  }
+  for (const raw of ['https://api.example.org', 'http://127.0.0.1:8080', 'https://user:secret@api.example.org']) {
+    assert.equal(resolveApiConfiguration(raw, true, true).base, null, raw)
+  }
+})

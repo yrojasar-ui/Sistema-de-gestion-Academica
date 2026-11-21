@@ -1,0 +1,33 @@
+=INFO REPORT==== 20-Nov-2026::19:00:27.863282 ===
+    alarm_handler: {set,
+                       {{disk_almost_full,
+                            "/usr/lib/linux-tools/6.18.54.1-microsoft-standard-WSL2"},
+                        []}}
+=INFO REPORT==== 20-Nov-2026::19:00:27.865935 ===
+    alarm_handler: {set,{{disk_almost_full,"/usr/lib/wsl/drivers"},[]}}
+2026-11-20 19:00:30.584786-06:00 [notice] <0.45.0> Application syslog exited with reason: stopped
+2026-11-20 19:00:30.595735-06:00 [notice] <0.216.0> Logging: switching to configured handler(s); following messages may not be visible in this log output
+
+  ##  ##      RabbitMQ 4.0.5
+  ##  ##
+  ##########  Copyright (c) 2007-2024 Broadcom Inc and/or its subsidiaries
+  ######  ##
+  ##########  Licensed under the MPL 2.0. Website: https://rabbitmq.com
+
+  Erlang:      27.3.4.6 [jit]
+  TLS Library: OpenSSL - OpenSSL 3.5.5 27 Jan 2026
+  Release series support status: see https://www.rabbitmq.com/release-information
+
+  Doc guides:  https://www.rabbitmq.com/docs
+  Support:     https://www.rabbitmq.com/docs/contact
+  Tutorials:   https://www.rabbitmq.com/tutorials
+  Monitoring:  https://www.rabbitmq.com/docs/monitoring
+  Upgrading:   https://www.rabbitmq.com/docs/upgrade
+
+  Logs: /tmp/biblioteca-final-mongo-occ4_6bd/rmq/log/bib_cloud_46315@localhost.log
+        <stdout>
+
+  Config file(s): /tmp/biblioteca-final-mongo-occ4_6bd/rmq/etc/rabbitmq.conf
+
+  Starting broker... completed with 0 plugins.
+Gracefully halting Erlang VM

@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="Yoel Alexander Rojas Arguedas">
+<title>Biblioteca Académica — Presentación Final (14 diapositivas)</title>
+<style>
+@page { size: 338.67mm 190.5mm; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #1e2a33; font: 14px/1.38 "Segoe UI", Arial, Helvetica, sans-serif; color: #152b38; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.slide { width: 338.67mm; height: 190.5mm; background: #f4f7fa; position: relative; overflow: hidden; display: flex; flex-direction: column; break-after: page; }
+.slide:last-child { break-after: auto; }
+.hdr { background: #132f45; color: #fff; padding: 4.5mm 14mm 4mm; border-bottom: 1.4mm solid #c2a575; display: flex; justify-content: space-between; align-items: flex-end; flex-shrink: 0; }
+.hdr .sec { font-size: 9pt; font-weight: 700; color: #f2deb7; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1mm; }
+.hdr h2 { margin: 0; font: 700 20pt/1.1 Georgia, serif; color: #ffffff; }
+.hdr .num { font-size: 11pt; font-weight: 700; color: #f2deb7; }
+.body { flex: 1; padding: 6.5mm 14mm 4mm; display: flex; flex-direction: column; gap: 4.5mm; }
+.ftr { padding: 0 14mm 3.5mm; font-size: 8.5pt; color: #4a6170; flex-shrink: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; flex: 1; align-items: stretch; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5.5mm; }
+.card { background: #ffffff; border: 1px solid #cbd7e0; border-left: 2.2mm solid #215aa7; border-radius: 6px; padding: 4.5mm 5.5mm; }
+.card.teal { border-left-color: #245854; }
+.card.navy { border-left-color: #132f45; }
+.card.gold { border-left-color: #c2a575; }
+.card.warn { border-left-color: #b87b22; background: #fff6e5; }
+.card.ok { border-left-color: #245854; background: #eff7f2; }
+.card.soft { border-left-color: #132f45; background: #edf4f8; }
+.card h3 { margin: 0 0 2.5mm; font-size: 13pt; color: #132f45; }
+.card ul { margin: 0; padding-left: 5mm; }
+.card li { margin-bottom: 1.8mm; font-size: 11.2pt; }
+.card p { margin: 0; font-size: 11.2pt; }
+.cover { background: #132f45; color: #fff; padding: 20mm 22mm 14mm; justify-content: space-between; }
+.cover .kicker { color: #f2deb7; font-weight: 700; font-size: 12pt; letter-spacing: .09em; }
+.cover h1 { margin: 4mm 0 4mm; font: 700 44pt/1.05 Georgia, serif; color: #fff; }
+.cover .sub { font-size: 17pt; color: #d8e5ee; max-width: 265mm; margin: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; margin-top: 8mm; }
+.kpi { background: #1d415a; border: 1px solid #3d6782; border-radius: 7px; padding: 4.5mm 5mm; }
+.kpi b { display: block; font: 700 16pt Georgia, serif; color: #f2deb7; margin-bottom: 1.5mm; }
+.kpi span { font-size: 11pt; color: #e3edf3; }
+.cover-ftr { border-top: 2mm solid #c2a575; padding-top: 4mm; font-size: 12pt; color: #dce7ee; }
+img.fit { max-width: 100%; max-height: 100%; object-fit: contain; border: 1px solid #cbd7e0; border-radius: 5px; background: #fff; display: block; }
+table { width: 100%; border-collapse: collapse; background: #fff; font-size: 11pt; }
+th, td { border: 1px solid #cbd7e0; padding: 3.6mm 4.2mm; text-align: left; }
+th { background: #132f45; color: #fff; }
+tbody tr:nth-child(even) { background: #f6f9fb; }
+.cap { font-size: 10pt; color: #4a6170; font-style: italic; text-align: center; }
+.banner { background: #132f45; color: #fff; border-radius: 7px; padding: 5mm 7mm; }
+.banner h3 { margin: 0 0 2mm; font: 700 16pt Georgia, serif; color: #f2deb7; }
+.banner p { margin: 0; font-size: 11.8pt; color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide cover">
+  <div>
+    <div class="kicker">UNIVERSIDAD CENFOTEC · ESTRUCTURAS DE DATOS II</div>
+    <h1>Biblioteca Académica</h1>
+    <p class="sub">Cinco estructuras propias en C++17, API autenticada de escritor único, mensajería real con RabbitMQ + worker y persistencia dual local/MongoDB.</p>
+    <div class="kpis">
+      <div class="kpi"><b>5 Estructuras</b><span>Propias en C++17</span></div>
+      <div class="kpi"><b>16 / 16 CTest</b><span>Debug y ASan/UBSan</span></div>
+      <div class="kpi"><b>RabbitMQ 4.0.5</b><span>Worker C++ + ACK manual</span></div>
+      <div class="kpi"><b>MongoDB Cloud</b><span>Verificado con reinicios</span></div>
+    </div>
+  </div>
+  <div class="cover-ftr">Autor: Yoel Alexander Rojas Arguedas &nbsp;·&nbsp; Entrega Final: 24 de noviembre de 2026</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">1. Contexto</div><h2>Problema de negocio y solución integral</h2></div><div class="num">2 / 14</div></div>
+  <div class="body">
+    <div class="grid-2" style="flex:0 0 auto">
+      <div class="card warn">
+        <h3>El problema</h3>
+        <ul>
+          <li>Separar obra intelectual (Libro) de copias físicas (Ejemplar) con historial auditable.</li>
+          <li>Garantizar consultas eficientes y reglas de negocio sin delegar índices a mapas estándar o al frontend.</li>
+          <li>Persistir en una API MongoDB sin transacciones ni atomicidad multicolección garantizada.</li>
+          <li>Procesar avisos asincrónicamente sin bloquear peticiones HTTP ni duplicar notificaciones.</li>
+        </ul>
+      </div>
+      <div class="card teal">
+        <h3>La solución implementada</h3>
+        <ul>
+          <li>Núcleo C++17 con B+, Rojo-Negro LLRB, Hash Extensible, Grafo de Temas y FIFO propia.</li>
+          <li>API HTTP de escritor único (<code>catalogo_api</code>) con Argon2id y pagos exclusivamente <code>SIMULADO</code>.</li>
+          <li>Agregado versionado con diario durable <code>.pending.json</code> y confirmación por <code>GET</code>.</li>
+          <li>Outbox desacoplado + RabbitMQ 4.0.5 durable + worker C++ independiente (<code>biblioteca_worker</code>).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card navy">
+      <h3>Principios de diseño verificados en todo el proyecto</h3>
+      <ul>
+        <li>Cero fallback silencioso entre JSON local y MongoDB; un fallo de carga bloquea con <code>/readyz 503</code> sin publicar catálogo vacío.</li>
+        <li>Separación estricta de credenciales: almacén <code>0600</code> y <code>service.token</code> fuera de MongoDB y fuera de Git.</li>
+        <li>Evidencia transparente: distingue pruebas en nube real, broker real, fixtures deterministas y navegador Chrome 157.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">2. Arquitectura</div><h2>Arquitectura por componentes y escritor único</h2></div><div class="num">3 / 14</div></div>
+  <div class="body" style="flex-direction:row;gap:6mm">
+    <div style="flex:3.2;display:flex;flex-direction:column;gap:2mm">
+      <img class="fit" src="diagramas/01-arquitectura-componentes.svg" style="height:132mm" alt="Arquitectura">
+      <div class="cap">Fuente editable: docs/diagramas/01-arquitectura-componentes.mmd / .svg</div>
+    </div>
+    <div class="card teal" style="flex:1">
+      <h3>Claves de diseño</h3>
+      <ul>
+        <li><code>catalogo_api</code> es el único dueño y escritor del estado.</li>
+        <li><code>stateMutex</code> serializa mutaciones; I/O AMQP corre fuera del cerrojo.</li>
+        <li>Worker nunca escribe directo en Mongo ni en JSON local.</li>
+        <li>Credenciales <code>0600</code> aisladas del dominio.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">3. Estructuras de datos (30 %)</div><h2>Cinco estructuras propias C++17 y su papel en el dominio</h2></div><div class="num">4 / 14</div></div>
+  <div class="body" style="align-items:center;justify-content:center">
+    <img class="fit" src="diagramas/03-estructuras-entidades.svg" style="max-height:130mm" alt="Estructuras">
+    <div style="font-size:12pt;font-weight:700;color:#132f45">Cada estructura valida sus invariantes y exporta snapshot JSON auditable en <code>/api/estructuras</code>.</div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">3. Estructuras ordenadas</div><h2>Árbol B+ (Catálogo) y Árbol Rojo-Negro LLRB (Préstamos activos)</h2></div><div class="num">5 / 14</div></div>
+  <div class="body" style="flex-direction:row;gap:6mm">
+    <div style="flex:1;display:flex;flex-direction:column;gap:4.5mm">
+      <div class="card">
+        <h3>Árbol B+ · BPlusTree.cpp</h3>
+        <ul>
+          <li>Clave compuesta <code>(tituloNormalizado, idLibro)</code> con UTF-8 español determinista (<code>ñ ≠ n</code>).</li>
+          <li>Hojas doblemente enlazadas para listado <code>O(n)</code>, prefijos y rangos <code>O(h log m + k)</code>.</li>
+          <li>Borrado físico con redistribución, fusión y contracción de raíz (cota conservadora <code>O(m·h²)</code>).</li>
+        </ul>
+      </div>
+      <div class="card teal">
+        <h3>Árbol Rojo-Negro LLRB · PrestamosActivos.cpp</h3>
+        <ul>
+          <li>Clave <code>(fechaVencimiento, idPrestamo)</code>: indexa únicamente préstamos activos.</li>
+          <li>Devolver o anular retira la clave en <code>O(log n)</code> conservando el historial en el dominio.</li>
+          <li>Renovar retira y reinserta con nueva fecha; verifica altura negra uniforme en todo camino.</li>
+        </ul>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:4mm">
+      <img class="fit" src="evidencias/final/navegador/01-admin-catalogo-bplus-desktop.png" style="height:95mm" alt="B+ real">
+      <div class="card navy" style="padding:3.5mm 5mm">
+        <h3>Verificación del oráculo B+ (semilla 20261109)</h3>
+        <p><strong>23 416</strong> operaciones · <strong>2 036 201</strong> comprobaciones vs <code>std::map</code> · 8 órdenes (3..32)<br>1 796 splits hoja · 553/448 préstamos hoja · 161/117 interno · 262 contracciones de raíz</p>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">3. Índices y colas</div><h2>Hash Extensible, Grafo de Temas y FIFO vs. RabbitMQ</h2></div><div class="num">6 / 14</div></div>
+  <div class="body">
+    <div class="grid-3">
+      <div class="card">
+        <h3>Hash Extensible (Usuarios)</h3>
+        <ul>
+          <li>FNV-1a 64 bits por <code>idUsuario</code>.</li>
+          <li>Cubetas de capacidad 4 y profundidad máxima 12.</li>
+          <li><code>O(1)</code> esperado; colisiones al tope resueltas linealmente en cubeta.</li>
+        </ul>
+      </div>
+      <div class="card teal">
+        <h3>Grafo de Temas (Libros)</h3>
+        <ul>
+          <li>No dirigido, listas de adyacencia ordenadas, sin bucles ni duplicados.</li>
+          <li>Recalcula aristas al editar temas de una obra.</li>
+          <li>BFS y DFS deterministas <code>O(V+E)</code> sin IA.</li>
+        </ul>
+      </div>
+      <div class="card gold">
+        <h3>Cola FIFO propia (Reservas)</h3>
+        <ul>
+          <li>Lista enlazada propia por <code>idLibro</code> ordenada por <code>(llegada, idReserva)</code>.</li>
+          <li>Cancelación lógica descartada al atender primer turno válido.</li>
+          <li><code>O(1)</code> encolar en orden; <code>O(1+c)</code> atender.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card soft">
+      <h3>Separación clave para defensa: Cola FIFO académica ≠ RabbitMQ</h3>
+      <ul>
+        <li><strong>ColaReservas (FIFO C++)</strong> decide turnos síncronos de libros dentro del dominio y se reconstruye al iniciar.</li>
+        <li><strong>RabbitMQ 4.0.5 (broker AMQP externo)</strong> transporta avisos entre procesos de forma durable con publisher confirms, ACK manual y DLQ.</li>
+        <li>Ninguno sustituye al otro: resuelven capas y requisitos distintos del sistema.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">4. Experiencia por roles</div><h2>Recorrido de Usuario y Administrador en interfaz real</h2></div><div class="num">7 / 14</div></div>
+  <div class="body">
+    <div class="grid-2" style="flex:0 0 auto">
+      <img class="fit" src="evidencias/final/navegador/02-ana-mis-avisos-desktop.png" style="height:95mm" alt="Mis avisos">
+      <img class="fit" src="evidencias/final/navegador/03-ana-pagos-simulados-desktop.png" style="height:95mm" alt="Pagos simulados">
+    </div>
+    <div class="grid-2">
+      <div class="card teal">
+        <h3>Mis avisos (Bandeja procesada por worker)</h3>
+        <ul>
+          <li>Muestra solo notificaciones del usuario autenticado (aislamiento A/B).</li>
+          <li>No finge procesamiento cuando RabbitMQ o el worker están caídos.</li>
+        </ul>
+      </div>
+      <div class="card gold">
+        <h3>Pagos simulados (SIMULADO)</h3>
+        <ul>
+          <li>Importe entero en centésimos CRC (₡100,00), recibo <code>PG-1</code> idempotente.</li>
+          <li>Sin cobros reales ni datos bancarios; pagar no devuelve la copia física.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">4. Seguridad y resiliencia</div><h2>Autenticación, identidad mínima y reconciliación de incertidumbre</h2></div><div class="num">8 / 14</div></div>
+  <div class="body">
+    <div class="grid-2" style="flex:0 0 auto">
+      <div class="card navy">
+        <h3>AuthService (libsodium 1.0.22)</h3>
+        <ul>
+          <li>Contraseñas Argon2id en archivo privado <code>0600</code> fuera de MongoDB.</li>
+          <li>Tokens Bearer de 256 bits solo en RAM (sin cookies/localStorage → sin CSRF).</li>
+          <li>Límite de intentos con <code>--trusted-proxy</code> para IP real detrás de Nginx/Caddy.</li>
+        </ul>
+      </div>
+      <div class="card teal">
+        <h3>ServiceIdentity (Worker)</h3>
+        <ul>
+          <li>Token independiente <code>0600</code> generado por <code>--bootstrap-service-token</code>.</li>
+          <li>Validado por hash BLAKE2b en tiempo constante (<code>sodium_memcmp</code>).</li>
+          <li>Solo autoriza <code>/api/interno/avisos/*</code>; bloqueado (403) en rutas ADMIN.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Reconciliación de escrituras inciertas en el navegador (PR #11 conservado)</h3>
+      <ul>
+        <li>Si una escritura sufre desconexión, JSON truncado o 5xx sin rechazo explícito, <code>FormDialog</code> bloquea el reenvío automático.</li>
+        <li>Reconsulta automáticamente mediante <code>GET</code> ligado a la generación de sesión original y ofrece «Consultar estado».</li>
+        <li>Cambiar de cuenta aborta lecturas pendientes y descarta respuestas tardías (verificado con Ana y Bruno).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">5. Persistencia (15 %)</div><h2>Persistencia dual: JSON v2 y MongoDB cloud verificado</h2></div><div class="num">9 / 14</div></div>
+  <div class="body">
+    <div class="grid-2">
+      <div class="card">
+        <h3>Protocolo MongoDB conservador</h3>
+        <ul>
+          <li>Un documento agregado (<code>versionEsquema=1</code>, dominio v2) evita escrituras parciales multicolección.</li>
+          <li>Diario durable <code>.pending.json</code> (<code>fsync</code> archivo + dir) ANTES de contactar red.</li>
+          <li>Envío único de POST/PUT condicionado por <code>estado.revision</code> + confirmación por <code>GET</code> completo.</li>
+          <li>Incertidumbre bloquea mutaciones (<code>/readyz 503</code>); recuperación explícita solo por <code>GET</code>, jamás reenvío ciego.</li>
+          <li>Migración v1 → v2 explícita con <code>--migrate</code>, sin cargos retroactivos.</li>
+        </ul>
+      </div>
+      <div class="card ok">
+        <h3>Verificación real en nube (20 nov 2026)</h3>
+        <ul>
+          <li>Colección sintética exclusiva: <code>biblioteca_yoel_final_3be394f489e7431c</code>.</li>
+          <li><code>GET</code> previo vacío (<code>total=0</code>); documento único confirmado (revisión final <strong>40</strong>).</li>
+          <li>Edición B+/grafo, Ana → Bruno → Carla FIFO, pago <code>SIMULADO</code> y <strong>10/10 avisos</strong> procesados por el worker.</li>
+          <li>Reinicio real de API y worker: 5 estructuras válidas, historial y notificaciones intactos.</li>
+          <li>0 contraseñas, tokens ni hashes Argon2 en Mongo; limpieza verificada (<code>eliminados=1, total=0</code>).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">6. Mensajería asincrónica (20 %)</div><h2>RabbitMQ 4.0.5 real, patrón Outbox y Worker C++17</h2></div><div class="num">10 / 14</div></div>
+  <div class="body" style="flex-direction:row;gap:5.5mm">
+    <div style="flex:1.65;display:flex;flex-direction:column;gap:4mm">
+      <img class="fit" src="diagramas/04-secuencia-prestamo-asincrona.svg" style="height:95mm" alt="Secuencia AMQP">
+      <div class="card navy" style="padding:3.5mm 5mm">
+        <h3>Desacoplamiento sin carreras</h3>
+        <ul>
+          <li>Aviso persistido junto al cambio de negocio; publicación solo tras confirmar repo.</li>
+          <li>Catálogo y préstamos siguen operativos con RabbitMQ caído; outbox reconecta solo.</li>
+        </ul>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:4mm">
+      <img class="fit" src="evidencias/final/navegador/04-admin-avisos-rabbitmq-desktop.png" style="height:72mm" alt="Admin Avisos">
+      <div class="card warn" style="flex:1">
+        <h3>Estados en interfaz Admin</h3>
+        <ul>
+          <li>Pendiente de publicación</li>
+          <li>Publicado (en cola, aún no recibido)</li>
+          <li>Procesado (confirmado por worker)</li>
+          <li>Fallido (reintento manual, sin borrado)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">6. Confiabilidad AMQP</div><h2>Garantías reales: confirms, ACK manual, redelivery y DLQ</h2></div><div class="num">11 / 14</div></div>
+  <div class="body">
+    <div class="grid-3" style="flex:1">
+      <div class="card">
+        <h3>Publicación segura</h3>
+        <ul>
+          <li>Colas y exchanges durables + <code>delivery_mode=2</code>.</li>
+          <li><code>confirm.select</code> + <code>mandatory=1</code>.</li>
+          <li>Detecta <code>basic.return</code> (sin ruta) como fallo explícito.</li>
+        </ul>
+      </div>
+      <div class="card teal">
+        <h3>Consumo e idempotencia</h3>
+        <ul>
+          <li><code>prefetch=1</code> y <code>no_ack=false</code>.</li>
+          <li>ACK manual SOLO tras HTTP 200 persistido.</li>
+          <li>Caída pre-ACK → redelivery → deduplicación 1:1 (<code>NT-AV-n</code>).</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h3>Fallos y DLQ</h3>
+        <ul>
+          <li>Reintentos acotados con backoff y cabecera <code>x-intentos</code>.</li>
+          <li>Inválidos o agotados → DLQ <code>biblioteca.avisos.fallidos</code>.</li>
+          <li>Admin revisa error sanitizado y reencola sin borrar.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card warn">
+      <h3>Honestidad técnica: NO prometemos «exactamente una vez» en red</h3>
+      <p>Garantizamos entrega <strong>al menos una vez (at-least-once)</strong> respaldada por deduplicación persistente por <code>idAviso</code>/<code>idEvento</code> en el único escritor, evitando notificaciones duplicadas incluso tras reinicios o pérdidas de ACK.</p>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">7. Calidad y evidencias</div><h2>Resultados reales medidos (20 de noviembre de 2026)</h2></div><div class="num">12 / 14</div></div>
+  <div class="body">
+    <table>
+      <thead>
+        <tr><th style="width:30%">Suite / Verificación</th><th style="width:25%">Entorno real</th><th style="width:45%">Resultado observado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>CTest Debug completo</strong></td><td>Ubuntu WSL2 · GCC 15.2</td><td><strong>16 / 16 aprobadas</strong> en 48,87 s (código 0)</td></tr>
+        <tr><td><strong>CTest ASan + UBSan + LeakSanitizer</strong></td><td>Instrumentado completo</td><td><strong>16 / 16 aprobadas</strong> en 181,52 s · 0 fugas / 0 errores</td></tr>
+        <tr><td><strong>Integración RabbitMQ + Worker</strong></td><td>RabbitMQ 4.0.5 real</td><td><strong>11 / 11 escenarios</strong> (broker caído, reinicio, pre-ACK, DLQ, proxy)</td></tr>
+        <tr><td><strong>Frontend Node 24.22.3</strong></td><td>npm test + build + verify:dist</td><td><strong>19 / 19 pruebas</strong> · bundle 265,79 kB · subruta Pages OK</td></tr>
+        <tr><td><strong>MongoDB cloud + RabbitMQ + Worker</strong></td><td>API docente real (aislada)</td><td>Revisión 40 · <strong>10/10 avisos</strong> · reinicio íntegro · limpieza <code>total=0</code></td></tr>
+        <tr><td><strong>Navegador Chrome 157.0.8103.80</strong></td><td>Escritorio + Móvil + Pages</td><td>Flujo Admin/Ana/Bruno · aislamiento · 8 capturas auténticas</td></tr>
+      </tbody>
+    </table>
+    <div style="text-align:center;font-weight:700;color:#245854;font-size:11.5pt;margin-top:2mm">Evidencia archivada y reproducible en <code>docs/evidencias/final/</code> (sin credenciales ni datos personales).</div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">8. Nube, Docker y CI/CD</div><h2>Despliegue, contenedores, CI y estado real de GitHub Pages</h2></div><div class="num">13 / 14</div></div>
+  <div class="body" style="flex-direction:row;gap:5.5mm">
+    <div style="flex:2.05;display:flex;flex-direction:column;gap:4mm">
+      <img class="fit" src="diagramas/05-despliegue.svg" style="height:86mm" alt="Despliegue">
+      <div class="card">
+        <h3>Empaquetado y CI listos</h3>
+        <ul>
+          <li>GitHub Actions ejecuta Debug + ASan/UBSan con RabbitMQ real + frontend antes de desplegar Pages.</li>
+          <li><code>docker-compose.yml</code>: volúmenes persistentes, red interna, puertos loopback y plantillas Caddy/Nginx HTTPS.</li>
+        </ul>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:4mm">
+      <img class="fit" src="evidencias/final/navegador/08-github-pages-publicado.png" style="height:64mm" alt="Pages">
+      <div class="card warn" style="flex:1">
+        <h3>Estado real (honesto)</h3>
+        <ul>
+          <li><strong>Pages:</strong> publicado (HTTP 200).</li>
+          <li><strong>Backend HTTPS:</strong> listo para alojar; falta elegir proveedor.</li>
+          <li><strong>Docker:</strong> manifiestos listos; daemon WSL inactivo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="hdr"><div><div class="sec">9. Cierre</div><h2>Qué garantizamos, límites y demostración en vivo</h2></div><div class="num">14 / 14</div></div>
+  <div class="body">
+    <div class="grid-2" style="flex:0 0 auto">
+      <div class="card ok">
+        <h3>Qué SÍ garantizamos</h3>
+        <ul>
+          <li>5 estructuras C++17 propias con invariantes validadas y 0 fugas en ASan/UBSan.</li>
+          <li>Aislamiento por rol/propietario, Argon2id y <code>ServiceIdentity</code> mínima.</li>
+          <li><code>At-least-once</code> con RabbitMQ durable, ACK manual y deduplicación persistente 1:1.</li>
+          <li>Confirmación <code>GET</code> y recuperación conservadora en MongoDB sin pérdida silenciosa.</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h3>Qué NO garantizamos (límites)</h3>
+        <ul>
+          <li>No prometemos «exactamente una vez» en red ni transacciones en la API docente.</li>
+          <li>Un solo escritor activo; agregado acotado a 1 MiB.</li>
+          <li>Sin cobros reales ni envío de correos externos.</li>
+          <li>Alojamiento HTTPS remoto pendiente de selección de proveedor.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="banner">
+      <h3>Paso a la demostración en vivo (5–7 minutos)</h3>
+      <p>Admin edita obra (B+/Grafo) → Ana solicita → Admin entrega → Ana paga SIMULADO → Admin devuelve → RabbitMQ + Worker entregan «Mis avisos» → Reinicio verificando persistencia y 5 estructuras válidas. Plan B 100 % local listo.</p>
+    </div>
+  </div>
+  <div class="ftr">Biblioteca Académica · Yoel Alexander Rojas Arguedas · Universidad CENFOTEC</div>
+</section>
+
+</body>
+</html>

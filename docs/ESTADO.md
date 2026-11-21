@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-Estado vigente: fase de acceso y paneles al final de este documento. Los apartados
-anteriores conservan los resultados y límites de cada entrega histórica.
+Estado vigente: **cierre de entrega final (20 de noviembre de 2026)** al final de este documento. Los apartados
+anteriores conservan los resultados y límites históricos de cada fase.
 
 ## Prompt 0 — contexto registrado
 
@@ -442,3 +442,33 @@ verificaron con fixtures deterministas, no forzando fallos en nube.
 GitHub Actions del nuevo HEAD se verifica al publicar y se enlaza en el PR;
 estos registros son locales. Se conservan entregable-2, catálogo inicial,
 persistencia, Pages y las evidencias históricas. Sin despliegue ni escrituras cloud.
+
+## Cierre final — 20 de noviembre de 2026
+
+Base: `main` en `225e151` (PR #11 ya fusionado el 19 de noviembre de 2026), árbol limpio, rama revisable `feat/cierre-final-biblioteca` (PR abierto sin fusionar). Se conservan intactos `entregable-2`, `data/libros_iniciales.json` (`SHA-256: 7852aadb1c01f71840aa34e8cf828495caf3ca195c88d656019d6ff702cffce5`), las cinco estructuras C++17, la consola, los informes anteriores y Pages.
+
+### Implementado y comprobado en esta fase
+
+- **RabbitMQ 4.0.5 real y worker C++17 independiente:** cliente AMQP 0-9-1 con `rabbitmq-c 0.15.0` fijado por SHA-256 (`scripts/preparar_rabbitmq_c.sh`), colas y exchanges durables (`biblioteca.eventos`, `biblioteca.avisos`, `biblioteca.dlx`, `biblioteca.avisos.fallidos`), `confirm.select` + `mandatory=1` + detección de `basic.return`, hilo desacoplado `AvisoOutboxRelay` sin bloquear HTTP, binario `biblioteca_worker` con `prefetch=1`, ACK manual post-persistencia, deduplicación 1:1 (`NT-AV-n`), reintentos acotados con backoff y DLQ.
+- **Identidad de servicio mínima (`ServiceIdentity`):** token `0600` independiente de cuentas humanas (`--bootstrap-service-token`), hash BLAKE2b en tiempo constante, autorizado exclusivamente en `/api/interno/avisos/{id}/(procesar|fallo)`.
+- **Bandeja *Mis avisos* y panel administrativo *Avisos*:** notificaciones procesadas visibles solo a su dueño (`/api/mis-avisos`), estado del broker sin credenciales, diferenciación de los cuatro estados (`pendiente de publicación`, `publicado`, `procesado`, `fallido`) y reintento manual sin borrado silencioso (`/api/avisos/{id}/reintento`). Catálogo y préstamos siguen operativos si RabbitMQ cae.
+- **Proxy de confianza, Docker, HTTPS y CI:** `--trusted-proxy` en `catalogo_api` para rate-limit por IP real sin confiar en cabeceras arbitrarias; `deploy/Dockerfile.backend`, `deploy/Dockerfile.frontend`, `docker-compose.yml`, `.env.example`, `deploy/Caddyfile.https.example`, `deploy/nginx-https.conf.example` y `docs/DESPLIEGUE_HTTPS_DOCKER.md`; CI actualizado en `.github/workflows/ci.yml` con `rabbitmq-server` real en Debug y ASan/UBSan.
+- **Informe, presentación y defensa:** [Informe Técnico Final](Informe_Final_Biblioteca.pdf) (14 páginas A4 + [HTML editable](Informe_Final_Biblioteca.html) + 5 diagramas editables en `docs/diagramas/`), [Presentación editable PPTX](Presentacion_Final_Biblioteca.pptx) y [PDF](Presentacion_Final_Biblioteca.pdf) (14 diapositivas revisadas), [guion de exposición](defensa/GUION_EXPOSICION.md), [guion de demo y Plan B](defensa/GUION_DEMO_Y_PLAN_B.md) y [guía de defensa (24 preguntas)](defensa/GUIA_DEFENSA_PREGUNTAS.md).
+
+### Resultados reales verificados (20 de noviembre de 2026)
+
+| Comprobación | Entorno real | Resultado | Evidencia |
+|---|---|---|---|
+| CTest Debug | WSL2 Ubuntu 26.04 · GCC 15.2 · RabbitMQ 4.0.5 | **16/16** en 48,87 s (código 0) | [debug-ctest.log](evidencias/final/pruebas/debug-ctest.log) |
+| CTest ASan/UBSan + fugas | Instrumentado completo + RabbitMQ 4.0.5 | **16/16** en 181,52 s, **0 diagnósticos** | [asan-ctest.log](evidencias/final/pruebas/asan-ctest.log) |
+| Frontend Node 24.22.3 | `npm test`, `tsc`, `vite build`, `verify:dist` | **19/19** pruebas OK, bundle 265,79 kB | [frontend-y-entorno.log](evidencias/final/pruebas/frontend-y-entorno.log) |
+| MongoDB cloud + RabbitMQ + Worker | Colección sintética `biblioteca_yoel_final_3be394f489e7431c` | Rev. 40, **10/10 avisos** procesados, reinicio íntegro, **0 secretos**, limpieza `total=0` | [nube-final.log](evidencias/final/mongodb-nube/nube-final.log), [checkpoint-final.json](evidencias/final/mongodb-nube/checkpoint-final.json) |
+| Navegador Chrome 157.0.8103.80 | Escritorio (1280×800), móvil (390×844) y Pages | Admin/Ana/Bruno, aislamiento, 8 capturas auténticas | [navegador.log](evidencias/final/navegador/navegador.log) |
+| GitHub Pages remoto | `https://yrojasar-ui.github.io/Sistema-de-gestion-Academica/` | `HTTP/2 200`, frontend estático publicado con mensaje servidor pendiente | [08-github-pages-publicado.png](evidencias/final/navegador/08-github-pages-publicado.png) |
+
+### Pendientes externos documentados
+
+1. **Alojamiento HTTPS remoto del backend:** pendiente de seleccionar y aprovisionar un proveedor Linux con TLS y volumen persistente (no se contrataron servicios de pago ni se inventó URL pública). Pages está publicado como frontend estático, pero la aplicación remota conectada requiere definir `VITE_API_URL` tras desplegar el backend.
+2. **Ejecución de contenedores Docker:** los manifiestos se prepararon y validaron sintácticamente, pero el daemon de Docker Desktop no estaba activo en WSL (`dockerDesktopLinuxEngine` inaccesible); no se reporta ejecución de contenedores.
+
+Índice completo de evidencias: [docs/evidencias/final/README.md](evidencias/final/README.md) · Lista final de entrega: [docs/LISTA_ENTREGA_FINAL.md](LISTA_ENTREGA_FINAL.md).

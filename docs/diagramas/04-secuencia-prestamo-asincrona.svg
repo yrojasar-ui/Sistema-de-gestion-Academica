@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-label="Secuencia de devolución, asignación FIFO y procesamiento asincrónico con RabbitMQ y Worker">
+  <defs>
+    <marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 1 L10 5 L0 9 z" fill="#1e4e68"/>
+    </marker>
+    <marker id="sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 1 L10 5 L0 9 z" fill="#8b5a1e"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #152b38; }
+      .p { fill: #132f45; rx: 5; }
+      .pt { font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .ll { stroke: #9fb4c0; stroke-width: 1.4; stroke-dasharray: 5 4; }
+      .msg { stroke: #1e4e68; stroke-width: 1.6; fill: none; marker-end: url(#sa); }
+      .ret { stroke: #1e4e68; stroke-width: 1.4; stroke-dasharray: 4 3; fill: none; marker-end: url(#sa); }
+      .amqp { stroke: #8b5a1e; stroke-width: 1.7; fill: none; marker-end: url(#sb); }
+      .lbl { font-size: 10.3px; fill: #152b38; }
+      .note { fill: #fff6e6; stroke: #c49342; stroke-width: 1.1; rx: 4; }
+      .nt { font-size: 10px; fill: #69450d; font-weight: bold; }
+    </style>
+  </defs>
+
+  <!-- Participantes (6 columnas) -->
+  <!-- x centers: 78, 236, 396, 556, 718, 878 -->
+  <rect class="p" x="18" y="12" width="120" height="32"/><text class="pt" x="78" y="32">Admin / Lector</text>
+  <rect class="p" x="166" y="12" width="140" height="32"/><text class="pt" x="236" y="32">catalogo_api</text>
+  <rect class="p" x="330" y="12" width="132" height="32"/><text class="pt" x="396" y="32">Repo (JSON/Mongo)</text>
+  <rect class="p" x="492" y="12" width="128" height="32"/><text class="pt" x="556" y="32">Outbox Relay</text>
+  <rect class="p" x="652" y="12" width="132" height="32" style="fill:#8b5a1e"/><text class="pt" x="718" y="32">RabbitMQ 4.0.5</text>
+  <rect class="p" x="814" y="12" width="130" height="32" style="fill:#285f4b"/><text class="pt" x="879" y="32">biblioteca_worker</text>
+
+  <!-- Lifelines -->
+  <line class="ll" x1="78" y1="44" x2="78" y2="454"/>
+  <line class="ll" x1="236" y1="44" x2="236" y2="454"/>
+  <line class="ll" x1="396" y1="44" x2="396" y2="454"/>
+  <line class="ll" x1="556" y1="44" x2="556" y2="454"/>
+  <line class="ll" x1="718" y1="44" x2="718" y2="454"/>
+  <line class="ll" x1="879" y1="44" x2="879" y2="454"/>
+
+  <!-- Paso 1 -->
+  <path class="msg" d="M78 72 L236 72"/>
+  <text class="lbl" x="86" y="67">1. POST /prestamos/P1/devolucion</text>
+
+  <!-- Paso 2 -->
+  <rect x="174" y="82" width="194" height="24" rx="4" fill="#ebf3f7" stroke="#85a6b8"/>
+  <text class="lbl" x="180" y="98">2. RN.eliminar + FIFO.atender + AV-n</text>
+
+  <!-- Paso 3 -->
+  <path class="msg" d="M236 126 L396 126"/>
+  <text class="lbl" x="244" y="121">3. replace(estado + AV-n pendiente)</text>
+  <path class="ret" d="M396 148 L236 148"/>
+  <text class="lbl" x="248" y="143">4. Confirmado (+ GET en Mongo)</text>
+
+  <!-- Paso 5 -->
+  <path class="ret" d="M236 172 L78 172"/>
+  <text class="lbl" x="86" y="167">5. HTTP 200 OK (swap en RAM)</text>
+  <path class="msg" d="M236 172 L556 172" style="stroke-dasharray:4 3"/>
+  <text class="lbl" x="345" y="167">6. notify() desacoplado (no bloquea HTTP)</text>
+
+  <!-- Nota Outbox -->
+  <rect class="note" x="488" y="186" width="320" height="22"/>
+  <text class="nt" x="498" y="201">Fuera de stateMutex · Broker caído deja AV-n pendiente</text>
+
+  <!-- Paso 7-8 -->
+  <path class="amqp" d="M556 232 L718 232"/>
+  <text class="lbl" x="562" y="226">7. basic.publish (durable, mandatory=1)</text>
+  <path class="amqp" d="M718 256 L556 256" style="stroke-dasharray:4 3"/>
+  <text class="lbl" x="562" y="250">8. Publisher Confirm (sin basic.return)</text>
+
+  <!-- Paso 9 -->
+  <path class="msg" d="M556 280 L236 280"/>
+  <text class="lbl" x="296" y="275">9. marcarAvisoPublicado(AV-n) → persiste publicado</text>
+
+  <!-- Paso 10 -->
+  <path class="amqp" d="M718 308 L879 308"/>
+  <text class="lbl" x="724" y="302">10. basic.deliver (no_ack=false)</text>
+
+  <!-- Paso 11-12 -->
+  <path class="msg" d="M879 336 L236 336"/>
+  <text class="lbl" x="424" y="330">11. POST /api/interno/avisos/AV-n/procesar (Bearer service.token)</text>
+  <path class="msg" d="M236 360 L396 360"/>
+  <text class="lbl" x="242" y="354">12. Deduplica idAviso + Notificacion</text>
+  <path class="ret" d="M396 380 L236 380"/>
+  <path class="ret" d="M236 392 L879 392"/>
+  <text class="lbl" x="466" y="387">13. HTTP 200 (procesado · duplicado: false/true)</text>
+
+  <!-- Paso 14: ACK manual -->
+  <path class="amqp" d="M879 418 L718 418"/>
+  <text class="lbl" x="726" y="413" style="font-weight:bold;fill:#754b14">14. basic.ack MANUAL post-persistencia</text>
+
+  <!-- Paso 15: Lector -->
+  <path class="msg" d="M78 444 L236 444"/>
+  <text class="lbl" x="86" y="439">15. GET /api/mis-avisos → bandeja propia</text>
+</svg>

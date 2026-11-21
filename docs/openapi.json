@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Biblioteca Académica — API local",
-    "version": "0.5.0",
-    "description": "API C++17 con sesiones Bearer en memoria del cliente, roles ADMIN/USUARIO y propiedad comprobada en servidor. Cuentas Argon2id en almacén privado; negocio local JSON agregado o Mongo confirmado, dominio versión 2. Pagos exclusivamente simulados. Ver ACCESO_PANELES.md. Nunca acepta rol/idUsuario del navegador para autorizar. Sin bypass por defecto."
+    "title": "Biblioteca Académica — API y Mensajería Final",
+    "version": "0.6.0",
+    "description": "API C++17 de escritor único con sesiones Bearer Argon2id/libsodium en RAM, roles ADMIN/USUARIO, identidad técnica mínima SERVICIO (/api/interno/avisos/*), dominio v2 con cinco estructuras propias, pagos exclusivamente SIMULADO, persistencia explícita (JSON v2 o MongoDB con diario durable) y outbox asincrónico sobre RabbitMQ 4.0.5 con worker independiente C++17."
   },
   "servers": [
     {
@@ -3231,6 +3231,387 @@
           }
         ]
       }
+    },
+    "/api/mis-avisos": {
+      "get": {
+        "summary": "Bandeja personal de notificaciones procesadas por el worker (solo dueño)",
+        "operationId": "get_api_mis_avisos",
+        "x-roles": [
+          "USUARIO",
+          "ADMIN"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notificaciones procesadas propias y resumen en trámite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MisAvisos"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/mis-avisos/{idNotificacion}": {
+      "get": {
+        "summary": "Detalle de una notificación procesada propia (404 si pertenece a otro usuario)",
+        "operationId": "get_api_mis_avisos_id",
+        "x-roles": [
+          "USUARIO",
+          "ADMIN"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "idNotificacion",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notificación propia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notificacion"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/avisos/{idAviso}/reintento": {
+      "post": {
+        "summary": "Reencola explícitamente un aviso fallido a estado pendiente (solo ADMIN; nunca borra eventos)",
+        "operationId": "post_api_avisos_reintento",
+        "x-roles": [
+          "ADMIN"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "idAviso",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aviso reencolado a pendiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/interno/avisos/{idAviso}/procesar": {
+      "post": {
+        "summary": "Confirmación idempotente de aviso procesado por el worker (solo identidad SERVICIO; nunca expuesta en borde)",
+        "operationId": "post_api_interno_avisos_procesar",
+        "x-roles": [
+          "SERVICIO"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "idAviso",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "idEvento": {
+                    "type": "string"
+                  },
+                  "titulo": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "mensaje": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "intentos": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "idEvento",
+                  "titulo",
+                  "mensaje",
+                  "intentos"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notificación persistida (o deduplicada si ya estaba procesada)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "notificacion": {
+                      "$ref": "#/components/schemas/Notificacion"
+                    },
+                    "duplicado": {
+                      "type": "boolean"
+                    },
+                    "estado": {
+                      "const": "procesado"
+                    }
+                  },
+                  "required": [
+                    "notificacion",
+                    "duplicado",
+                    "estado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/interno/avisos/{idAviso}/fallo": {
+      "post": {
+        "summary": "Registro de fallo de procesamiento del worker y transición a fallido/DLQ (solo identidad SERVICIO)",
+        "operationId": "post_api_interno_avisos_fallo",
+        "x-roles": [
+          "SERVICIO"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "idAviso",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "idEvento": {
+                    "type": "string"
+                  },
+                  "intentos": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "definitivo": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "idEvento",
+                  "intentos",
+                  "error",
+                  "definitivo"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Error registrado en el aviso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "estado": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "estado"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3530,57 +3911,79 @@
         "properties": {
           "idAviso": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "idEvento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           },
           "tipo": {
+            "type": "string",
             "enum": [
               "reserva_apartada",
-              "devolucion"
+              "reserva_cancelada",
+              "devolucion",
+              "prestamo_registrado",
+              "prestamo_renovado",
+              "prestamo_anulado",
+              "pago_simulado"
             ]
           },
           "idUsuario": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            "minLength": 1,
+            "maxLength": 64
           },
           "idReserva": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{1,64}$"
-              },
-              {
-                "const": ""
-              }
-            ]
+            "type": "string",
+            "maxLength": 64
           },
           "idPrestamo": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{1,64}$"
-              },
-              {
-                "const": ""
-              }
-            ]
+            "type": "string",
+            "maxLength": 64
           },
           "creado": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            "type": "string"
           },
           "estado": {
-            "const": "pendiente"
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "publicado",
+              "procesado",
+              "fallido"
+            ]
+          },
+          "publicadoEn": {
+            "type": "string"
+          },
+          "procesadoEn": {
+            "type": "string"
+          },
+          "intentos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ultimoError": {
+            "type": "string",
+            "maxLength": 512
           }
         },
         "required": [
           "idAviso",
+          "idEvento",
           "tipo",
           "idUsuario",
           "idReserva",
           "idPrestamo",
           "creado",
-          "estado"
+          "estado",
+          "publicadoEn",
+          "procesadoEn",
+          "intentos",
+          "ultimoError"
         ]
       },
       "Dominio": {
@@ -4365,13 +4768,21 @@
           "desplazamiento": {
             "type": "integer",
             "minimum": 0
+          },
+          "resumen": {
+            "$ref": "#/components/schemas/ResumenAvisos"
+          },
+          "broker": {
+            "$ref": "#/components/schemas/EstadoBroker"
           }
         },
         "required": [
           "items",
           "total",
           "limite",
-          "desplazamiento"
+          "desplazamiento",
+          "resumen",
+          "broker"
         ]
       },
       "Relacionados": {
@@ -4909,6 +5320,146 @@
           "creada",
           "cancelacion",
           "libro"
+        ]
+      },
+      "Notificacion": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "idNotificacion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "idAviso": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "idEvento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "idUsuario": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mensaje": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "idReserva": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "idPrestamo": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "procesadaEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idNotificacion",
+          "idAviso",
+          "idEvento",
+          "idUsuario",
+          "tipo",
+          "titulo",
+          "mensaje",
+          "idReserva",
+          "idPrestamo",
+          "procesadaEn"
+        ]
+      },
+      "EstadoBroker": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "configurado": {
+            "type": "boolean"
+          },
+          "conectado": {
+            "type": "boolean"
+          },
+          "ultimoError": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "configurado",
+          "conectado",
+          "ultimoError"
+        ]
+      },
+      "ResumenAvisos": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pendiente": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "publicado": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "procesado": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "fallido": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "pendiente",
+          "publicado",
+          "procesado",
+          "fallido"
+        ]
+      },
+      "MisAvisos": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notificacion"
+            }
+          },
+          "pendientes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "publicados": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "fallidos": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "pendientes",
+          "publicados",
+          "fallidos"
         ]
       }
     },

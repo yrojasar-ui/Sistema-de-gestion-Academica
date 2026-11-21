@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="Yoel Alexander Rojas Arguedas">
+<title>Biblioteca Académica — Informe Técnico Final</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #e8ecee; color: #162834;
+  font: 9.5pt/1.4 "Segoe UI", Arial, Helvetica, sans-serif;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.page {
+  width: 210mm; height: 297mm; margin: 0 auto 5mm;
+  padding: 12.5mm 15.5mm 10.5mm; background: #ffffff;
+  display: flex; flex-direction: column; overflow: hidden;
+  break-after: page;
+}
+.page:last-child { break-after: auto; }
+header, footer {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 8pt; color: #435c6b; flex-shrink: 0;
+}
+header { border-bottom: 1.5px solid #132f45; padding-bottom: 2.2mm; font-weight: 700; letter-spacing: .02em; }
+footer { margin-top: auto; padding-top: 2.2mm; border-top: 1px solid #c3d1d9; }
+main { flex: 1; padding: 4mm 0 1.5mm; }
+.kicker { margin: 0 0 1.2mm; color: #245854; font-weight: 700; font-size: 8.2pt; letter-spacing: .09em; text-transform: uppercase; }
+h1, h2, h3 { color: #132f45; margin: 0; break-after: avoid; }
+h1 { font: 700 25pt/1.06 Georgia, "Times New Roman", serif; letter-spacing: -.03em; margin-bottom: 2.5mm; }
+h2 { font: 700 15.2pt/1.14 Georgia, "Times New Roman", serif; letter-spacing: -.02em; margin: 0 0 2.4mm; border-bottom: 1.5px solid #c2a575; padding-bottom: 1.2mm; }
+h3 { font: 700 10.3pt/1.22 "Segoe UI", Arial, sans-serif; color: #1e4b64; margin: 3.2mm 0 1.1mm; }
+p { margin: 0 0 2.1mm; text-align: justify; }
+ul, ol { margin: 0 0 2.2mm; padding-left: 4.6mm; }
+li { margin-bottom: .9mm; }
+code { font: 8.3pt/1.28 Consolas, "Liberation Mono", monospace; background: #eef3f6; color: #193b4d; padding: 0.3px 2.5px; border-radius: 3px; word-break: break-word; }
+pre { font: 7.8pt/1.3 Consolas, monospace; background: #f2f6f8; border: 1px solid #d2dde4; border-radius: 5px; padding: 2.2mm 2.8mm; margin: 1.4mm 0 2.2mm; white-space: pre-wrap; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 8.2pt; line-height: 1.27; margin: 1.4mm 0 2.4mm; }
+th, td { text-align: left; padding: 1.5mm 1.9mm; vertical-align: top; border: 1px solid #c6d4dc; overflow-wrap: anywhere; word-break: break-word; }
+th { background: #132f45; color: #ffffff; font-weight: 600; }
+th code { background: #264a66; color: #ffffff; }
+tbody tr:nth-child(even) { background: #f5f8fa; }
+.cover-band { background: #132f45; color: #ffffff; padding: 7.5mm 8mm 6.5mm; border-radius: 6px; border-bottom: 4px solid #c2a575; margin-bottom: 4.5mm; }
+.cover-band .kicker { color: #f2deb7; }
+.cover-band h1 { color: #ffffff; font-size: 25.5pt; margin-bottom: 2mm; }
+.cover-band .subtitle { color: #dce7ee; font-size: 10.6pt; margin: 0; text-align: left; }
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; margin-bottom: 3.8mm; }
+.meta-box { background: #f4f7f9; border: 1px solid #cedae2; border-left: 3.5px solid #215aa7; padding: 2.3mm 3mm; border-radius: 4px; font-size: 8.5pt; }
+.meta-box strong { display: block; color: #132f45; font-size: 7.7pt; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5mm; }
+.callout { background: #f2f7f6; border-left: 3.5px solid #245854; padding: 2.2mm 3mm; margin: 1.8mm 0 2.4mm; font-size: 8.6pt; }
+.callout.warn { background: #fff7e8; border-left-color: #b87b22; }
+.toc { list-style: none; padding: 0; margin: 1.5mm 0 0; columns: 2; column-gap: 6.5mm; font-size: 8.6pt; }
+.toc li { display: flex; justify-content: space-between; border-bottom: 1px dotted #b7c6d0; padding: .95mm 0; break-inside: avoid; }
+.toc span.pg { font-weight: 700; color: #132f45; margin-left: 4px; }
+figure { margin: 1.4mm 0 2.2mm; text-align: center; }
+figure img { max-width: 100%; height: auto; border: 1px solid #cad6de; border-radius: 4px; background: #ffffff; display: block; margin: 0 auto; }
+figcaption { font-size: 8pt; color: #405866; margin-top: 1mm; text-align: left; }
+.diag-md img { max-height: 82mm; width: auto; }
+.diag-lg img { max-height: 92mm; width: auto; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; }
+.grid-3 { display: grid; grid-template-columns: 1.25fr 1.25fr 0.72fr; gap: 2.8mm; align-items: start; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.3mm; margin: 1.8mm 0 2.6mm; }
+.kpi { background: #f3f7fa; border: 1px solid #c9d7e0; border-top: 3px solid #215aa7; border-radius: 4px; padding: 2mm 2.2mm; text-align: center; }
+.kpi b { display: block; font-size: 13pt; color: #132f45; font-family: Georgia, serif; }
+.kpi span { font-size: 7.5pt; color: #48606e; }
+.badge-ok { display: inline-block; background: #e6f4ec; color: #1d5c38; font-weight: 700; padding: 0.4mm 1.5mm; border-radius: 3px; font-size: 7.4pt; }
+.badge-part { display: inline-block; background: #fff3d9; color: #7a4e00; font-weight: 700; padding: 0.4mm 1.5mm; border-radius: 3px; font-size: 7.4pt; }
+.shot-sm img { max-height: 51mm; object-fit: contain; }
+.shot-tall img { max-height: 62mm; object-fit: contain; }
+</style>
+</head>
+<body>
+
+<!-- ==================== PÁGINA 1: PORTADA E ÍNDICE ==================== -->
+<section class="page">
+  <header>
+    <span>UNIVERSIDAD CENFOTEC · ESTRUCTURAS DE DATOS II</span>
+    <span>ENTREGA FINAL · 24 DE NOVIEMBRE DE 2026</span>
+  </header>
+  <main>
+    <div class="cover-band">
+      <p class="kicker">Informe Técnico Final · Proyecto Integrador</p>
+      <h1>Biblioteca Académica</h1>
+      <p class="subtitle">Núcleo de estructuras de datos propias en C++17, API autenticada con escritor único, mensajería asincrónica durable con RabbitMQ y worker independiente, persistencia dual (JSON local y MongoDB cloud) e interfaz React/TypeScript.</p>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-box"><strong>Autor</strong>Yoel Alexander Rojas Arguedas</div>
+      <div class="meta-box"><strong>Institución y Curso</strong>Universidad CENFOTEC · Estructuras de Datos II</div>
+      <div class="meta-box"><strong>Repositorio y Rama Revisable</strong><code>github.com/yrojasar-ui/Sistema-de-gestion-Academica</code><br>Rama <code>feat/cierre-final-biblioteca</code> (base <code>main</code> <code>225e151</code>, PR #11)</div>
+      <div class="meta-box"><strong>Fecha de Evidencias y Entorno</strong>20 de noviembre de 2026 · Ubuntu 26.04.1 LTS (WSL2 x86_64)<br>GCC 15.2.0 · CMake 4.2.3 · Node 24.22.3 · RabbitMQ 4.0.5</div>
+    </div>
+
+    <div class="callout">
+      <strong>Resumen ejecutivo:</strong> Biblioteca Académica integra cinco estructuras de datos diseñadas y validadas desde cero en C++17 —Árbol B+ (catálogo), Árbol Rojo-Negro LLRB (préstamos activos), Tabla Hash Extensible (usuarios), Grafo no dirigido por temas (relaciones entre obras) y Cola FIFO propia por libro (turnos de reserva)— detrás de una API HTTP con sesiones Argon2id/libsodium, pagos exclusivamente simulados, persistencia confirmada en JSON local y MongoDB cloud con diario durable, y comunicación asincrónica real mediante RabbitMQ 4.0.5 y un worker independiente C++17 (<code>biblioteca_worker</code>) que procesa la bandeja interna <em>Mis avisos</em> a través del único escritor.
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><b>16 / 16</b><span>CTest Debug (48,87 s) y ASan/UBSan (181,52 s, 0 fugas)</span></div>
+      <div class="kpi"><b>19 / 19</b><span>Pruebas Frontend Node 24 + build Vite/Pages OK</span></div>
+      <div class="kpi"><b>11 / 11</b><span>Garantías reales RabbitMQ + Worker verificadas</span></div>
+      <div class="kpi"><b>10 / 10</b><span>Avisos en MongoDB cloud real (rev. 40, limpieza total=0)</span></div>
+    </div>
+
+    <h3>Índice de contenidos</h3>
+    <ul class="toc">
+      <li><span>1. Introducción, problema y objetivos</span><span class="pg">2</span></li>
+      <li><span>2. Alcance, límites y matriz de trazabilidad</span><span class="pg">2–3</span></li>
+      <li><span>3. Arquitectura y modelo de dominio v2</span><span class="pg">4</span></li>
+      <li><span>4. Las cinco estructuras propias y complejidades</span><span class="pg">5</span></li>
+      <li><span>5. Detalle algorítmico y FIFO vs. RabbitMQ</span><span class="pg">6</span></li>
+      <li><span>6. RabbitMQ real, outbox y worker C++17</span><span class="pg">7</span></li>
+      <li><span>7. Autenticación, permisos y pagos simulados</span><span class="pg">8</span></li>
+      <li><span>8. Persistencia, migración y reconciliación</span><span class="pg">9</span></li>
+      <li><span>9. Despliegue, Docker, Pages y CI/CD</span><span class="pg">10</span></li>
+      <li><span>10. Suite C++17, sanitizers y métricas B+</span><span class="pg">11</span></li>
+      <li><span>11. MongoDB cloud real, Frontend y Chrome 157</span><span class="pg">12</span></li>
+      <li><span>12. Evidencia visual (escritorio, móvil y Pages)</span><span class="pg">13</span></li>
+      <li><span>13. Problemas, conclusiones y referencias</span><span class="pg">14</span></li>
+    </ul>
+
+    <div class="callout warn" style="margin-top:3mm">
+      <strong>Transparencia de evidencias y alcance:</strong> El PDF de diseño inicial mencionado históricamente no se encontraba en el repositorio; las decisiones parten de la guía de requisitos del curso y del código real inspeccionado. Este informe distingue expresamente las pruebas contra <strong>nube MongoDB real</strong>, <strong>RabbitMQ 4.0.5 real</strong>, <strong>fixtures deterministas</strong> y <strong>navegador Chrome 157 real</strong>. El PDF del segundo avance (<code>docs/Informe_Entregable2_Biblioteca.pdf</code>) y la etiqueta <code>entregable-2</code> se conservan intactos.
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 1 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 2: INTRODUCCIÓN, PROBLEMA, OBJETIVOS Y ALCANCE ==================== -->
+<section class="page">
+  <header>
+    <span>1. INTRODUCCIÓN, OBJETIVOS Y ALCANCE</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>1. Introducción, problema y objetivos</h2>
+    <p>El proyecto <strong>Biblioteca Académica</strong> resuelve la gestión integral de una biblioteca universitaria única con obras, ejemplares físicos, lectores, bibliotecarios, préstamos, reservas por turno, comprobantes demostrativos simulados y avisos internos asincrónicos. En lugar de delegar la indexación a mapas estándar de biblioteca, índices del frontend o consultas de una base de datos externa, el núcleo implementa y mantiene en C++17 cinco estructuras de datos académicas con verificación estricta de invariantes y exportación auditable de su estado interno.</p>
+
+    <h3>Planteamiento del problema</h3>
+    <p>Una biblioteca real exige garantizar simultáneamente integridad estructural y consistencia operativa: diferenciar una obra (<code>Libro</code>) de sus copias físicas (<code>Ejemplar</code>), impedir préstamos duplicados sobre un mismo ejemplar, ordenar vencimientos activos sin perder historial al devolver, respetar turnos FIFO justos ante devoluciones o cancelaciones, proteger las operaciones con autenticación real y privacidad por usuario, persistir en un almacenamiento cloud sin transacciones nativas evitando escrituras parciales o silenciosas, y desacoplar el procesamiento de notificaciones mediante un broker de mensajería sin introducir condiciones de carrera ni duplicación de avisos.</p>
+
+    <h3>Objetivo general y objetivos específicos</h3>
+    <ul>
+      <li><strong>Objetivo general:</strong> Construir, verificar y documentar un sistema completo de biblioteca académica cuyo núcleo algorítmico en C++17 opere las cinco estructuras requeridas e integre persistencia local/cloud, autenticación real, mensajería asincrónica con RabbitMQ y una interfaz web React/TypeScript reproducible.</li>
+      <li><strong>Objetivos específicos:</strong>
+        <ol style="margin-top:1mm">
+          <li>Implementar Árbol B+, Árbol Rojo-Negro LLRB, Hash Extensible, Grafo de Temas y Cola FIFO propia por libro en C++17 con oráculos independientes, semillas deterministas y validación de invariantes.</li>
+          <li>Aplicar un modelo de dominio v2 con escritor único, auditoría de cancelaciones/anulaciones y pagos exclusivamente simulados (<code>SIMULADO</code>), sin cobros reales ni multas monetarias.</li>
+          <li>Garantizar persistencia explícita en JSON local atómico y MongoDB cloud con diario durable, confirmación por <code>GET</code> y recuperación conservadora sin fallback silencioso.</li>
+          <li>Incorporar RabbitMQ 4.0.5 real y un worker independiente C++17 (<code>biblioteca_worker</code>) con publisher confirms, ACK manual post-persistencia, deduplicación 1:1, reintentos acotados, DLQ e identidad de servicio mínima.</li>
+          <li>Consolidar pruebas automatizadas Debug y ASan/UBSan, integración continua con RabbitMQ real, empaquetado Docker, preparación HTTPS/GitHub Pages y documentación completa de defensa.</li>
+        </ol>
+      </li>
+    </ul>
+
+    <h2>2. Alcance implementado y límites pendientes</h2>
+    <div class="grid-2">
+      <div class="callout" style="margin:0">
+        <strong>Implementado y verificado:</strong>
+        <ul style="margin-top:1mm;margin-bottom:0">
+          <li>Consola C++17 (E2-A/E2-B) y API HTTP <code>catalogo_api</code>.</li>
+          <li>Las 5 estructuras propias C++17 con exportación JSON y validación.</li>
+          <li>Autenticación Argon2id/libsodium, Bearer en RAM, roles y aislamiento por propietario.</li>
+          <li>Identidad técnica <code>ServiceIdentity</code> (<code>0600</code>) para el worker.</li>
+          <li>RabbitMQ 4.0.5 real, <code>AvisoOutboxRelay</code> y <code>biblioteca_worker</code>.</li>
+          <li>Paneles React completos, <em>Mis avisos</em>, <em>Avisos RabbitMQ</em>, pagos <code>SIMULADO</code> y reconciliación de escrituras inciertas.</li>
+          <li>Persistencia local JSON v2 y MongoDB cloud comprobada con reinicios y limpieza.</li>
+          <li>CI con RabbitMQ real, Docker/Compose, plantillas HTTPS y GitHub Pages publicado.</li>
+        </ul>
+      </div>
+      <div class="callout warn" style="margin:0">
+        <strong>Límites externos y alcance excluido:</strong>
+        <ul style="margin-top:1mm;margin-bottom:0">
+          <li><strong>Alojamiento HTTPS remoto del backend:</strong> pendiente de elegir y aprovisionar un proveedor Linux con TLS y volumen persistente (no se contrataron servicios de pago ni se inventó URL pública). GitHub Pages está publicado como frontend estático y muestra <em>«Servidor de biblioteca pendiente de configuración»</em> hasta configurar <code>VITE_API_URL</code>.</li>
+          <li><strong>Ejecución de contenedores Docker:</strong> los <code>Dockerfile</code> y <code>docker-compose.yml</code> se prepararon y validaron sintácticamente, pero el daemon de Docker Desktop no estaba activo en WSL durante esta corrida.</li>
+          <li><strong>Fuera de alcance por regla del curso:</strong> sin cobros reales, sin multas monetarias, sin correos externos, sin sedes múltiples, sin IA y sin soporte multiinstancia de escritura.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 2 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 3: MATRIZ DE TRAZABILIDAD ==================== -->
+<section class="page">
+  <header>
+    <span>2. MATRIZ DE REQUISITOS Y TRAZABILIDAD CON LA RÚBRICA</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>2.1 Matriz de trazabilidad (Requisito → Componente → Prueba → Evidencia)</h2>
+    <p>Cada requisito de la entrega final se enlaza con los archivos reales del repositorio, las pruebas automatizadas o demostraciones reproducibles ejecutadas el 20 de noviembre de 2026 y su estado verificable:</p>
+    <table>
+      <thead>
+        <tr><th style="width:14%">Rubro / ID</th><th style="width:23%">Criterio verificable</th><th style="width:24%">Implementación real</th><th style="width:27%">Prueba y evidencia</th><th style="width:12%">Estado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Estructuras (30 %)</strong><br>A01–A08</td><td>B+ propio <code>(tituloNorm, idLibro)</code>, hojas enlazadas, split/préstamo/fusión/contracción, UTF-8 español</td><td><code>backend/src/BPlusTree.cpp</code>, <code>Libro.cpp</code>, <code>CatalogService.cpp</code></td><td><code>bplus_oraculo</code> (23 416 ops, 2 036 201 checks, 8 órdenes), <code>snapshot_bplus</code>, Debug + ASan</td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>Estructuras (30 %)</strong><br>F01</td><td>Rojo-Negro LLRB, Hash Extensible, Grafo no dirigido por temas y FIFO propia por libro + snapshots JSON</td><td><code>PrestamosActivos.cpp</code>, <code>IndiceUsuarios.cpp</code>, <code>GrafoTemas.cpp</code>, <code>ColaReservas.cpp</code></td><td><code>rojo_negro</code>, <code>hash_extensible</code>, <code>grafo_temas</code>, <code>fifo_reservas</code> (4 851 ops, 47 426 checks, Debug + ASan)</td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>Integración (20 %)</strong><br>F02 / A-PANEL</td><td>Dominio v2, CRUD, préstamos, reservas FIFO, pagos <code>SIMULADO</code>, cancelación/anulación auditada, reconciliación incierta</td><td><code>LibraryService.cpp</code>, <code>LibraryValidation.cpp</code>, <code>HttpController.cpp</code>, <code>frontend/src/*</code></td><td><code>dominio_repositorios</code>, <code>biblioteca_api</code>, <code>acceso_paneles_api</code>, 19/19 tests frontend, 8 capturas Chrome 157</td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>Seguridad (20 %)</strong><br>AUTH / SVC</td><td>Argon2id/libsodium, Bearer en RAM, roles, aislamiento A/B, <code>ServiceIdentity</code> mínima, <code>--trusted-proxy</code></td><td><code>AuthService.cpp</code>, <code>ServiceIdentity.cpp</code>, <code>HttpController.cpp</code></td><td><code>acceso_paneles_api</code>, <code>outbox_unidad</code>, <code>rabbitmq_worker_real</code> (escenarios 2, 7 y 11)</td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>Comunicación (20 %)</strong><br>F03-RMQ</td><td>RabbitMQ 4.0.5 real, outbox desacoplado, publisher confirms, <code>basic.return</code>, worker C++, ACK manual, deduplicación 1:1, DLQ, <em>Mis avisos</em></td><td><code>AmqpBroker.cpp</code>, <code>biblioteca_worker.cpp</code>, <code>Panels.tsx</code>, <code>scripts/preparar_rabbitmq_c.sh</code></td><td><code>outbox_unidad</code> + <code>rabbitmq_worker_real</code> (11 escenarios contra RabbitMQ 4.0.5 en Debug y ASan)</td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>Nube / Persistencia (15 %)</strong><br>P4 / F03-DB</td><td>JSON agregado v2 y MongoDB cloud con diario durable, confirmación GET, bloqueo, recuperación y migración v1→v2</td><td><code>LocalLibraryRepository.cpp</code>, <code>MongoLibraryRepository.cpp</code>, <code>DomainMigration.hpp</code></td><td>Demo cloud real (<code>biblioteca_yoel_final_3be394f489e7431c</code>, rev. 40, 10/10 avisos, limpieza <code>total=0</code>) + <code>mongo_biblioteca_recuperacion</code></td><td><span class="badge-ok">Verificado</span></td></tr>
+        <tr><td><strong>CI / Docker / Pages (15 %)</strong><br>F04</td><td>GitHub Actions (Debug/ASan + RabbitMQ real + frontend), Docker/Compose, plantillas HTTPS y GitHub Pages</td><td><code>.github/workflows/ci.yml</code>, <code>pages.yml</code>, <code>docker-compose.yml</code>, <code>deploy/*</code></td><td>Pages <code>HTTP/2 200</code> verificado; YAML validado; HTTPS remoto pendiente de proveedor; daemon Docker no activo en WSL</td><td><span class="badge-part">Parcial*</span></td></tr>
+        <tr><td><strong>Informe y Defensa (35 %)</strong><br>F05</td><td>Informe PDF + HTML editable + diagramas + PPTX/PDF + guiones de exposición/demo + guía de defensa (≥20 preguntas)</td><td><code>docs/Informe_Final_Biblioteca.pdf/.html</code>, <code>docs/Presentacion_Final_Biblioteca.pptx/.pdf</code>, <code>docs/defensa/*</code></td><td>Todas las páginas del informe y diapositivas rasterizadas con <code>pdftoppm</code> y revisadas visualmente</td><td><span class="badge-ok">Verificado</span></td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>Conservación de entregables previos:</strong> Se preservan intactos <code>data/libros_iniciales.json</code> (SHA-256 <code>7852aadb1c01f71840aa34e8cf828495caf3ca195c88d656019d6ff702cffce5</code>), la consola C++ E2-A/E2-B (<code>biblioteca</code>), el informe del segundo avance (<code>docs/Informe_Entregable2_Biblioteca.pdf</code> y <code>.html</code>), todas las evidencias previas bajo <code>docs/evidencias/</code> y la etiqueta Git <code>entregable-2</code>.
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 3 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 4: ARQUITECTURA Y MODELO DE DOMINIO ==================== -->
+<section class="page">
+  <header>
+    <span>3. ARQUITECTURA POR COMPONENTES Y MODELO DE DOMINIO</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>3. Arquitectura por componentes y modelo de dominio v2</h2>
+    <p>La arquitectura impone un <strong>único escritor del estado de negocio</strong> (<code>catalogo_api</code>). Tanto la interfaz web como <code>biblioteca_worker</code> interactúan únicamente mediante contratos HTTP autenticados. Un <code>ThreadPool(1)</code> y <code>stateMutex</code> serializan las mutaciones sobre <code>CatalogService</code>, <code>LibraryService</code> y <code>AuthService</code>, mientras <code>AvisoOutboxRelay</code> realiza todo el I/O AMQP fuera del cerrojo para no bloquear solicitudes HTTP.</p>
+
+    <figure class="diag-md">
+      <img src="diagramas/01-arquitectura-componentes.svg" alt="Arquitectura por componentes">
+      <figcaption><strong>Figura 1.</strong> Arquitectura por componentes (<code>docs/diagramas/01-arquitectura-componentes.mmd/.svg</code>). El worker nunca escribe directamente en JSON local ni en MongoDB.</figcaption>
+    </figure>
+
+    <p>El dominio distingue <code>Libro</code> (obra) de <code>Ejemplar</code> (copia física) y añade en v2 auditoría de cancelaciones/anulaciones, <code>Cargo</code>/<code>Comprobante</code> (<code>SIMULADO</code>), <code>Aviso</code> (outbox) y <code>Notificacion</code> (bandeja 1:1). Las credenciales humanas (<code>CuentaPrivada</code>) y la identidad técnica (<code>ServiceIdentity</code>) permanecen fuera del agregado de negocio.</p>
+
+    <figure class="diag-md">
+      <img src="diagramas/02-casos-uso-clases.svg" alt="Casos de uso y diagrama de clases">
+      <figcaption><strong>Figura 2.</strong> Casos de uso por identidad verificada (<code>USUARIO</code>, <code>ADMIN</code>, <code>SERVICIO</code>) y modelo de clases del dominio v2 (<code>docs/diagramas/02-casos-uso-clases.mmd/.svg</code>).</figcaption>
+    </figure>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 4 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 5: LAS CINCO ESTRUCTURAS PROPIAS ==================== -->
+<section class="page">
+  <header>
+    <span>4. LAS CINCO ESTRUCTURAS DE DATOS PROPIAS EN C++17</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>4. Justificación, invariantes y complejidades de las cinco estructuras</h2>
+    <p>Ninguna consulta académica delega su índice a <code>std::map</code>, al navegador ni a índices del proveedor MongoDB. Los contenedores STL auxiliares se justifican en fronteras acotadas: <code>unordered_map&lt;idLibro, Clave&gt;</code> para unicidad global y borrado por ID en <code>CatalogService</code>, vectores de almacenamiento de registros/historial en <code>EstadoBiblioteca</code> y <code>std::map</code> exclusivamente como oráculo independiente en pruebas o etiquetas locales al exportar snapshots.</p>
+
+    <figure>
+      <img src="diagramas/03-estructuras-entidades.svg" alt="Relación estructuras y entidades" style="max-height:70mm;width:auto">
+      <figcaption><strong>Figura 3.</strong> Correspondencia directa entre las cinco estructuras C++17 y las entidades/consultas del dominio (<code>docs/diagramas/03-estructuras-entidades.mmd/.svg</code>).</figcaption>
+    </figure>
+
+    <h3>Operaciones, invariantes y complejidades reales de ESTA implementación</h3>
+    <table>
+      <thead>
+        <tr><th style="width:17%">Estructura / Archivo</th><th style="width:19%">Clave y justificación</th><th style="width:28%">Invariantes validadas en código</th><th style="width:21%">Complejidad real</th><th style="width:15%">Auxiliares</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Árbol B+</strong><br><code>BPlusTree.cpp</code></td><td><code>(tituloNorm, idLibro)</code>. Catálogo ordenado, búsqueda exacta, prefijo y rango con alta ramificación.</td><td>Orden <code>m∈[3,128]</code>; hojas <code>⌊m/2⌋..m-1</code>; internos <code>⌈m/2⌉..m</code> hijos; raíz ≥2 hijos; misma profundidad; hojas doblemente enlazadas; separador <code>i = mín(hijo i+1)</code>.</td><td>Búsqueda: <code>O(h log m)</code><br>Listado: <code>O(n)</code><br>Rango: <code>O(h log m + k)</code><br>Mutación: <strong><code>O(m·h²)</code></strong>*</td><td><code>vector</code> en nodo; <code>unordered_map</code> id→clave en servicio.</td></tr>
+        <tr><td><strong>Rojo-Negro LLRB</strong><br><code>PrestamosActivos.cpp</code></td><td><code>(vencimiento, idPrestamo)</code>. Indexa solo préstamos activos por fecha límite.</td><td>Raíz negra; sin enlaces rojos a la derecha ni dos rojos seguidos; altura negra uniforme en todo camino; orden BST estricto.</td><td>Insertar: <code>O(log n)</code><br>Eliminar: <code>O(log n)</code><br>Renovar: <code>O(log n)</code><br>Activos: <code>O(n)</code></td><td><code>unique_ptr</code> propios; sin mapa auxiliar.</td></tr>
+        <tr><td><strong>Hash Extensible</strong><br><code>IndiceUsuarios.cpp</code></td><td><code>FNV-1a 64b(idUsuario)</code>. Acceso directo por ID ampliando directorio al desbordar.</td><td>Directorio <code>2^D</code>; <code>d_local ≤ D ≤ 12</code>; sufijo de <code>d_local</code> bits coincide en cada cubeta (cap. 4); sin duplicados.</td><td>Buscar/editar/borrar: <code>O(1)</code> esperado; <code>O(k)</code> al tope <code>D=12</code>. Duplicación: <code>O(2^D)</code>.</td><td><code>vector&lt;shared_ptr&gt;</code> para entradas del directorio.</td></tr>
+        <tr><td><strong>Grafo de Temas</strong><br><code>GrafoTemas.cpp</code></td><td>Vértices = <code>idLibro</code>; arista no dirigida por temas normalizados compartidos.</td><td>Sin bucles (<code>u≠v</code>), sin aristas duplicadas, listas ordenadas, simetría <code>v∈adj(u) ⇔ u∈adj(v)</code>, sincronizado al editar/borrar.</td><td>Vecinos: <code>O(1)</code> ref.<br>BFS/DFS: <code>O(V + E)</code><br>Alta/edición: <code>O(V·T)</code></td><td><code>unordered_map</code> id→vértice; <code>set</code> visitados.</td></tr>
+        <tr><td><strong>Cola FIFO</strong><br><code>ColaReservas.cpp</code></td><td>Lista enlazada propia por <code>idLibro</code> ordenada por <code>(llegada, idReserva)</code>.</td><td>Orden monótono creciente; sin IDs repetidos; punteros <code>frente</code>/<code>final</code> consistentes; canceladas descartadas al atender.</td><td>Encolar en orden: <code>O(1)</code>; fuera de orden: <code>O(q)</code>. Atender: <code>O(1 + c)</code>.</td><td><code>unordered_set</code> unicidad; <code>map&lt;idLibro,Cola&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:8pt;color:#3d5563">*<strong>Rigor sobre el B+:</strong> Tras split, préstamo o fusión, <code>BPlusTree.cpp</code> recalcula separadores obteniendo el mínimo de cada subárbol derecho (cota conservadora <code>O(m·h²)</code> en inserción/borrado). Además, <code>LibraryService::cambiar</code> valida una copia completa antes de confirmar al repositorio (coste <code>O(V²·T)</code> al auditar pares de temas del grafo).</p>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 5 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 6: DETALLE ALGORÍTMICO, NORMALIZACIÓN Y FIFO VS RABBITMQ ==================== -->
+<section class="page">
+  <header>
+    <span>5. ANÁLISIS ALGORÍTMICO Y DIFERENCIA FIFO VS. RABBITMQ</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>5. Análisis algorítmico interno y separación FIFO vs. RabbitMQ</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>Árbol B+ y normalización española UTF-8</h3>
+        <p>Toda obra reside en las hojas. Al desbordar <code>m-1</code> entradas, la hoja se divide enlazando <code>anterior</code>/<code>siguiente</code> y promoviendo la clave mínima derecha; si un nodo interno supera <code>m</code> hijos, se divide propagando su separador medio. El borrado es <strong>físico</strong>: ante subocupación intenta redistribuir (préstamo desde hermano izquierdo o derecho); si ambos están en el mínimo, fusiona hermanos y contrae la raíz si queda con un solo hijo.</p>
+        <p><code>Libro.cpp::normalizeTitle</code> valida UTF-8 estricto, pasa <code>A-Z</code> a minúsculas, elimina tildes españolas (<code>áéíóú</code>), convierte <code>ü→u</code> y <code>Ñ→ñ</code> preservando <code>ñ ≠ n</code>, reconoce formas descompuestas y compacta espacios. <strong>Límite:</strong> ordenación lexicográfica por bytes UTF-8 e <code>idLibro</code> ASCII, no colación lingüística Unicode completa.</p>
+
+        <h3>Rojo-Negro LLRB (<code>PrestamosActivos.cpp</code>)</h3>
+        <p>Usa rotaciones izquierda/derecha e <code>invertirColores</code> al insertar, y <code>moverRojoIzquierda</code>/<code>moverRojoDerecha</code> al borrar por devolución o anulación. <code>cambiarVencimiento</code> retira la clave previa e inserta la nueva, conservando el historial fuera del índice.</p>
+      </div>
+      <div>
+        <h3>Hash Extensible (<code>IndiceUsuarios.cpp</code>)</h3>
+        <p>Aplica FNV-1a 64 bits sobre <code>idUsuario</code> y toma los <code>D</code> bits bajos para indexar el directorio. Al llenar una cubeta (capacidad 4) con <code>d == D &lt; 12</code>, duplica el directorio y divide la cubeta por el bit adicional. Al alcanzar el tope <code>D=12</code>, resuelve colisiones linealmente dentro de la cubeta. El borrado conserva cubetas reutilizables sin encoger el directorio.</p>
+
+        <h3>Grafo de Temas y Cola FIFO propia</h3>
+        <p><code>GrafoTemas</code> actualiza aristas simétricamente al editar temas y ofrece recorridos <strong>BFS</strong> y <strong>DFS</strong> deterministas desempatados por ID. <code>ColaReservas</code> mantiene una lista enlazada por libro con punteros <code>frente</code> y <code>final</code>; las reservas canceladas se conservan en el dominio y <code>atender(predicadoCancelada)</code> las descarta lógicamente del frente hasta asignar la primera reserva válida.</p>
+      </div>
+    </div>
+
+    <h3>Diferencia arquitectónica: Cola FIFO académica vs. Servicio RabbitMQ</h3>
+    <p>Aunque ambos operan en orden de llegada, pertenecen a capas distintas y <strong>ninguno sustituye al otro</strong>:</p>
+    <table>
+      <thead>
+        <tr><th style="width:17%">Dimensión</th><th style="width:41.5%">Cola FIFO académica (<code>ColaReservas.cpp</code>)</th><th style="width:41.5%">Servicio RabbitMQ 4.0.5 (<code>AmqpBroker.cpp</code> + <code>biblioteca_worker</code>)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Propósito</strong></td><td>Asignar copias físicas libres al siguiente lector en espera de un libro específico (regla de dominio).</td><td>Desacoplar la generación de avisos de negocio de su procesamiento asincrónico en un proceso separado.</td></tr>
+        <tr><td><strong>Implementación</strong></td><td>Lista enlazada propia en memoria C++17 (sin bibliotecas externas) dentro de <code>LibraryService</code>, una cola por <code>idLibro</code>.</td><td>Broker externo AMQP 0-9-1 durable conectado mediante <code>rabbitmq-c 0.15.0</code> con exchanges, colas durables y DLQ.</td></tr>
+        <tr><td><strong>Persistencia</strong></td><td>Reconstruida determinísticamente desde el agregado (<code>reservas</code> + <code>llegada</code> + <code>siguienteLlegada</code>) al iniciar la API.</td><td>Persiste mensajes en disco (<code>delivery_mode=2</code>, Mnesia) y sobrevive a reinicios del broker o paradas del worker.</td></tr>
+        <tr><td><strong>Semántica</strong></td><td>Transición síncrona e inmediata dentro de la mutación confirmada (<code>devolver</code>, <code>cancelar</code>, <code>crearEjemplar</code>).</td><td>Entrega <em>al menos una vez</em> (<code>at-least-once</code>) con publisher confirms, ACK manual, reintentos con backoff e idempotencia.</td></tr>
+        <tr><td><strong>Fallos</strong></td><td>Cancelación lógica descartada en <code>atender()</code>; rechazos devuelven HTTP 400/409 sin alterar estado.</td><td>Detección de <code>basic.return</code>, reintentos acotados y enrutamiento a DLQ <code>biblioteca.avisos.fallidos</code> para revisión admin.</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 6 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 7: RABBITMQ REAL Y WORKER C++17 ==================== -->
+<section class="page">
+  <header>
+    <span>6. COMUNICACIÓN ASINCRÓNICA REAL: RABBITMQ Y WORKER C++17</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>6. RabbitMQ real, patrón outbox y worker C++17 independiente</h2>
+    <p>La mensajería separa cuatro fases: (1) <strong>persistencia del aviso</strong> junto al cambio de negocio en <code>avisos</code> con <code>estado="pendiente"</code> e <code>idEvento="EV-AV-n"</code> estable; (2) <strong>publicación desacoplada</strong> vía <code>AvisoOutboxRelay</code> solo tras confirmar el negocio; (3) <strong>consumo</strong> en el proceso independiente <code>biblioteca_worker</code>; y (4) <strong>confirmación durable</strong> a través del único escritor (<code>POST /api/interno/avisos/{id}/procesar</code>) con identidad de servicio mínima.</p>
+
+    <figure class="diag-md">
+      <img src="diagramas/04-secuencia-prestamo-asincrona.svg" alt="Secuencia préstamo y mensajería asincrónica">
+      <figcaption><strong>Figura 4.</strong> Secuencia completa de devolución, asignación FIFO, persistencia, publicación con publisher confirm, consumo del worker, confirmación interna idempotente y ACK manual (<code>docs/diagramas/04-secuencia-prestamo-asincrona.mmd/.svg</code>).</figcaption>
+    </figure>
+
+    <div class="grid-2">
+      <div>
+        <h3>Topología durable y publicación segura</h3>
+        <ul>
+          <li><strong>Exchanges y colas durables:</strong> <code>biblioteca.eventos</code> (<code>direct</code>) enlazado con clave <code>aviso.creado</code> a <code>biblioteca.avisos</code> (DLX <code>biblioteca.dlx</code> / <code>aviso.fallido</code>) y DLQ durable <code>biblioteca.avisos.fallidos</code>.</li>
+          <li><strong>Publisher confirms + <code>mandatory=1</code>:</strong> <code>RabbitEventPublisher</code> activa <code>confirm.select</code>, envía con <code>delivery_mode=2</code> y verifica ausencia de <code>basic.return</code> antes de confirmar. Un rechazo o timeout deja el aviso en <code>pendiente</code>.</li>
+          <li><strong>Resiliencia ante broker caído:</strong> Catálogo, préstamos, reservas y pagos operan normalmente sin bloquear peticiones web; el relay reconecta con backoff (<code>1 s → 5 s</code>) y publica pendientes al volver RabbitMQ.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>ACK manual, idempotencia y revisión DLQ</h3>
+        <ul>
+          <li><strong>Publisher confirm ≠ aviso recibido:</strong> Mientras no procese el worker, el estado es <code>publicado</code> y <em>Mis avisos</em> no simula éxito.</li>
+          <li><strong>ACK manual post-efecto:</strong> <code>biblioteca_worker</code> usa <code>basic.qos(1)</code> y <code>no_ack=false</code>; envía <code>basic.ack</code> solo tras recibir <code>HTTP 200</code> del escritor confirmando la persistencia durable.</li>
+          <li><strong>Sin promesa «exactamente una vez»:</strong> Se garantiza <em>at-least-once</em> + deduplicación persistente 1:1 (<code>NT-AV-n</code>). Una caída pre-ACK provoca redelivery, pero la API responde <code>200 {"duplicado": true}</code> sin duplicar la notificación visible.</li>
+          <li><strong>Reintentos y DLQ:</strong> Errores transitorios republicados con <code>x-intentos</code> y backoff; mensajes malformados o agotados pasan por <code>basic.reject(requeue=false)</code> a la DLQ y marcan <code>fallido</code>. El admin puede ejecutar <code>POST /api/avisos/{id}/reintento</code> (sin borrado silencioso).</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 7 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 8: AUTENTICACIÓN, PERMISOS Y PAGOS SIMULADOS ==================== -->
+<section class="page">
+  <header>
+    <span>7. AUTENTICACIÓN, PRIVACIDAD Y PAGOS SIMULADOS</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>7. Autenticación, identidad de servicio, privacidad y pagos simulados</h2>
+
+    <h3>Autenticación humana y sesiones (<code>AuthService.cpp</code>)</h3>
+    <p>El acceso humano utiliza <strong>libsodium 1.0.22</strong> fijado por SHA-256. Las contraseñas (12–256 bytes) se guardan solo como hashes <strong>Argon2id interactivo</strong> en un almacén privado separado del dominio (<code>cuentas.json</code>, directorio <code>0700</code>, archivo <code>0600</code>, propietario verificado, sin enlaces simbólicos y bloqueo <code>FileLock</code> independiente). Nunca se escriben credenciales ni hashes en MongoDB.</p>
+    <ul>
+      <li><strong>Sesiones Bearer en RAM:</strong> Token aleatorio de 256 bits (<code>randombytes_buf</code>); el servidor guarda únicamente su hash BLAKE2b y expiración absoluta (1800 s por defecto, 1 sesión por cuenta). El navegador guarda el token solo en memoria (sin cookies ni <code>localStorage</code>), evitando CSRF ambiental.</li>
+      <li><strong>Denegación por defecto y privacidad:</strong> <code>USUARIO</code> accede únicamente al catálogo y a sus rutas propias (<code>/api/mi-biblioteca</code>, <code>/api/mis-avisos</code>, <code>/api/mis-prestamos/*</code>, <code>/api/mis-reservas/*</code>, <code>/api/mis-pagos/*</code>); consultar recursos ajenos devuelve <code>404</code> y rutas administrativas devuelven <code>403</code>.</li>
+      <li><strong>Rate-limit con <code>--trusted-proxy</code>:</strong> Límite de 5 fallos por IP y por cuenta en 60 s con hash ficticio para errores genéricos. Por defecto ignora <code>X-Forwarded-For</code>; solo cuando la conexión llega desde un proxy confiable extrae la IP cliente real, evitando que todos los usuarios detrás del proxy compartan el mismo límite.</li>
+    </ul>
+
+    <h3>Identidad técnica de servicio (<code>ServiceIdentity.cpp</code>)</h3>
+    <p><code>--bootstrap-service-token</code> genera un secreto de 256 bits en archivo <code>0600</code> sin imprimirlo. <code>catalogo_api</code> conserva solo su hash BLAKE2b y valida en tiempo constante (<code>sodium_memcmp</code>). Autoriza <strong>exclusivamente</strong> <code>/api/interno/avisos/{id}/procesar</code> y <code>/fallo</code>; el token de servicio recibe <code>403</code> en cualquier ruta humana/admin, y <code>ADMIN</code>/<code>USUARIO</code> reciben <code>403</code> en <code>/api/interno/*</code>.</p>
+
+    <h3>Pagos ficticios (<code>SIMULADO</code>) y reglas de negocio</h3>
+    <table>
+      <thead>
+        <tr><th style="width:21%">Regla / Transición</th><th style="width:44%">Implementación en <code>LibraryService.cpp</code></th><th style="width:35%">Garantía y límite</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Cargo entero y recibo único</strong></td><td>Cada préstamo genera un <code>Cargo</code> entero (predeterminado <code>10000</code> centésimos CRC = ₡100,00). <code>POST /api/mis-pagos/{id}/simulacion</code> crea un <code>Comprobante</code> <code>PG-n</code> con <code>etiqueta="SIMULADO"</code>.</td><td>Servidor define dueño e importe; reintentar devuelve el mismo comprobante (idempotente). Pagar no devuelve la copia física; sin dinero real.</td></tr>
+        <tr><td><strong>Devolución vs. Anulación</strong></td><td><code>devolver()</code> retira clave Rojo-Negro, libera copia y atiende FIFO. <code>anular()</code> exige <code>ADMIN</code>, motivo y <code>copiaRecuperada=true</code>, marca estado <code>cancelado</code> y anula el cargo.</td><td>Un préstamo devuelto no puede anularse; uno cancelado no puede devolverse ni renovarse. Comprobantes previos se conservan en historial.</td></tr>
+        <tr><td><strong>Cancelación de reservas</strong></td><td><code>cancelar()</code> registra <code>Auditoria(fecha, motivo, responsable)</code> y, si había copia apartada, reasigna inmediatamente el siguiente turno FIFO válido.</td><td>Las reservas canceladas nunca se registran como devoluciones y permanecen auditables en historial.</td></tr>
+        <tr><td><strong>Aislamiento en cliente React</strong></td><td><code>sessionClient</code> vincula toda consulta y reconciliación a una generación de sesión; cambiar cuenta aborta peticiones y descarta respuestas tardías.</td><td>Verificado en pruebas unitarias (<code>session-client.test.ts</code>) y Chrome real (Ana → Bruno sin fugas).</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 8 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 9: PERSISTENCIA, MIGRACIÓN Y RECONCILIACIÓN ==================== -->
+<section class="page">
+  <header>
+    <span>8. PERSISTENCIA DUAL, MIGRACIÓN Y RECONCILIACIÓN</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>8. Persistencia local, MongoDB cloud, migración y reconciliación</h2>
+    <p>La persistencia queda encapsulada detrás de <code>IBookRepository</code> e <code>IDomainRepository</code> con dos modos explícitos (<code>--storage local</code> y <code>--storage mongo</code>) y <strong>cero fallback silencioso</strong>: un error en MongoDB jamás recurre automáticamente a JSON local ni publica un catálogo vacío.</p>
+
+    <div class="grid-2">
+      <div>
+        <h3>Modo local durable (<code>LocalLibraryRepository.cpp</code>)</h3>
+        <p>Persiste libros y dominio v2 (usuarios, ejemplares, préstamos, reservas, avisos, notificaciones, cargos, comprobantes y <code>siguienteLlegada</code>) en un único archivo JSON agregado (cota 1 MiB, máximo 10 000 registros por entidad). Cada guardado escribe un temporal <code>0600</code>, ejecuta <code>fsync</code> del archivo, <code>rename</code> atómico y <code>fsync</code> del directorio bajo <code>WriterLock</code> (<code>flock</code>). Fallo previo a <code>rename</code> devuelve <code>rechazado</code>; fallo posterior devuelve <code>incierto</code> y bloquea hasta reiniciar. La consola E2 conserva <code>JsonBookRepository</code> sin tocar <code>data/libros_iniciales.json</code>.</p>
+      </div>
+      <div>
+        <h3>Modo MongoDB cloud (<code>MongoLibraryRepository.cpp</code>)</h3>
+        <p>Almacena la biblioteca en una colección dedicada como un único documento <code>idBiblioteca="principal"</code> (<code>versionEsquema=1</code>) cuyo campo <code>estado</code> agrupa <code>revision</code>, <code>libros</code> y <code>dominio</code> (v2). Esta arquitectura responde al contrato real observado en <code>paginas-web-cr.com/Api/apis/mongodb.php</code>: soporta objetos anidados y filtro por <code>estado.revision</code> en <code>PUT</code>, pero <code>POST</code> repetidos duplican documentos y no existen transacciones multicolección documentadas.</p>
+      </div>
+    </div>
+
+    <h3>Protocolo de escritura confirmada y recuperación conservadora en MongoDB</h3>
+    <ol>
+      <li><strong>Preparación y validación local:</strong> <code>LibraryService</code> clona registros y nodos, aplica los algoritmos de los cinco índices y valida todas las invariantes antes de tocar la red.</li>
+      <li><strong>Lectura previa y diario durable:</strong> Un <code>GET</code> completo verifica que el documento remoto coincide con la última instantánea confirmada. Luego se escribe la intención (<code>endpoint</code>, <code>coleccion</code>, <code>anterior</code>, <code>esperado</code>) en <code>&lt;mongo-state&gt;.pending.json</code> con <code>fsync</code> de archivo y directorio <strong>antes</strong> de enviar la petición HTTP.</li>
+      <li><strong>Envío único y confirmación por GET:</strong> Se envía un único <code>POST</code> (inicialización) o <code>PUT</code> condicionado por <code>_id</code>, <code>proyecto</code>, <code>idBiblioteca</code> y <code>estado.revision</code>. Tras acuse, timeout o HTML ambiguo, se ejecuta un <code>GET</code> completo. Solo si el documento observado coincide exactamente con <code>esperado</code> se retira el diario, se publica por <code>swap</code> en memoria y se responde éxito.</li>
+      <li><strong>Bloqueo seguro ante incertidumbre:</strong> Si la confirmación falla o el documento muestra estado antiguo o parcial, el diario se conserva y la API entra en bloqueo (<code>/healthz → 200</code>, <code>/readyz → 503</code>, rutas de negocio <code>→ 503 resultado="incierto"</code>). Un reinicio nunca reenvía <code>POST/PUT</code> a ciegas; <code>POST /api/recuperacion</code> solo ejecuta <code>GET</code> y reconstrucción de candidatos.</li>
+    </ol>
+
+    <h3>Migración explícita y reconciliación en el frontend</h3>
+    <div class="grid-2">
+      <div class="callout" style="margin:0">
+        <strong>Migración v1 → v2 (<code>DomainMigration.hpp</code>):</strong> Un catálogo local legacy (array) o un documento Mongo v1 falla cerrado al arrancar. Con respaldo y <code>--migrate</code> se convierte a v2: añade <code>estado</code> y <code>cancelacion</code> a préstamos, auditoría marcada <code>"migracion"</code> a reservas canceladas, campos completos de outbox a avisos y arreglos vacíos <code>notificaciones</code>, <code>cargos</code> y <code>comprobantes</code> (sin cargos retroactivos), validando antes de servir.
+      </div>
+      <div class="callout" style="margin:0">
+        <strong>Reconciliación de escrituras inciertas (<code>mutation-attempt.ts</code>):</strong> Ante interrupción de transporte, JSON truncado o <code>5xx</code> sin rechazo explícito tras un <code>POST/PUT/DELETE</code>, <code>FormDialog</code> bloquea el reenvío de ese intento, ejecuta una reconsulta <code>GET</code> ligada a la generación de sesión y habilita <em>Consultar estado</em> de solo lectura sin duplicar la escritura.
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 9 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 10: DESPLIEGUE, DOCKER, PAGES Y CI/CD ==================== -->
+<section class="page">
+  <header>
+    <span>9. DESPLIEGUE, DOCKER COMPOSE, GITHUB PAGES Y CI/CD</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>9. Despliegue, contenedores, GitHub Pages e integración continua</h2>
+    <p>El despliegue separa la capa estática pública (GitHub Pages) del plano de cómputo privado (API escritora única, RabbitMQ y worker). GitHub Pages sirve únicamente HTML/JS/CSS compilados bajo <code>/Sistema-de-gestion-Academica/</code> y <strong>no ejecuta C++ ni RabbitMQ</strong>. En producción, la variable pública <code>VITE_API_URL</code> acepta únicamente un origen HTTPS válido sin sufijo <code>/api</code> (el cliente lo agrega una sola vez y detiene el build si detecta credenciales, HTTP o <code>localhost</code>).</p>
+
+    <figure class="diag-lg">
+      <img src="diagramas/05-despliegue.svg" alt="Diagrama de despliegue">
+      <figcaption><strong>Figura 5.</strong> Topología de despliegue con GitHub Pages estático, proxy inverso HTTPS, red privada <code>biblioteca_interna</code> con escritor único y almacenamiento persistente (<code>docs/diagramas/05-despliegue.mmd/.svg</code>).</figcaption>
+    </figure>
+
+    <div class="grid-2">
+      <div>
+        <h3>Docker Compose y preparación HTTPS</h3>
+        <ul>
+          <li><code>deploy/Dockerfile.backend</code>: multi-stage <code>ubuntu:24.04</code>, verifica <code>third_party/SHA256SUMS</code>, compila <code>libsodium 1.0.22</code> y <code>rabbitmq-c 0.15.0</code>, y ejecuta como usuario sin privilegios <code>biblioteca</code> (UID 10001) con <code>HEALTHCHECK</code> en <code>/healthz</code>.</li>
+          <li><code>deploy/Dockerfile.frontend</code>: <code>node:24.22.3-slim</code> + <code>nginxinc/nginx-unprivileged:1.27-alpine</code> con bloqueo <code>403</code> en <code>/api/interno/</code>.</li>
+          <li><code>docker-compose.yml</code>: define <code>rabbitmq:4.0-alpine</code>, <code>api</code> (<code>replicas: 1</code>, <code>--trusted-proxy 172.28.0.10</code>), <code>worker</code> (<code>biblioteca_privado:ro</code>) y <code>web</code> (puerto ligado solo a <code>127.0.0.1</code>), 4 volúmenes persistentes y <code>.env.example</code> sin secretos. Nunca usar <code>down -v</code> en demos.</li>
+          <li><code>deploy/Caddyfile.https.example</code> y <code>nginx-https.conf.example</code>: listos para TLS, HSTS, límite <code>1m</code>, bloqueo <code>/api/interno/*</code> y <code>--origin https://yrojasar-ui.github.io</code>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>CI/CD (<code>ci.yml</code> / <code>pages.yml</code>) y reproducción</h3>
+        <p>En cada PR y push a <code>main</code>, GitHub Actions (<code>ubuntu-24.04</code>) ejecuta: (1) <strong>C++17 Debug</strong> con <code>rabbitmq-server</code> real y CTest 16/16; (2) <strong>C++17 ASan-UBSan</strong> con detección de fugas y RabbitMQ real; (3) <strong>Frontend</strong> con Node <code>24.22.3</code> (<code>npm ci</code>, <code>npm test</code>, <code>npm run build</code>, <code>verify:dist</code>). Solo si todos aprueban en <code>main</code> se invoca <code>pages.yml</code> con acciones fijadas por SHA y artefacto exclusivo <code>frontend/dist</code>.</p>
+        <pre># Reproducción en WSL (build + 16/16 CTest):
+bash scripts/preparar_sodium.sh
+bash scripts/preparar_rabbitmq_c.sh
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug \
+  -DENABLE_MONGO=ON -DBUILD_TESTING=ON
+cmake --build build/debug -j2
+ctest --test-dir build/debug --output-on-failure
+cd frontend && npm ci && npm test && npm run build</pre>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 10 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 11: PRUEBAS C++17, SANITIZERS Y MÉTRICAS ==================== -->
+<section class="page">
+  <header>
+    <span>10. SUITE AUTOMATIZADA C++17, SANITIZERS Y MÉTRICAS REALES</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>10. Pruebas automatizadas C++17, sanitizers y métricas medidas</h2>
+    <p>Todas las pruebas siguientes se ejecutaron el <strong>20 de noviembre de 2026</strong> en Ubuntu 26.04.1 LTS (WSL2 x86_64, GCC 15.2.0, CMake 4.2.3, RabbitMQ 4.0.5) sobre la rama <code>feat/cierre-final-biblioteca</code> (registros completos en <code>docs/evidencias/final/pruebas/</code>).</p>
+
+    <h3>Resultados reales de la suite CTest (Debug vs. ASan/UBSan + LeakSanitizer)</h3>
+    <table>
+      <thead>
+        <tr><th style="width:26%">Caso CTest</th><th style="width:16%">Entorno</th><th style="width:34%">Cobertura real comprobada</th><th style="width:12%">Debug</th><th style="width:12%">ASan/UBSan</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>bplus_oraculo</code></td><td>Local determinista</td><td>Semilla <code>20261109</code> · 8 órdenes (3,4,5,6,7,8,16,32) · 23 416 ops · 2 036 201 comprobaciones vs <code>std::map</code></td><td>24,25 s · OK</td><td>142,27 s · OK</td></tr>
+        <tr><td><code>rojo_negro</code>, <code>hash_extensible</code>, <code>grafo_temas</code>, <code>fifo_reservas</code>, <code>snapshot_bplus</code></td><td>Local determinista</td><td>Semillas <code>20261114–20261118</code> · 4 851 ops · 47 426 comprobaciones e invariantes JSON de los 5 índices</td><td>0,68 s · 5/5</td><td>2,45 s · 5/5</td></tr>
+        <tr><td><code>dominio_repositorios</code>, <code>catalogo_json_consola</code>, <code>demo_reinicio</code></td><td>Local (2 procesos)</td><td>121 checks JSON/consola, fallos inyectados sin parcial, 2 procesos de reinicio, fixture inicial intacto</td><td>0,37 s · 3/3</td><td>1,81 s · 3/3</td></tr>
+        <tr><td><code>catalogo_http_reinicio</code>, <code>biblioteca_api</code>, <code>acceso_paneles_api</code></td><td>HTTP loopback real</td><td>Argon2id, TTL, logout, 401/403/404/429, Ana/Bruno/Carla, pagos <code>SIMULADO</code>, anulación, migración local</td><td>5,01 s · 3/3</td><td>9,39 s · 3/3</td></tr>
+        <tr><td><code>mongo_contrato_simulado</code>, <code>mongo_biblioteca_recuperacion</code></td><td>Fixtures deterministas</td><td>Timeout aplicado/tardío, HTTP 200 HTML, rechazo, lectura fallida, parcial, diario, migración v1→v2</td><td>0,45 s · 2/2</td><td>1,44 s · 2/2</td></tr>
+        <tr><td><code>outbox_unidad</code></td><td>Local + mock pub</td><td><code>ServiceIdentity 0600</code>, sanitización URI, outbox caído/recuperado, carrera, idempotencia, reintento</td><td>0,30 s · OK</td><td>0,47 s · OK</td></tr>
+        <tr><td><code>rabbitmq_worker_real</code></td><td><strong>RabbitMQ 4.0.5 real</strong></td><td>11 escenarios: broker caído, recuperación, <code>basic.return</code>, reinicio broker durable, crash pre-ACK + redelivery, DLQ, reintento admin, aislamiento A/B, token servicio, <code>--trusted-proxy</code></td><td>17,81 s · OK</td><td>23,69 s · OK</td></tr>
+        <tr><td><strong>TOTAL SUITE CTEST</strong></td><td><strong>16 pruebas</strong></td><td><strong>0 errores de memoria · 0 fugas · 0 comportamiento indefinido</strong></td><td><strong>16/16 (48,87 s)</strong></td><td><strong>16/16 (181,52 s)</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="grid-2">
+      <div>
+        <h3>Cobertura estructural medida en <code>bplus_oraculo</code></h3>
+        <table>
+          <thead><tr><th style="width:68%">Rama algorítmica del Árbol B+</th><th style="width:32%">Ejecuciones</th></tr></thead>
+          <tbody>
+            <tr><td>Divisiones (splits) de hoja / nodo interno</td><td>1 796 / 645</td></tr>
+            <tr><td>Préstamos de hoja (izquierda / derecha)</td><td>553 / 448</td></tr>
+            <tr><td>Préstamos de interno (izquierda / derecha)</td><td>161 / 117</td></tr>
+            <tr><td>Fusiones de hoja / nodo interno</td><td>1 796 / 645</td></tr>
+            <tr><td>Contracciones de raíz</td><td>262</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Cobertura de las demás estructuras propias</h3>
+        <table>
+          <thead><tr><th style="width:40%">Caso</th><th style="width:22%">Semilla</th><th style="width:18%">Ops.</th><th style="width:20%">Checks</th></tr></thead>
+          <tbody>
+            <tr><td><code>rojo_negro</code></td><td>20261114</td><td>3 085</td><td>9 261</td></tr>
+            <tr><td><code>hash_extensible</code></td><td>20261115</td><td>659</td><td>26 795</td></tr>
+            <tr><td><code>grafo_temas</code></td><td>20261116</td><td>518</td><td>6 310</td></tr>
+            <tr><td><code>fifo_reservas</code></td><td>20261117</td><td>582</td><td>5 043</td></tr>
+            <tr><td><code>snapshot_bplus</code></td><td>20261118</td><td>7</td><td>17</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 11 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 12: MONGODB CLOUD REAL, FRONTEND Y NAVEGADOR ==================== -->
+<section class="page">
+  <header>
+    <span>11. VERIFICACIÓN CLOUD MONGODB, FRONTEND Y NAVEGADOR REAL</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>11. Verificación integrada en MongoDB cloud real, Frontend y Chrome 157</h2>
+
+    <h3>Verificación integrada en MongoDB cloud real + RabbitMQ + Worker</h3>
+    <p>Se ejecutó <code>scripts/demo_final_mongodb_rabbitmq.py</code> el 20 de noviembre de 2026 contra <code>https://paginas-web-cr.com/Api/apis/mongodb.php</code> usando la colección sintética exclusiva <code>biblioteca_yoel_final_3be394f489e7431c</code> (sin tocar colecciones del usuario ni inducir fallos destructivos en el servicio compartido). Evidencia completa en <code>docs/evidencias/final/mongodb-nube/</code>:</p>
+    <table>
+      <thead>
+        <tr><th style="width:24%">Etapa de verificación cloud</th><th style="width:52%">Acción ejecutada con procesos reales</th><th style="width:24%">Resultado comprobado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Contrato y ámbito limpio</td><td><code>GET ?coleccion=biblioteca_yoel_final_3be394f489e7431c</code> previo e inicialización explícita <code>--initialize</code>.</td><td><code>total=0</code> inicial; <code>oid=6b00edad48417c5f81019651</code> único.</td></tr>
+        <tr><td>2. Negocio completo v2</td><td>Alta y edición de libro (B+/grafo), usuarios Ana/Bruno/Carla, copia <code>FIN-E1</code>, solicitud, préstamo, pago <code>SIMULADO</code> idempotente, renovación, devolución, cancelación FIFO Bruno → Carla y segundo préstamo/devolución.</td><td>Todas las transiciones confirmadas por <code>GET</code>; <code>siguienteLlegada=4</code>; 1 comprobante único.</td></tr>
+        <tr><td>3. RabbitMQ + Worker real</td><td><code>AvisoOutboxRelay</code> publicó 10 avisos a RabbitMQ 4.0.5; <code>biblioteca_worker</code> consumió y confirmó por <code>/api/interno/avisos/*/procesar</code>.</td><td><strong>10/10 avisos procesados</strong>, 10 notificaciones persistidas hasta revisión <code>40</code>.</td></tr>
+        <tr><td>4. Reinicio real y privacidad</td><td>Detención y reinicio de <code>catalogo_api</code> y <code>biblioteca_worker</code> contra MongoDB y RabbitMQ; inspección del documento remoto.</td><td>5 estructuras válidas; historial, pagos y <em>Mis avisos</em> idénticos; <strong>0 contraseñas/tokens/argon2</strong> en Mongo.</td></tr>
+        <tr><td>5. Limpieza verificada</td><td><code>DELETE</code> filtrado estrictamente por <code>_id</code>, <code>proyecto</code> e <code>idBiblioteca="principal"</code> + <code>GET</code> final.</td><td><code>eliminados=1</code> y <code>GET</code> final <code>total=0</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="grid-2" style="margin-top:2.5mm">
+      <div>
+        <h3>Pruebas y build del Frontend (Node 24.22.3)</h3>
+        <ul>
+          <li><strong><code>npm test</code>:</strong> <strong>19/19 pruebas aprobadas</strong> en 741 ms (<code>api-config</code>, <code>mutation-attempt</code>, <code>session-client</code>, <code>personal-cards</code> y <code>notices-panel</code>).</li>
+          <li><strong>Validación de producción:</strong> <code>tsc --noEmit</code>, <code>vite build</code> (225 ms; CSS 10,38 kB, JS 265,79 kB / 81,61 kB gzip) y <code>npm run verify:dist</code> verificando recursos bajo <code>/Sistema-de-gestion-Academica/</code>.</li>
+          <li><strong>Verificación de <em>Avisos</em>:</strong> Comprueba las 4 etiquetas diferenciadas (<code>Pendiente de publicación</code>, <code>Publicado</code>, <code>Procesado</code>, <code>Fallido</code>), reintento solo en <code>fallido</code> y ausencia de controles de borrado silencioso.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Navegador real Chrome 157 y GitHub Pages</h3>
+        <ul>
+          <li><strong>Recorrido integrado Chrome 157.0.8103.80:</strong> Conectado en vivo contra Vite + <code>catalogo_api</code> + RabbitMQ 4.0.5 + <code>biblioteca_worker</code> en escritorio (<code>1280×800</code>) y móvil (<code>390×844</code>).</li>
+          <li><strong>Aislamiento real comprobado:</strong> Tras cerrar sesión de Ana e iniciar como Bruno, la bandeja de Bruno muestra cero avisos y cero registros de <code>P-FIN-1</code> o <code>PG-1</code>.</li>
+          <li><strong>GitHub Pages remoto:</strong> Comprobación <code>HTTP/2 200</code> y renderizado real de <code>yrojasar-ui.github.io/Sistema-de-gestion-Academica/</code> mostrando <em>«Servidor de biblioteca pendiente de configuración»</em> sin llamadas a <code>localhost</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 12 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 13: CAPTURAS AUTÉNTICAS DE NAVEGADOR ==================== -->
+<section class="page">
+  <header>
+    <span>12. EVIDENCIA VISUAL AUTÉNTICA (CHROME 157 · ESCRITORIO, MÓVIL Y PAGES)</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>12. Capturas auténticas de ejecución integrada</h2>
+    <p>Imágenes capturadas directamente desde <strong>Chrome 157.0.8103.80</strong> operando contra el backend C++17, RabbitMQ 4.0.5, <code>biblioteca_worker</code> y Vite (y contra GitHub Pages en producción), usando contraseñas efímeras nunca versionadas.</p>
+
+    <div class="grid-2">
+      <figure class="shot-sm">
+        <img src="evidencias/final/navegador/01-admin-catalogo-bplus-desktop.png" alt="Admin catálogo y B+">
+        <figcaption><strong>Captura 1 (1280×800):</strong> Rol <code>ADMIN</code> en Catálogo con <code>L001</code> editado y árbol B+ con <em>Invariantes válidas</em>.</figcaption>
+      </figure>
+      <figure class="shot-sm">
+        <img src="evidencias/final/navegador/04-admin-avisos-rabbitmq-desktop.png" alt="Admin avisos RabbitMQ">
+        <figcaption><strong>Captura 2 (1280×800):</strong> Panel admin <em>Avisos y mensajería RabbitMQ</em>: broker conectado y 4 estados diferenciados.</figcaption>
+      </figure>
+      <figure class="shot-sm">
+        <img src="evidencias/final/navegador/02-ana-mis-avisos-desktop.png" alt="Ana Mis avisos">
+        <figcaption><strong>Captura 3 (1280×800):</strong> Rol <code>USUARIO</code> (Ana) en <em>Mis avisos</em>: 4 notificaciones procesadas por RabbitMQ + worker.</figcaption>
+      </figure>
+      <figure class="shot-sm">
+        <img src="evidencias/final/navegador/03-ana-pagos-simulados-desktop.png" alt="Ana pagos simulados">
+        <figcaption><strong>Captura 4 (1280×800):</strong> Ana en <em>Mis pagos simulados</em>: comprobante único <code>PG-1</code> por ₡100,00 (<code>SIMULADO</code>).</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-3" style="margin-top:1.5mm">
+      <figure class="shot-tall">
+        <img src="evidencias/final/navegador/05-admin-estructuras-desktop.png" alt="Admin 5 estructuras">
+        <figcaption><strong>Captura 5 (1280×800):</strong> Validación de las cinco estructuras y snapshot JSON real emitido por C++.</figcaption>
+      </figure>
+      <figure class="shot-tall">
+        <img src="evidencias/final/navegador/08-github-pages-publicado.png" alt="GitHub Pages publicado">
+        <figcaption><strong>Captura 6 (1280×800):</strong> GitHub Pages real sirviendo el frontend estático con servidor pendiente.</figcaption>
+      </figure>
+      <figure class="shot-tall">
+        <img src="evidencias/final/navegador/06-ana-mis-avisos-movil.png" alt="Ana Mis avisos móvil">
+        <figcaption><strong>Captura 7 (390×844):</strong> Vista móvil de <em>Mis avisos</em> (Admin móvil en <code>07-admin-avisos-movil.png</code>).</figcaption>
+      </figure>
+    </div>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 13 de 14</span>
+  </footer>
+</section>
+
+<!-- ==================== PÁGINA 14: PROBLEMAS, CONCLUSIONES Y REFERENCIAS ==================== -->
+<section class="page">
+  <header>
+    <span>13. PROBLEMAS, LIMITACIONES, CONCLUSIONES Y REFERENCIAS</span>
+    <span>BIBLIOTECA ACADÉMICA</span>
+  </header>
+  <main>
+    <h2>13. Problemas encontrados, soluciones, conclusiones y referencias</h2>
+
+    <h3>Problemas reales encontrados y soluciones aplicadas</h3>
+    <table>
+      <thead>
+        <tr><th style="width:27%">Problema observado</th><th style="width:36%">Causa técnica identificada</th><th style="width:37%">Solución aplicada y verificada</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Ruta MongoDB E2 devolvía HTTP 200 con HTML</td><td><code>/Api/index.php</code> respondía página HTML en vez de JSON, ocultando errores si solo se revisaba el código HTTP.</td><td>Se fijó el endpoint <code>/Api/apis/mongodb.php</code>, se exige <code>application/json</code> y se confirma cada cambio por <code>GET</code> completo.</td></tr>
+        <tr><td>Bloqueo HTTP si RabbitMQ cae o demora</td><td>Publicar a AMQP dentro del handler bloquearía el <code>ThreadPool(1)</code> del escritor único.</td><td><code>AvisoOutboxRelay</code> corre en hilo dedicado con <code>stateMutex</code>: copia pendientes, publica fuera del cerrojo y persiste <code>publicado</code> tras confirm.</td></tr>
+        <tr><td>Carrera worker rápido vs. outbox</td><td>El worker podía procesar el evento antes de que el outbox marcara <code>publicado</code>.</td><td><code>procesarAviso</code> admite <code>pendiente</code> o <code>publicado</code> y <code>marcarAvisoPublicado</code> jamás retrocede un aviso <code>procesado</code> (<code>outbox_unidad</code>).</td></tr>
+        <tr><td>Migración v1→v2 con avisos extendidos</td><td>El fixture legacy v1 eliminaba <code>comprobantes</code> dejando un aviso <code>pago_simulado</code> sin referencia válida.</td><td>Se mantuvo esquema estricto con migración v1→v2 explícita y lectura retrocompatible verificada en <code>mongo_biblioteca_recuperacion</code>.</td></tr>
+        <tr><td>Rate-limit compartido detrás de proxy</td><td>Todos los clientes detrás de Nginx/Caddy llegan con la misma IP TCP del proxy.</td><td><code>--trusted-proxy</code> ignora cabeceras arbitrarias y extrae la IP cliente real solo desde proxies confiables (<code>rabbitmq_worker_real</code>).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Qué se garantiza y qué NO se garantiza</h3>
+    <div class="grid-2">
+      <div class="callout" style="margin:0">
+        <strong>Garantizado y comprobado:</strong> Invariantes de las 5 estructuras C++17 tras cada operación; unicidad de préstamos activos por copia y de reservas por lector/libro; aislamiento de recursos y avisos por propietario; credenciales <code>0600</code> fuera de Mongo; entrega <em>at-least-once</em> con RabbitMQ durable, ACK manual post-efecto y deduplicación 1:1 en <code>Notificacion</code>; recuperación conservadora sin reenvío ciego.
+      </div>
+      <div class="callout warn" style="margin:0">
+        <strong>NO garantizado (límites explícitos):</strong> No se promete entrega «exactamente una vez» en red ni transacciones distribuidas en la API MongoDB docente; no soporta múltiples escritores simultáneos (límite 1 MiB por agregado); sin pagos reales ni correos externos; alojamiento HTTPS remoto del backend y ejecución local del daemon Docker quedan pendientes de infraestructura externa.
+      </div>
+    </div>
+
+    <h3>Conclusiones</h3>
+    <p>Biblioteca Académica demuestra que es factible unir estructuras de datos académicas construidas desde cero en C++17 con prácticas reales de ingeniería: validación de invariantes bajo sanitizers, persistencia cloud consciente de los límites del proveedor, autenticación Argon2id e identidad de servicio mínima, y comunicación asincrónica real con RabbitMQ. El sistema queda auditable, reproducible localmente sin secretos y listo para conectarse a un servidor HTTPS.</p>
+
+    <h3>Referencias oficiales</h3>
+    <ul style="font-size:8.2pt;margin-bottom:0">
+      <li><strong>Cormen, Leiserson, Rivest, Stein:</strong> <em>Introduction to Algorithms</em> (Árboles B, Rojo-Negro, Tablas Hash y Grafos); <strong>Sedgewick:</strong> <em>Left-Leaning Red-Black Trees</em>.</li>
+      <li><strong>RabbitMQ Documentation (4.0):</strong> Reliability Guide, Publisher Confirms, Consumer Acknowledgements &amp; DLX — <code>rabbitmq.com/docs</code>.</li>
+      <li><strong>rabbitmq-c 0.15.0 (MIT):</strong> <code>github.com/alanxz/rabbitmq-c</code> · <strong>libsodium 1.0.22 (ISC):</strong> Argon2id y aleatoriedad — <code>doc.libsodium.org</code>.</li>
+      <li><strong>nlohmann/json 3.12.0 (MIT):</strong> <code>json.nlohmann.me</code> · <strong>cpp-httplib 0.66.0 (MIT):</strong> <code>github.com/yhirose/cpp-httplib</code>.</li>
+      <li><strong>Vite &amp; GitHub Pages:</strong> Despliegue estático, <code>base</code>, <code>VITE_*</code> y workflows OIDC — <code>vite.dev/guide/static-deploy</code> y <code>docs.github.com/en/pages</code>.</li>
+    </ul>
+  </main>
+  <footer>
+    <span>Biblioteca Académica — Yoel Alexander Rojas Arguedas</span>
+    <span>Página 14 de 14</span>
+  </footer>
+</section>
+
+</body>
+</html>

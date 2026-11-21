@@ -8,10 +8,13 @@ emitidos por C++.
 
 ## Frontend en GitHub Pages
 
-Esta fase prepara el despliegue estático; la publicación efectiva se comprueba
-después de revisar y fusionar el PR. La URL esperada es
-`https://yrojasar-ui.github.io/Sistema-de-gestion-Academica/`; no se presenta
-como un sitio ya publicado.
+El frontend estático está publicado en
+`https://yrojasar-ui.github.io/Sistema-de-gestion-Academica/` (`HTTP/2 200`
+comprobado el 20 de noviembre de 2026). **Frontend publicado ≠ aplicación
+remota funcional:** GitHub Pages sirve únicamente HTML/JS/CSS y no ejecuta C++
+ni RabbitMQ; mientras no exista un backend HTTPS remoto configurado en
+`VITE_API_URL`, muestra *«Servidor de biblioteca pendiente de configuración»*.
+Ver [despliegue Docker y preparación HTTPS](docs/DESPLIEGUE_HTTPS_DOCKER.md).
 
 1. En el repositorio, abrir **Settings > Pages > Build and deployment >
    Source > GitHub Actions**.
@@ -128,9 +131,11 @@ son simulaciones de transporte, no evidencia de nube real.
 
 [Esquema, confirmaciones, recuperación y límites](docs/PERSISTENCIA_MONGODB.md).
 [Evidencias reales y fixtures separados](docs/evidencias/persistencia-mongodb/README.md).
-Solo un escritor y datos sintéticos. El futuro worker deberá coordinar sus cambios
-de avisos mediante el único escritor; no debe sobrescribir el agregado directamente.
-RabbitMQ y despliegue del backend siguen pendientes. CI no ejecuta la demo cloud.
+[Verificación final integrada MongoDB + RabbitMQ + Worker](docs/evidencias/final/README.md).
+Solo un escritor y datos sintéticos. El worker C++ (`biblioteca_worker`)
+canaliza sus confirmaciones a través del único escritor (`/api/interno/avisos/*`
+con identidad de servicio mínima); nunca escribe el agregado directamente.
+El despliegue HTTPS remoto del backend sigue pendiente de proveedor. CI no ejecuta la demo cloud.
 
 ## Arrancar el catálogo web en dos terminales WSL
 
@@ -427,9 +432,11 @@ gestionar reservas. La edición de libros actualiza título en B+ y temas en el
 grafo. El [contrato OpenAPI](docs/openapi.json) y la [guía de dominio con diagramas](docs/DOMINIO_API.md)
 detallan los endpoints, estados, persistencia y límites.
 
-Libros y dominio se guardan en un JSON agregado y se recuperan automáticamente.
-Las rutas privadas requieren sesión real y permisos. Los avisos quedan pendientes
-para la futura publicación por eventos; no se implementa RabbitMQ todavía.
+Libros y dominio se guardan en un JSON agregado o en MongoDB cloud y se
+recuperan automáticamente. Las rutas privadas requieren sesión real y permisos.
+Los avisos generados se publican mediante `AvisoOutboxRelay` hacia RabbitMQ
+4.0.5 y son procesados por `biblioteca_worker` hacia la bandeja *Mis avisos*
+a través de `/api/interno/avisos/*` con identidad técnica `ServiceIdentity`.
 
 Para repetir Ana → Bruno → Carla desde la raíz en WSL, una vez compilado el backend:
 
@@ -440,13 +447,45 @@ bash scripts/demo_biblioteca.sh
 El script arranca una API propia con datos temporales, verifica el recorrido,
 exporta y reconstruye los turnos tras reiniciar y limpia sus archivos.
 
-## Qué queda pendiente
+## Entregables finales y qué queda pendiente
 
-El informe E2-C se integró en `main`. Para el proyecto final quedan el broker/worker, el despliegue HTTPS del backend y el informe/defensa final. El esquema nuevo de cargos está probado con fixtures Mongo; no se repitieron escrituras cloud. El segundo avance se entrega el 16 de noviembre de 2026 y el proyecto final el 24 de noviembre de 2026.
+El cierre de la entrega final (24 de noviembre de 2026) incorpora comunicación asincrónica real con RabbitMQ 4.0.5 y `biblioteca_worker`, bandeja *Mis avisos* con aislamiento por propietario y panel administrativo de mensajería, plantillas Docker/Compose y HTTPS (`--trusted-proxy`), verificación integrada real en MongoDB cloud + RabbitMQ + worker (con limpieza comprobada `total=0`), demostración real en navegador Chrome (escritorio y móvil) y el paquete documental completo:
 
-Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`,
-`docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF de diseño no estaba en el repositorio;
-las decisiones se tomaron de la guía adjunta, sin afirmar haber leído ese PDF.
+- **Lista maestra y trazabilidad**: [`docs/LISTA_ENTREGA_FINAL.md`](docs/LISTA_ENTREGA_FINAL.md)
+- **Informe técnico final**: [`docs/Informe_Final_Biblioteca.pdf`](docs/Informe_Final_Biblioteca.pdf) (fuente editable: [`docs/Informe_Final_Biblioteca.html`](docs/Informe_Final_Biblioteca.html)) y 5 diagramas editables en [`docs/diagramas/`](docs/diagramas/README.md).
+- **Presentación editable y defensa**: [`docs/Presentacion_Final_Biblioteca.pptx`](docs/Presentacion_Final_Biblioteca.pptx), [`docs/Presentacion_Final_Biblioteca.pdf`](docs/Presentacion_Final_Biblioteca.pdf), [`docs/defensa/GUION_EXPOSICION.md`](docs/defensa/GUION_EXPOSICION.md), [`docs/defensa/GUION_DEMO_Y_PLAN_B.md`](docs/defensa/GUION_DEMO_Y_PLAN_B.md) y [`docs/defensa/GUIA_DEFENSA_PREGUNTAS.md`](docs/defensa/GUIA_DEFENSA_PREGUNTAS.md).
+- **Guía de despliegue Docker y HTTPS**: [`docs/DESPLIEGUE_HTTPS_DOCKER.md`](docs/DESPLIEGUE_HTTPS_DOCKER.md), [`docker-compose.yml`](docker-compose.yml), [`.env.example`](.env.example).
+- **Evidencias finales reproducibles**: [`docs/evidencias/final/README.md`](docs/evidencias/final/README.md).
+
+**Pendientes externos al repositorio (documentados sin simular):**
+1. **Alojamiento HTTPS remoto del backend**: el frontend estático está publicado en GitHub Pages (`https://yrojasar-ui.github.io/Sistema-de-gestion-Academica/`, HTTP/2 200), pero conectar la aplicación remota requiere elegir y aprovisionar un servidor externo HTTPS para `catalogo_api` + RabbitMQ + `biblioteca_worker` y configurar `VITE_API_URL` en el repositorio.
+2. **Ejecución local de contenedores Docker**: `docker-compose.yml` y los `Dockerfile` están preparados y validados sintácticamente, pero el daemon de Docker Desktop no estuvo activo en esta sesión WSL (la ejecución real verificada se realizó en modo nativo WSL y está lista para CI).
+
+Documentos de seguimiento: `AGENTS.md`, `docs/REQUISITOS.md`, `docs/DECISIONES.md`, `docs/ESTADO.md`. El PDF inicial de diseño no estaba en el repositorio; las decisiones se tomaron de la guía adjunta, sin afirmar haber leído ese PDF.
+
+## Arranque con RabbitMQ y `biblioteca_worker` (WSL nativo o Docker)
+
+En modo nativo WSL (con el backend compilado en `build/debug` y `rabbitmq-c` preparado):
+
+```bash
+bash scripts/arrancar_rabbitmq_wsl.sh
+./build/debug/catalogo_api --data data/catalogo_demo.json \
+  --auth-store data/privado/cuentas.json \
+  --service-token-file data/privado/worker.token \
+  --bootstrap-service-token --host 127.0.0.1 --port 8080 --amqp-host 127.0.0.1
+./build/debug/biblioteca_worker --api-url http://127.0.0.1:8080 \
+  --service-token-file data/privado/worker.token --amqp-host 127.0.0.1
+```
+
+Con Docker Compose (cuando el daemon Docker esté activo):
+
+```bash
+cp .env.example .env && docker compose up -d --build
+# Detener conservando datos (nunca usar down -v en una demo normal):
+docker compose stop
+```
+
+Ver detalle completo, variables y plantillas Caddy/Nginx HTTPS en [`docs/DESPLIEGUE_HTTPS_DOCKER.md`](docs/DESPLIEGUE_HTTPS_DOCKER.md).
 
 ## Demostración de acceso y paneles (5–7 minutos)
 

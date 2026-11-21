@@ -1,0 +1,8 @@
+2026-11-21T01:00:25.975704+00:00 Verificación integrada final en MongoDB cloud + RabbitMQ + Worker {"coleccion": "biblioteca_yoel_final_3be394f489e7431c", "endpoint": "https://paginas-web-cr.com/Api/apis/mongodb.php"}
+2026-11-21T01:00:27.500887+00:00 GET previo confirmado: total=0
+2026-11-21T01:00:32.354120+00:00 RabbitMQ real iniciado en loopback {"port": 46315}
+2026-11-21T01:00:37.409296+00:00 Documento único inicializado en MongoDB cloud {"oid": "6b00edad48417c5f81019651", "revision": 2}
+2026-11-21T01:01:37.082651+00:00 Worker procesó todos los avisos en MongoDB vía escritor único {"fallido": 0, "pendiente": 0, "procesado": 10, "publicado": 0}
+2026-11-21T01:01:39.281698+00:00 REINICIO REAL OK: 5 estructuras, edición B+/grafo, FIFO, pago SIMULADO, avisos/worker e historial intactos
+2026-11-21T01:01:42.392789+00:00 DELETE del documento sintético único {"eliminados": 1, "mensaje": "Documento eliminado"}
+2026-11-21T01:01:42.905030+00:00 GET final confirmado: total=0; limpieza completa verificada
