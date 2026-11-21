@@ -28,7 +28,7 @@ Para pasar de **frontend publicado** a **aplicación remota funcional** hace fal
 
 Archivos preparados:
 - [deploy/Dockerfile.backend](../deploy/Dockerfile.backend): multi-stage `ubuntu:24.04`, verifica `third_party/SHA256SUMS`, compila `libsodium 1.0.22` y `rabbitmq-c 0.15.0` fijados, construye `catalogo_api` y `biblioteca_worker`, ejecuta como usuario sin privilegios `biblioteca` (`UID 10001`).
-- [deploy/Dockerfile.frontend](../deploy/Dockerfile.frontend): multi-stage `node:24.22.3-slim` + `nginxinc/nginx-unprivileged:1.27-alpine` sirviendo la SPA y proxying `/api/` hacia `api:8080` (bloqueando `/api/interno/`).
+- [deploy/Dockerfile.frontend](../deploy/Dockerfile.frontend): multi-stage `node:24.22.3-slim` + `nginxinc/nginx-unprivileged:1.27-alpine`, ejecuta el modo explícito `npm run build:docker && npm run verify:dist:docker` (`--mode docker` + `VITE_API_SAME_ORIGIN=true`, base `/` y `/api/` en el mismo origen vía Nginx, bloqueando `/api/interno/`), sin alterar el build por defecto de GitHub Pages bajo `/Sistema-de-gestion-Academica/` con validación estricta HTTPS.
 - [docker-compose.yml](../docker-compose.yml): levanta `rabbitmq` (`4.0-alpine`), `api` (`replicas: 1`), `worker` (monta `biblioteca_privado` en solo lectura `:ro`) y `web` en `127.0.0.1:5173`.
 - [.env.example](../.env.example): variables de ejemplo sin secretos reales.
 

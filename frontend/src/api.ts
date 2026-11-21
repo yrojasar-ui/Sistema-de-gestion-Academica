@@ -1,7 +1,8 @@
 import { resolveApiConfiguration } from './api-config'
 import { createSessionClient } from './session-client'
 export { ApiError } from './session-client'
-const configuration = resolveApiConfiguration(import.meta.env.VITE_API_URL, import.meta.env.PROD)
+const sameOriginProxy = import.meta.env.MODE === 'docker' && import.meta.env.VITE_API_SAME_ORIGIN === 'true'
+const configuration = resolveApiConfiguration(import.meta.env.VITE_API_URL, import.meta.env.PROD, sameOriginProxy)
 export const apiConfigurationError = configuration.message
 export const sessionClient = createSessionClient(configuration.base, configuration.message ?? '')
 export const api = sessionClient.request

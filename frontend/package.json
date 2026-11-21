@@ -9,8 +9,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:docker": "tsc --noEmit && VITE_API_SAME_ORIGIN=true vite build --mode docker",
     "test": "node --test src/*.test.ts",
     "verify:dist": "node verify-dist.mjs",
+    "verify:dist:docker": "node verify-dist-docker.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

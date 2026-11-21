@@ -5,9 +5,18 @@ export interface ApiConfiguration {
   message?: string
 }
 
-// Desarrollo usa siempre el proxy de Vite. Producción requiere un origen HTTPS público.
-export function resolveApiConfiguration(raw: string | undefined, production: boolean): ApiConfiguration {
+// Desarrollo usa siempre el proxy de Vite. Producción (GitHub Pages) requiere un origen HTTPS público.
+// El modo sameOriginProxy=true solo se habilita explícitamente en el build Docker detrás de Nginx (/api/).
+export function resolveApiConfiguration(
+  raw: string | undefined,
+  production: boolean,
+  sameOriginProxy = false,
+): ApiConfiguration {
   if (!production) return { base: '/api/' }
+  if (sameOriginProxy) {
+    if (raw?.trim()) return { base: null, message: 'Configuración del servidor de biblioteca inválida' }
+    return { base: '/api/' }
+  }
   if (!raw?.trim()) return { base: null, message: pendingServerMessage }
   try {
     const url = new URL(raw.trim())
