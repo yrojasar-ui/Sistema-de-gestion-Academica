@@ -1,0 +1,36 @@
+VERIFICACIÓN 2 SESIONES + REINICIO + AISLAMIENTO OK (comprobante=PG-4, avisos procesados=17).
+DATASET DEFENSA LISTO en: /home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/demo-defensa
+{
+  "working": "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/demo-defensa/datos/defensa-local.json",
+  "auth_store": "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/demo-defensa/privado/cuentas.json",
+  "service_token": "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/demo-defensa/privado/service.token",
+  "credenciales_privadas": "/home/yoerojas/proyectos/Sistema-de-gestion-Academica/build/demo-defensa/privado/credenciales_demo.json",
+  "prestamos": {
+    "activos": 4,
+    "devueltos": 2,
+    "anulados": 1
+  },
+  "reservas": {
+    "pendiente": 2,
+    "apartada": 1,
+    "atendida": 1,
+    "cancelada": 1
+  },
+  "cargos": {
+    "pendiente": 3,
+    "pagado": 3,
+    "anulado": 1
+  },
+  "comprobantes": 4,
+  "avisos": {
+    "fallido": 0,
+    "pendiente": 0,
+    "procesado": 17,
+    "publicado": 0
+  },
+  "ejemplares_disponibles_para_vivo": [
+    "E-DEF-5",
+    "E-DEF-6"
+  ],
+  "cargo_pendiente_ana_para_vivo": "P-DEF-VIG"
+}
