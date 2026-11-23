@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BookOpen, Search, Plus, Network } from 'lucide-react'
 import { api, send, ApiError, type BibliotecaPersonal, type Libro } from './api'
+import { errorMessage } from './domain-helpers'
 import { Empty, FormDialog, LoadState, useData } from './ui'
 type Modal = {kind:'add'} | {kind:'edit'|'delete'|'request'|'related';book:Libro}
 interface Availability { idLibro:string; disponibles:number;apartados:number;prestados:number }
@@ -97,12 +98,12 @@ function Related({book,close}:{book:Libro;close:()=>void}) {
 }
 function Tree({revision}:{revision:number}) {
   const state=useData<{estructura:string}>('arbol',revision)
-  const [message,setMessage]=useState('')
+  const [notice,setNotice]=useState<{text:string;isError:boolean}|null>(null)
   const [busy,setBusy]=useState(false)
   return <section className="tree-detail"><div className="tree-head"><h2>Árbol B+</h2><button className="secondary" disabled={busy} onClick={async()=>{
-    setBusy(true);try{const v=await api<{valido:boolean}>('arbol/validacion');setMessage(v.valido?'Invariantes válidas':'Invariantes inválidas')}
-    catch(e){setMessage((e as Error).message)}finally{setBusy(false)}
+    setBusy(true);setNotice(null);try{const v=await api<{valido:boolean}>('arbol/validacion');setNotice({text:v.valido?'Invariantes válidas':'Invariantes inválidas',isError:!v.valido})}
+    catch(e){setNotice({text:errorMessage(e),isError:true})}finally{setBusy(false)}
   }}>Validar invariantes</button></div><LoadState error={state.error} retry={state.retry} loading={!state.data&&!state.error}/>
-    {message&&<p role="status">{message}</p>}{state.data&&<pre tabIndex={0}>{state.data.estructura}</pre>}
+    {notice&&<p role={notice.isError?'alert':'status'} className={notice.isError?'problem':'success'}>{notice.text}</p>}{state.data&&<pre tabIndex={0}>{state.data.estructura}</pre>}
   </section>
 }

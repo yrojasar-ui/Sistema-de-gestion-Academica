@@ -52,4 +52,8 @@ export interface BibliotecaPersonal {
 }
 
 export type PrestamoPersonal = Prestamo & { libro: Pick<Libro,'idLibro'|'titulo'|'autor'> }
-export type ReservaPersonal = Reserva & { libro: Pick<Libro,'idLibro'|'titulo'|'autor'> }
+export type ReservaPersonal = Reserva & {
+  libro: Pick<Libro,'idLibro'|'titulo'|'autor'>
+  posicionCola?: number
+  fechaCierre?: string
+}
