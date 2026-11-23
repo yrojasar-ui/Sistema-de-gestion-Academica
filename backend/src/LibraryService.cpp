@@ -113,6 +113,7 @@ void LibraryService::editarUsuario(const Usuario& u, const std::string& responsa
     });
 }
 void LibraryService::borrarUsuario(const std::string& id) {
+    validarId(id);
     cambiar([&](Runtime& e) {
         auto u = usuario(e, id);
         for (const auto& p : e.datos.prestamos)
@@ -133,6 +134,8 @@ void LibraryService::borrarUsuario(const std::string& id) {
     });
 }
 void LibraryService::crearEjemplar(const std::string& id, const std::string& libro) {
+    validarId(id);
+    validarId(libro);
     exigir(catalogo_.find(libro).has_value(), "Libro ausente", 404);
     cambiar([&](Runtime& e) {
         unico(e.datos.ejemplares, id, [](const auto& x) { return x.idEjemplar; });
@@ -141,6 +144,7 @@ void LibraryService::crearEjemplar(const std::string& id, const std::string& lib
     });
 }
 void LibraryService::estadoEjemplar(const std::string& id, const std::string& estado) {
+    validarId(id);
     exigir(estado == "disponible" || estado == "retirado", "Estado editable disponible o retirado", 400);
     cambiar([&](Runtime& e) {
         auto& c = copia(e.datos, id);
@@ -150,6 +154,7 @@ void LibraryService::estadoEjemplar(const std::string& id, const std::string& es
     });
 }
 void LibraryService::borrarEjemplar(const std::string& id) {
+    validarId(id);
     cambiar([&](Runtime& e) {
         auto& c = copia(e.datos, id);
         exigir(c.estado == "disponible" || c.estado == "retirado", "Ejemplar comprometido");
@@ -161,6 +166,9 @@ void LibraryService::borrarEjemplar(const std::string& id) {
     });
 }
 void LibraryService::prestar(const std::string& id, const std::string& ejemplar, const std::string& lector, const std::string& vence) {
+    validarId(id);
+    validarId(ejemplar);
+    validarId(lector);
     fechaFutura(vence);
     cambiar([&](Runtime& e) {
         unico(e.datos.prestamos, id, [](const auto& x) { return x.idPrestamo; });
@@ -182,6 +190,7 @@ void LibraryService::prestar(const std::string& id, const std::string& ejemplar,
     });
 }
 void LibraryService::devolver(const std::string& id) {
+    validarId(id);
     cambiar([&](Runtime& e) {
         auto& p = prestamo(e.datos, id);
         exigir(activo(p), "Préstamo ya devuelto");
@@ -194,6 +203,7 @@ void LibraryService::devolver(const std::string& id) {
     });
 }
 void LibraryService::renovar(const std::string& id, const std::string& vence) {
+    validarId(id);
     fechaFutura(vence);
     cambiar([&](Runtime& e) {
         auto& p = prestamo(e.datos, id);
@@ -205,6 +215,9 @@ void LibraryService::renovar(const std::string& id, const std::string& vence) {
     });
 }
 void LibraryService::reservar(const std::string& id, const std::string& libro, const std::string& lector) {
+    validarId(id);
+    validarId(libro);
+    validarId(lector);
     exigir(catalogo_.find(libro).has_value(), "Libro ausente", 404);
     cambiar([&](Runtime& e) {
         unico(e.datos.reservas, id, [](const auto& x) { return x.idReserva; });
@@ -225,6 +238,7 @@ void LibraryService::liberar(Runtime& e, Reserva& r) {
     aviso(e, "reserva_cancelada", r.idUsuario, r.idReserva, "");
 }
 void LibraryService::cancelar(const std::string& id, const std::string& motivo, const std::string& responsable) {
+    validarId(id);
     validarId(responsable);
     exigir(!normalizeTitle(motivo).empty() && motivo.size() <= 512, "Motivo requerido (máximo 512 bytes)", 400);
     cambiar([&](Runtime& e) {
@@ -242,6 +256,7 @@ void LibraryService::configurarCargo(std::int64_t importe, const std::string& mo
     importeDemo_ = importe; monedaDemo_ = moneda;
 }
 void LibraryService::anular(const std::string& id, const std::string& motivo, const std::string& responsable, bool recuperada) {
+    validarId(id);
     validarId(responsable);
     exigir(recuperada, "Confirme que la copia no salió o fue recuperada", 400);
     exigir(!normalizeTitle(motivo).empty() && motivo.size() <= 512, "Motivo requerido (máximo 512 bytes)", 400);
@@ -258,6 +273,18 @@ void LibraryService::anular(const std::string& id, const std::string& motivo, co
     });
 }
 Comprobante LibraryService::pagar(const std::string& id) {
+    validarId(id);
+    // Verificación idempotente antes de mutar: evita reescrituras innecesarias en doble clic o reintento
+    // y garantiza un único comprobante y un único aviso de pago simulado.
+    const auto cargoActual = std::find_if(actual_->datos.cargos.begin(), actual_->datos.cargos.end(),
+                                          [&](const auto& c) { return c.idPrestamo == id; });
+    if (cargoActual == actual_->datos.cargos.end()) throw ErrorDominio(404, "Registro ausente: " + id);
+    exigir(cargoActual->estado != "anulado", "Cargo anulado");
+    if (cargoActual->estado == "pagado") {
+        const auto existente = std::find_if(actual_->datos.comprobantes.begin(), actual_->datos.comprobantes.end(),
+                                            [&](const auto& c) { return c.idPrestamo == id; });
+        if (existente != actual_->datos.comprobantes.end()) return *existente;
+    }
     Comprobante resultado;
     cambiar([&](Runtime& e) {
         auto& cargo = obtener(e.datos.cargos, id, [](const auto& c) { return c.idPrestamo; });
@@ -390,6 +417,7 @@ void LibraryService::editarLibro(const Libro& libro) {
     actual_.swap(nuevo);
 }
 void LibraryService::borrarLibro(const std::string& id) {
+    validarId(id);
     exigir(catalogo_.find(id).has_value(), "Libro ausente", 404);
     for (const auto& c : estado().ejemplares) exigir(c.idLibro != id, "Libro referenciado por un ejemplar");
     for (const auto& r : estado().reservas) exigir(r.idLibro != id, "Libro referenciado por reservas o historial");
@@ -411,6 +439,7 @@ std::vector<Prestamo> LibraryService::activos(const std::string& hasta) const {
     return salida;
 }
 std::vector<Libro> LibraryService::relacionados(const std::string& id) const {
+    validarId(id);
     exigir(catalogo_.find(id).has_value(), "Libro ausente", 404);
     std::vector<Libro> salida;
     for (const auto& vecino : actual_->grafo.vecinos(id)) salida.push_back(*catalogo_.find(vecino));

@@ -2,6 +2,7 @@
 #include "biblioteca/DomainJson.hpp"
 #include <algorithm>
 #include <charconv>
+#include <iostream>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -179,7 +180,11 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
                 const auto user = auth.authenticate(authHeader);
                 if (b.repository().ready()) {
                     bool active = false;
-                    try { active = b.usuario(user.idUsuario).activo; } catch (const ErrorDominio&) {}
+                    try {
+                        active = b.usuario(user.idUsuario).activo;
+                    } catch (const ErrorDominio& e) {
+                        if (e.status != 404) throw;
+                    }
                     if (!active) throw ErrorDominio(401, "Sesión requerida o vencida");
                 } else if (user.rol != "ADMIN") {
                     throw ErrorDominio(503, "Biblioteca no disponible");
@@ -199,6 +204,20 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
                 }
             } catch (const ErrorDominio& e) {
                 responder(res, e.status, {{"error", e.what()}});
+                return httplib::Server::HandlerResponse::Handled;
+            } catch (const PersistenceError& e) {
+                std::cerr << "[api] Persistencia en pre-routing " << req.method << " " << req.path
+                          << ": " << sanitizeErrorText(e.what()) << '\n';
+                responder(res, 503, {{"error", "Operación no disponible temporalmente"}, {"resultado", outcomeName(e.outcome)}});
+                return httplib::Server::HandlerResponse::Handled;
+            } catch (const std::exception& e) {
+                std::cerr << "[api] Error inesperado en pre-routing " << req.method << " " << req.path
+                          << ": " << sanitizeErrorText(e.what()) << '\n';
+                responder(res, 503, {{"error", "Operación no disponible"}});
+                return httplib::Server::HandlerResponse::Handled;
+            } catch (...) {
+                std::cerr << "[api] Excepción desconocida en pre-routing " << req.method << " " << req.path << '\n';
+                responder(res, 503, {{"error", "Operación no disponible"}});
                 return httplib::Server::HandlerResponse::Handled;
             }
         }
@@ -333,7 +352,32 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
             return out;
         };
         auto reservas = owned(b.estado().reservas);
-        for (auto& row : reservas) row["libro"] = libroResumen(row.at("idLibro").get<std::string>());
+        for (auto& row : reservas) {
+            const auto idLibro = row.at("idLibro").get<std::string>();
+            const auto estadoRes = row.at("estado").get<std::string>();
+            row["libro"] = libroResumen(idLibro);
+            if (estadoRes == "pendiente") {
+                const auto llegada = row.at("llegada").get<std::uint64_t>();
+                std::size_t posicion = 0;
+                for (const auto& otra : b.estado().reservas) {
+                    if (otra.idLibro == idLibro && otra.estado == "pendiente" && otra.llegada <= llegada) ++posicion;
+                }
+                row["posicionCola"] = posicion;
+            } else if (estadoRes == "atendida") {
+                const auto idEjemplar = row.at("idEjemplar").get<std::string>();
+                const auto creada = row.at("creada").get<std::string>();
+                std::string cierre;
+                for (const auto& p : b.estado().prestamos) {
+                    if (p.idEjemplar == idEjemplar && p.idUsuario == i.idUsuario && p.inicio >= creada) {
+                        if (cierre.empty() || p.inicio < cierre) cierre = p.inicio;
+                    }
+                }
+                if (!cierre.empty()) row["fechaCierre"] = cierre;
+            } else if (estadoRes == "cancelada") {
+                const auto f = row.at("cancelacion").at("fecha").get<std::string>();
+                if (!f.empty()) row["fechaCierre"] = f;
+            }
+        }
         std::size_t pendientes = 0, publicados = 0, fallidos = 0;
         for (const auto& a : b.estado().avisos) {
             if (a.idUsuario != i.idUsuario) continue;
@@ -341,11 +385,19 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
             else if (a.estado == "publicado") ++publicados;
             else if (a.estado == "fallido") ++fallidos;
         }
+        auto notifsPropios = b.estado().notificaciones;
+        notifsPropios.erase(std::remove_if(notifsPropios.begin(), notifsPropios.end(),
+                                           [&](const auto& n) { return n.idUsuario != i.idUsuario; }),
+                            notifsPropios.end());
+        std::sort(notifsPropios.begin(), notifsPropios.end(), [](const auto& a, const auto& b2) {
+            if (a.procesadaEn != b2.procesadaEn) return a.procesadaEn > b2.procesadaEn;
+            return a.idNotificacion > b2.idNotificacion;
+        });
         responder(res, 200, {
             {"usuario", b.usuario(i.idUsuario)}, {"activos", prestamosPropios(b.activos())},
             {"prestamos", prestamosPropios(b.estado().prestamos)}, {"reservas", reservas},
             {"cargos", owned(b.estado().cargos)}, {"comprobantes", owned(b.estado().comprobantes)},
-            {"notificaciones", owned(b.estado().notificaciones)},
+            {"notificaciones", notifsPropios},
             {"avisosEnCurso", {{"pendientes", pendientes}, {"publicados", publicados}, {"fallidos", fallidos}}}
         });
     }));
@@ -353,9 +405,15 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
     s.Get("/api/mis-avisos", guard([&](const Request& req, Response& res) {
         parametros(req, {});
         const auto i = auth.authenticate(req.get_header_value("Authorization"));
-        auto items = Json::array();
+        std::vector<Notificacion> propios;
         for (const auto& n : b.estado().notificaciones)
-            if (n.idUsuario == i.idUsuario) items.push_back(Json(n));
+            if (n.idUsuario == i.idUsuario) propios.push_back(n);
+        std::sort(propios.begin(), propios.end(), [](const auto& a, const auto& b2) {
+            if (a.procesadaEn != b2.procesadaEn) return a.procesadaEn > b2.procesadaEn;
+            return a.idNotificacion > b2.idNotificacion;
+        });
+        auto items = Json::array();
+        for (const auto& n : propios) items.push_back(Json(n));
         std::size_t pendientes = 0, publicados = 0, fallidos = 0;
         for (const auto& a : b.estado().avisos) {
             if (a.idUsuario != i.idUsuario) continue;
@@ -594,6 +652,8 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         std::string mensaje;
         try { std::rethrow_exception(error); }
         catch (const PersistenceError& e) {
+            std::cerr << "[api] Error de persistencia en " << req.method << " " << req.path
+                      << " (" << outcomeName(e.outcome) << "): " << sanitizeErrorText(e.what()) << '\n';
             responder(res, 503, {{"error", e.what()}, {"resultado", outcomeName(e.outcome)}});
             return;
         }
@@ -601,7 +661,15 @@ void registrarHttp(httplib::Server& s, CatalogService& catalogo, LibraryService&
         catch (const DuplicateBookId& e) { codigo = 409; mensaje = e.what(); }
         catch (const std::invalid_argument& e) { codigo = 400; mensaje = e.what(); }
         catch (const Json::exception&) { codigo = 400; mensaje = "JSON inválido o tipo incorrecto"; }
-        catch (const std::exception&) { mensaje = "Operación no disponible"; }
+        catch (const std::exception& e) {
+            std::cerr << "[api] Error interno en " << req.method << " " << req.path
+                      << ": " << sanitizeErrorText(e.what()) << '\n';
+            mensaje = "Operación no disponible";
+        }
+        catch (...) {
+            std::cerr << "[api] Excepción desconocida en " << req.method << " " << req.path << '\n';
+            mensaje = "Operación no disponible";
+        }
         if (req.path == "/readyz") codigo = 503;
         responder(res, codigo, {{"error", mensaje}});
     });

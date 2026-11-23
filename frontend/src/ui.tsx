@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { api, sessionClient } from './api'
+import { errorMessage } from './domain-helpers'
 import { createMutationAttempt, type AttemptResult } from './mutation-attempt'
 
 export function useData<T>(path: string, revision: number) {
@@ -8,18 +9,23 @@ export function useData<T>(path: string, revision: number) {
   const [error,setError]=useState('')
   const pending=useRef<AbortController | null>(null)
   const mounted=useRef(false)
+  const lastPath=useRef(path)
   async function reload(): Promise<T> {
     pending.current?.abort()
     const control=new AbortController()
     pending.current=control
-    setData(null); setError('')
+    if (lastPath.current !== path) {
+      setData(null)
+      lastPath.current = path
+    }
+    setError('')
     try {
       const value=await api<T>(path,{signal:control.signal})
       if (!mounted.current || control.signal.aborted) throw new DOMException('Consulta cancelada','AbortError')
       setData(value)
       return value
     } catch(e) {
-      if (mounted.current && !control.signal.aborted && (e as Error).name!=='AbortError') setError((e as Error).message)
+      if (mounted.current && !control.signal.aborted && (e as Error)?.name!=='AbortError') setError(errorMessage(e))
       throw e
     }
   }
@@ -74,7 +80,7 @@ export function FormDialog({title,close,fields=[],children,submitLabel='Guardar'
       else if (result.kind==='rejected') setError('Operación rechazada: '+result.error.message)
       else setReview(result)
     } catch(e) {
-      if (mounted.current && (e as Error).name!=='AbortError') setError((e as Error).message)
+      if (mounted.current && (e as Error)?.name!=='AbortError') setError(errorMessage(e))
     } finally {running.current=false;if(mounted.current)setBusy(false)}
   }
   async function save(event:FormEvent<HTMLFormElement>) {
@@ -116,7 +122,9 @@ export function FormDialog({title,close,fields=[],children,submitLabel='Guardar'
     </form></dialog>
 }
 export function Empty({children='No hay registros.'}: {children?:ReactNode}) {return <p className="empty" role="status">{children}</p>}
-export function Audit({audit}: {audit:{fecha:string;motivo:string;responsable:string}}) {
-  return audit.fecha ? <p className="audit">Cancelado: {audit.fecha} · Responsable: {audit.responsable}<br/>{audit.motivo}</p> : null
+export function Audit({audit, label = 'Cancelado'}: {audit:{fecha:string;motivo:string;responsable:string}; label?: string}) {
+  return audit.fecha
+    ? <p className="audit">Fecha de cierre ({label}): {audit.fecha} · Responsable: {audit.responsable}<br/>Motivo: {audit.motivo}</p>
+    : null
 }
 export const money=(amount:number,currency:string)=>new Intl.NumberFormat('es-CR',{style:'currency',currency}).format(amount/100)

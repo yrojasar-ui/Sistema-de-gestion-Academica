@@ -139,6 +139,8 @@ fieldset { margin:0; padding:0; border:0; min-width:0 }
 .notice-summary { padding: 16px 20px; margin-bottom: 18px; display: grid; gap: 10px }
 .summary-pills { display: flex; flex-wrap: wrap; gap: 8px }
 .badge-pendiente { background: #fff4d9; color: #7a5200 }
+.badge-hoy { background: #ffe4cc; color: #8a3a00; font-weight: 600 }
 .badge-publicado { background: #e3effa; color: #194d84 }
 .badge-procesado { background: #e7f4ec; color: #215e3d }
 .badge-fallido { background: #fdecea; color: #8c2a21 }
+.payment-confirmed { padding: 10px 12px; background: #e7f4ec; color: #185134; border: 1px solid #b5dcc4; border-radius: 6px; font-weight: 600; margin: 6px 0 }

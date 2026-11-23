@@ -74,7 +74,14 @@ struct Settings {
 Settings settings(int argc, char** argv) {
     Settings cfg;
     cfg.amqp.host = envOr("AMQP_HOST", "");
-    if (auto p = envOr("AMQP_PORT"); !p.empty()) cfg.amqp.port = std::stoi(p);
+    if (auto p = envOr("AMQP_PORT"); !p.empty()) {
+        int parsedPort = 0;
+        const auto end = p.data() + p.size();
+        const auto parsed = std::from_chars(p.data(), end, parsedPort);
+        if (parsed.ec != std::errc{} || parsed.ptr != end || parsedPort < 1 || parsedPort > 65535)
+            throw std::invalid_argument("Variable de entorno AMQP_PORT inválida (1..65535)");
+        cfg.amqp.port = parsedPort;
+    }
     cfg.amqp.vhost = envOr("AMQP_VHOST", "/");
     cfg.amqp.user = envOr("AMQP_USER", "guest");
     cfg.amqp.password = envOr("AMQP_PASSWORD", "guest");
@@ -200,7 +207,7 @@ int main(int argc, char** argv) {
                     remote->outcome() == "incierto" ? WriteOutcome::incierto : WriteOutcome::rechazado, e.what()); }
             };
             try { rebuild(cfg.initialize); }
-            catch (const std::exception& e) { std::cerr << "Mongo no listo: " << e.what() << '\n'; }
+            catch (const std::exception& e) { std::cerr << "Mongo no listo: " << sanitizeErrorText(e.what()) << '\n'; }
         }
 #endif
         biblioteca.configurarCargo(cfg.charge, cfg.moneda);

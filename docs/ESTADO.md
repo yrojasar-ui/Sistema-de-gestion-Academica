@@ -472,3 +472,14 @@ Base: `main` en `225e151` (PR #11 ya fusionado el 19 de noviembre de 2026), árb
 2. **Ejecución de contenedores Docker:** los manifiestos se prepararon y validaron sintácticamente, pero el daemon de Docker Desktop no estaba activo en WSL (`dockerDesktopLinuxEngine` inaccesible); no se reporta ejecución de contenedores.
 
 Índice completo de evidencias: [docs/evidencias/final/README.md](evidencias/final/README.md) · Lista final de entrega: [docs/LISTA_ENTREGA_FINAL.md](LISTA_ENTREGA_FINAL.md).
+
+
+## Refinamiento pre-defensa: pagos, estados UTC, auditoría de excepciones y dataset aislado — 22 de noviembre de 2026
+
+Base: `main` en `f3de312` (PR #12 fusionado), rama `feat/defensa-ux-validaciones`, conservando `entregable-2` (`0cb6d31`) y los entregables anteriores.
+
+- **Pagos simulados**: filtros por estado en *Admin → Pagos* con lector, libro, importe, fecha UTC, comprobante e insignia *«Pago simulado realizado»*; confirmación persistente *«Usted ha pagado. Pago simulado registrado.»* en *Usuario → Mis pagos* (conservada tras recargar y reiniciar); cargos pagados y luego anulados conservan el comprobante histórico; idempotencia en `LibraryService::pagar()` ante doble clic o reintento sin duplicar comprobante ni aviso.
+- **Préstamos, reservas, historiales y avisos**: préstamos activos ordenados por vencimiento con estado UTC (*Vencido*, *Vence hoy*, *Vence pronto*, *Vigente*); posición en cola FIFO (`posicionCola`) en reservas pendientes y fecha de cierre + motivo en atendidas, canceladas, devoluciones y anulaciones; *Mis avisos* ordenado por fecha descendente con enlace *Ir a Mis pagos* desde el aviso `pago_simulado`.
+- **Auditoría de excepciones y validaciones**: documentada en [AUDITORIA_EXCEPCIONES_Y_VALIDACIONES.md](AUDITORIA_EXCEPCIONES_Y_VALIDACIONES.md) (capturas vacías eliminadas en `HttpController.cpp` y `biblioteca_worker.cpp`, manejo de JSON corrupto en `LocalLibraryRepository.cpp` como `503 PersistenceError`, validación temprana de IDs y `AMQP_PORT`, registro sanitizado en logs y pruebas de regresión `regresion_validaciones` + `domain-helpers.test.ts`).
+- **Datos y verificación para defensa**: script repetible [scripts/preparar_demo_defensa.py](../scripts/preparar_demo_defensa.py) sobre instancia aislada (`build/demo-defensa/`), 17 avisos procesados por el worker, dos sesiones (`Ana`/`Admin`), reinicio real de API, aislamiento de `Bruno`, cargo pendiente `P-DEF-VIG` y ejemplares `E-DEF-5`/`E-DEF-6` listos para demostración en vivo. Evidencias y 6 capturas sin credenciales en [evidencias/defensa/README.md](evidencias/defensa/README.md).
+- **Resultados verificados en WSL2**: CTest Debug **17/17** (56,61 s), ASan/UBSan + LeakSanitizer **7/7** suites de integración y regresión (39,91 s, 0 diagnósticos), Frontend **25/25** pruebas + `build:docker` + `verify:dist:docker` + `build` + `verify:dist`.

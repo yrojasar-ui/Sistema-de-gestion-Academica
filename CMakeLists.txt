@@ -112,6 +112,10 @@ if(BUILD_TESTING)
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/backend/tests/test_acceso_api.py
             $<TARGET_FILE:catalogo_api> ${CMAKE_SOURCE_DIR}/data/libros_iniciales.json)
   set_tests_properties(acceso_paneles_api PROPERTIES TIMEOUT 120)
+  add_test(NAME regresion_validaciones
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/backend/tests/test_regresion_validaciones.py
+            $<TARGET_FILE:catalogo_api> $<TARGET_FILE:biblioteca_worker> ${CMAKE_SOURCE_DIR}/data/libros_iniciales.json)
+  set_tests_properties(regresion_validaciones PROPERTIES TIMEOUT 120)
   add_test(NAME biblioteca_api
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/backend/tests/test_library_api.py
             $<TARGET_FILE:catalogo_api> ${CMAKE_SOURCE_DIR}/data/libros_iniciales.json)
