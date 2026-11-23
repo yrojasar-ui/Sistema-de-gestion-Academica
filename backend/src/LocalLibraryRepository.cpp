@@ -55,8 +55,17 @@ void LocalLibraryRepository::commit(Json next, bool checkExternal) const {
     if (blocked_) throw PersistenceError(WriteOutcome::incierto, "Almacenamiento bloqueado; reinicie para reconciliar");
     const auto text = next.dump();
     if (text.size() > 1024*1024) throw PersistenceError(WriteOutcome::rechazado, "Biblioteca supera 1 MiB");
-    if (checkExternal && std::filesystem::exists(path_) && read(path_) != current_)
-        throw PersistenceError(WriteOutcome::rechazado, "Archivo cambiado externamente; reinicie antes de escribir");
+    if (checkExternal && std::filesystem::exists(path_)) {
+        Json onDisk;
+        try {
+            onDisk = read(path_);
+        } catch (const std::exception& e) {
+            throw PersistenceError(WriteOutcome::rechazado,
+                std::string("Archivo de biblioteca ilegible antes de guardar: ") + e.what());
+        }
+        if (onDisk != current_)
+            throw PersistenceError(WriteOutcome::rechazado, "Archivo cambiado externamente; reinicie antes de escribir");
+    }
     auto pattern = path_.string() + ".tmp.XXXXXX";
     std::vector<char> name(pattern.begin(), pattern.end()); name.push_back('\0');
     int fd = ::mkstemp(name.data());

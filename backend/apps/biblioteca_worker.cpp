@@ -44,7 +44,14 @@ WorkerConfig parseArgs(int argc, char** argv) {
     WorkerConfig cfg;
     cfg.apiUrl = envOr("API_URL", cfg.apiUrl);
     cfg.amqp.host = envOr("AMQP_HOST", "127.0.0.1");
-    if (auto p = envOr("AMQP_PORT"); !p.empty()) cfg.amqp.port = std::stoi(p);
+    if (auto p = envOr("AMQP_PORT"); !p.empty()) {
+        int parsedPort = 0;
+        const auto end = p.data() + p.size();
+        const auto parsed = std::from_chars(p.data(), end, parsedPort);
+        if (parsed.ec != std::errc{} || parsed.ptr != end || parsedPort < 1 || parsedPort > 65535)
+            throw std::invalid_argument("Variable de entorno AMQP_PORT inválida (1..65535)");
+        cfg.amqp.port = parsedPort;
+    }
     cfg.amqp.vhost = envOr("AMQP_VHOST", "/");
     cfg.amqp.user = envOr("AMQP_USER", "guest");
     cfg.amqp.password = envOr("AMQP_PASSWORD", "guest");
@@ -275,7 +282,12 @@ int main(int argc, char** argv) {
                     }
                     consumer.ack(msg.deliveryTag);
                     bool duplicado = false;
-                    try { duplicado = Json::parse(res.body).value("duplicado", false); } catch (...) {}
+                    try {
+                        duplicado = Json::parse(res.body).value("duplicado", false);
+                    } catch (const Json::exception& e) {
+                        std::cerr << "[worker] Respuesta 200 de " << idAviso
+                                  << " sin marca booleana de duplicado: " << sanitizeErrorText(e.what()) << std::endl;
+                    }
                     std::cout << "[worker] " << idAviso << " (" << idEvento << ") confirmado y ACK enviado"
                               << (duplicado ? " [duplicado idempotente]" : "") << std::endl;
                     continue;
