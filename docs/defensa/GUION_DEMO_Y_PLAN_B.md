@@ -5,41 +5,52 @@
 Desde la raíz `/home/yoerojas/proyectos/Sistema-de-gestion-Academica` en WSL, con `build/debug` compilado y Node `24.22.3` en `PATH`:
 
 ```bash
-# Preparación única (solo si no existe el archivo de demo y credenciales):
-mkdir -p data/privado-demo && chmod 700 data/privado-demo
-./build/debug/catalogo_api --bootstrap-service-token data/privado-demo/service.token
-printf 'user=guest\npassword=guest\nvhost=/\n' > data/privado-demo/amqp.creds
-chmod 600 data/privado-demo/amqp.creds
-./build/debug/catalogo_api --storage local \
-  --initial data/libros_iniciales.json --working data/demo-defensa.json \
-  --auth-store data/privado-demo/cuentas.json \
-  --bootstrap-admin Admin --admin-name "Administrador"
+# 1) Generar una instancia aislada nueva con dataset completo (no modifica cuentas
+#    personales ni la API docente y rechaza directorios existentes sin borrar nada):
+DEMO_DIR="build/demo-defensa-$(date -u +%Y%m%d-%H%M%S)"
+python3 scripts/preparar_demo_defensa.py --dir "$DEMO_DIR"
+# Opcional: añadir --verify para comprobar dos sesiones, reinicio y aislamiento Bruno.
+# Las contraseñas sintéticas exclusivas quedan únicamente en "$DEMO_DIR/privado/credenciales_demo.json" (0600).
 ```
 
-Abrir **4 terminales WSL** (sin imprimir contraseñas en pantalla):
+Abrir **4 terminales WSL** apuntando al mismo `$DEMO_DIR` (sin imprimir contraseñas en pantalla):
 
 ```bash
-# Terminal 1 · RabbitMQ 4.0.5 real en loopback (persiste en data/rabbitmq-wsl)
+# En cada terminal exportar la ruta generada:
+export DEMO_DIR="build/demo-defensa-<AAAAMMDD-HHMMSS>"
+
+# Terminal 1 · RabbitMQ 4.0.5 real en loopback (puerto 127.0.0.1:5672)
 bash scripts/arrancar_rabbitmq_wsl.sh
 
 # Terminal 2 · API C++17 (único escritor, con outbox RabbitMQ y token de servicio)
 ./build/debug/catalogo_api --storage local \
-  --working data/demo-defensa.json --auth-store data/privado-demo/cuentas.json \
-  --service-token-file data/privado-demo/service.token \
-  --amqp-host 127.0.0.1 --amqp-port 5672 --amqp-credentials-file data/privado-demo/amqp.creds \
-  --demo-charge 10000 --currency CRC --port 8080
+  --initial data/libros_iniciales.json \
+  --working "$DEMO_DIR/datos/defensa-local.json" \
+  --auth-store "$DEMO_DIR/privado/cuentas.json" \
+  --service-token-file "$DEMO_DIR/privado/service.token" \
+  --amqp-host 127.0.0.1 --amqp-port 5672 \
+  --amqp-credentials-file "$DEMO_DIR/privado/amqp.creds" \
+  --outbox-poll-ms 300 --demo-charge 10000 --currency CRC --port 8080
 
 # Terminal 3 · Worker independiente C++17
 ./build/debug/biblioteca_worker --api-url http://127.0.0.1:8080 \
-  --service-token-file data/privado-demo/service.token \
-  --amqp-host 127.0.0.1 --amqp-port 5672 --amqp-credentials-file data/privado-demo/amqp.creds
+  --service-token-file "$DEMO_DIR/privado/service.token" \
+  --amqp-host 127.0.0.1 --amqp-port 5672 \
+  --amqp-credentials-file "$DEMO_DIR/privado/amqp.creds"
 
 # Terminal 4 · Frontend Vite (http://127.0.0.1:5173/)
 export PATH="$PWD/build/catalogo-prep/node-v24.22.3-linux-x64/bin:$PATH"
 cd frontend && npm run dev
 ```
 
-*(Tener creados previamente los usuarios sintéticos `Ana` y `Bruno` con sus cuentas `USUARIO` desde Admin → Usuarios, usando contraseñas propias de al menos 12 caracteres.)*
+*(El script deja creados `Admin`, `Ana`, `Bruno` y `Carla`, pagos pendientes/pagados/anulados, préstamos vencido/próximo a vencer/vigentes/devueltos/anulado, reservas en los 4 estados, ≥ 8 avisos procesados por el worker, los ejemplares disponibles `E-DEF-5` y `E-DEF-6`, y el cargo pendiente `P-DEF-VIG` de Ana listo para la demostración en vivo.)*
+
+### Comprobación en vivo con dos ventanas (Ana y Admin)
+
+1. Abrir **Ventana 1** (`http://127.0.0.1:5173/`) como `Admin` → **Pagos simulados** → filtrar por **Pagados**.
+2. Abrir **Ventana 2** (ventana privada/incógnito en `http://127.0.0.1:5173/`) como `Ana` → **Mis pagos simulados** → pulsar **Simular pago** en `P-DEF-VIG` y confirmar.
+3. Verificar en Ventana 2 que aparece *«Usted ha pagado. Pago simulado registrado.»* y el nuevo comprobante (`PG-4`, conservado al recargar).
+4. En Ventana 1 (`Admin`), pulsar **Actualizar**: el filtro **Pagados** se conserva y aparece el mismo comprobante `PG-4` con *«Pago simulado realizado»*.
 
 ---
 

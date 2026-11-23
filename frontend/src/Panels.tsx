@@ -222,6 +222,7 @@ export function AdminPanel({section}:{section:'ejemplares'|'usuarios'|'prestamos
       {name:'idEjemplar',label:'ID del ejemplar',maxLength:64},{name:'idLibro',label:'Libro',options:catalog.data!.libros.map(b=>({value:b.idLibro,label:b.titulo+' · '+b.idLibro}))}],
       submit:async v=>{await send('ejemplares',v)}})}>Crear ejemplar</button>}
     {ready&&section==='prestamos'&&<button className="primary" onClick={()=>loan()}>Registrar préstamo</button>}
+    {section==='pagos'&&<button className="secondary" onClick={refresh}>Actualizar</button>}
     </div></div>
     <LoadState error={error} retry={()=>{state.retry();catalog.retry();accounts.retry();active.retry()}} loading={!ready&&!error}/>
     {ready&&section==='usuarios'&&<Records>{data.usuarios.map(u=>{

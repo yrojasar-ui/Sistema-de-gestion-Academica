@@ -145,22 +145,66 @@ def wait_until(fn, timeout=15.0, msg="condición"):
     raise AssertionError(f"Timeout esperando {msg}: {last}")
 
 
+def validate_prerequisites(api_bin: Path, worker_bin: Path, initial_json: Path) -> None:
+    missing = []
+    if not api_bin.is_file() or not os.access(api_bin, os.X_OK):
+        missing.append(f"Binario catalogo_api ausente o no ejecutable: {api_bin}")
+    if not worker_bin.is_file() or not os.access(worker_bin, os.X_OK):
+        missing.append(f"Binario biblioteca_worker ausente o no ejecutable: {worker_bin}")
+    if not initial_json.is_file():
+        missing.append(f"Catálogo inicial ausente: {initial_json}")
+    try:
+        srv, ctl, _ = find_rabbitmq()
+        if not os.access(srv, os.X_OK) or not os.access(ctl, os.X_OK):
+            missing.append(f"Binarios de RabbitMQ no ejecutables: {srv}, {ctl}")
+    except RuntimeError as exc:
+        missing.append(str(exc))
+    if missing:
+        raise RuntimeError(
+            "Validación previa de binarios falló (no se creó ni modificó ningún directorio):\n  - "
+            + "\n  - ".join(missing)
+            + "\nCompile primero con: cmake --build build/debug --parallel 4"
+        )
+
+
+def resolve_new_output_dir(raw_dir: str | None) -> Path:
+    if raw_dir:
+        candidate = Path(raw_dir).resolve()
+        if candidate.exists() or candidate.is_symlink():
+            raise FileExistsError(
+                f"El directorio destino ya existe y no se sobrescribe ni borra: {candidate}. "
+                "Indique una ruta nueva con --dir o omita --dir para crear un directorio único."
+            )
+        return candidate
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    for _ in range(16):
+        candidate = (REPO_ROOT / "build" / f"demo-defensa-{stamp}-{secrets.token_hex(2)}").resolve()
+        if not candidate.exists():
+            return candidate
+    raise RuntimeError("No se pudo reservar un directorio nuevo bajo build/")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Prepara instancia aislada de defensa con datos completos.")
-    parser.add_argument("--dir", default=str(REPO_ROOT / "build" / "demo-defensa"), help="Directorio aislado de la instancia")
+    parser = argparse.ArgumentParser(description="Prepara instancia aislada de defensa con datos completos sin borrar directorios existentes.")
+    parser.add_argument("--dir", default=None, help="Directorio NUEVO (no existente) para la instancia aislada; si se omite se crea uno único en build/")
     parser.add_argument("--api-bin", default=str(REPO_ROOT / "build" / "debug" / "catalogo_api"))
     parser.add_argument("--worker-bin", default=str(REPO_ROOT / "build" / "debug" / "biblioteca_worker"))
     parser.add_argument("--verify", action="store_true", help="Ejecutar verificación de dos sesiones, reinicio y aislamiento Bruno")
     args = parser.parse_args()
 
-    out_dir = Path(args.dir).resolve()
     api_bin = Path(args.api_bin).resolve()
     worker_bin = Path(args.worker_bin).resolve()
     initial_json = REPO_ROOT / "data" / "libros_iniciales.json"
 
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Validar todos los binarios y el destino ANTES de crear cualquier archivo o directorio.
+        validate_prerequisites(api_bin, worker_bin, initial_json)
+        out_dir = resolve_new_output_dir(args.dir)
+    except (FileExistsError, RuntimeError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(2)
+
+    out_dir.mkdir(parents=True, exist_ok=False)
     priv = out_dir / "privado"
     priv.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chmod(priv, 0o700)
